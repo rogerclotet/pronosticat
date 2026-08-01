@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "Pronosticat",
+    "tagline": "Pronostica amb els teus amics"
+  },
+  "nav": {
+    "home": "Inici",
+    "predictions": "Pronòstics",
+    "standings": "Classificació",
+    "group": "Grup"
+  },
+  "auth": {
+    "signIn": "Inicia sessió",
+    "signOut": "Tanca sessió",
+    "continueWithGoogle": "Continua amb Google",
+    "magicLink": "Enllaç màgic",
+    "emailPlaceholder": "El teu correu electrònic",
+    "sendLink": "Envia enllaç",
+    "linkSent": "Enllaç enviat! Revisa el teu correu.",
+    "welcome": "Benvingut a Pronosticat",
+    "welcomeSubtitle": "Crea grups amb amics i pronostica resultats de futbol"
+  },
+  "home": {
+    "title": "Inici",
+    "yourGroups": "Els teus grups",
+    "noGroups": "Encara no pertanyes a cap grup",
+    "createGroup": "Crea un grup",
+    "joinGroup": "Uneix-te a un grup",
+    "upcomingMatches": "Pròxims partits",
+    "yourPoints": "Els teus punts",
+    "activePredictions": "Pronòstics actius",
+    "recentResults": "Resultats recents"
+  },
+  "predictions": {
+    "title": "Pronòstics",
+    "round": "Jornada {round}",
+    "noMatches": "No hi ha partits en aquesta jornada",
+    "predict": "Pronostica",
+    "edit": "Edita",
+    "cancel": "Cancel·la",
+    "lock": "Confirmar",
+    "wager": "Aposta",
+    "wagerPlaceholder": "Punts a apostar",
+    "locked": "Bloquejat",
+    "yourPrediction": "El teu pronòstic",
+    "matchStarted": "Partit començat",
+    "matchFinished": "Partit acabat"
+  },
+  "standings": {
+    "title": "Classificació",
+    "player": "Jugador",
+    "points": "Punts",
+    "correctResults": "Resultats exactes",
+    "correctOutcomes": "Resultats parcials",
+    "matchesPredicted": "Partits pronosticats",
+    "noMembers": "No hi ha membres al grup"
+  },
+  "group": {
+    "title": "Grup",
+    "yourGroups": "Els teus grups",
+    "create": "Crea un grup nou",
+    "join": "Uneix-te amb codi",
+    "switch": "Canvia de grup",
+    "manage": "Gestiona el grup",
+    "name": "Nom del grup",
+    "competition": "Competició",
+    "inviteCode": "Codi d'invitació",
+    "members": "Membres",
+    "startingPoints": "Punts inicials",
+    "leave": "Surt del grup",
+    "delete": "Elimina el grup",
+    "copyCode": "Copia codi",
+    "codeCopied": "Codi copiat!",
+    "joinCodePlaceholder": "Introdueix el codi d'invitació",
+    "createSubmit": "Crea grup",
+    "joinSubmit": "Uneix-te",
+    "competitions": {
+      "laliga": "LaLiga",
+      "premier_league": "Premier League",
+      "champions_league": "Champions League"
+    }
+  },
+  "match": {
+    "vs": "vs",
+    "scheduled": "Programat",
+    "live": "En directe",
+    "finished": "Acabat",
+    "postponed": "Ajornat",
+    "cancelled": "Cancel·lat"
+  },
+  "common": {
+    "loading": "Carregant...",
+    "error": "S'ha produït un error",
+    "save": "Desa",
+    "cancel": "Cancel·la",
+    "confirm": "Confirma",
+    "back": "Torna"
+  }
+}
