@@ -7,7 +7,7 @@ services:
       context: .
       target: migrator
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-pronosticat}:${POSTGRES_PASSWORD:-pronosticat}@db:5432/${POSTGRES_DB:-pronosticat}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pronosticat}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-pronosticat}
     depends_on:
       db:
         condition: service_healthy
@@ -20,7 +20,7 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-pronosticat}:${POSTGRES_PASSWORD:-pronosticat}@db:5432/${POSTGRES_DB:-pronosticat}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pronosticat}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-pronosticat}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:?BETTER_AUTH_URL is required}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
