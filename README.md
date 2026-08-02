@@ -48,6 +48,22 @@ npm run docker:prod:logs   # veure logs
 npm run docker:prod:down   # aturar
 ```
 
+### Desplegament continu
+
+Cada push a `main` que passi `lint`+`typecheck` (`.github/workflows/ci.yml`) desplega automàticament via SSH (`scripts/deploy.sh`): fa `git pull` al servidor i `docker compose -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans`.
+
+Cal configurar aquests secrets al repositori de GitHub:
+
+| Secret | Descripció |
+|---|---|
+| `SSH_PASSWORD` | Contrasenya SSH del servidor |
+| `SSH_USERNAME` | Usuari SSH |
+| `SSH_IP` | IP o host del servidor |
+| `SSH_PROJECT_DIRECTORY` | Ruta del repositori clonat al servidor |
+| `PORT` | Port públic de l'app (`APP_PORT`) |
+
+El servidor ha de tenir el repositori clonat amb un `.env` de producció ja configurat (docker compose el llegeix automàticament).
+
 ## Configuració
 
 1. Copia les variables d'entorn:

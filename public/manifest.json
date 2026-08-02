@@ -4,8 +4,8 @@
   "description": "Pronostica resultats de futbol amb els teus amics",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a2332",
-  "theme_color": "#1a2332",
+  "background_color": "#0b1116",
+  "theme_color": "#0b1116",
   "orientation": "portrait",
   "lang": "ca",
   "icons": [

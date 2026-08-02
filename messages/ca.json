@@ -4,10 +4,10 @@
     "tagline": "Pronostica amb els teus amics"
   },
   "nav": {
-    "home": "Inici",
+    "jornada": "Jornada",
     "predictions": "Pronòstics",
-    "standings": "Classificació",
-    "group": "Grup"
+    "group": "Grup",
+    "perfil": "Perfil"
   },
   "auth": {
     "signIn": "Inicia sessió",
@@ -20,65 +20,119 @@
     "welcome": "Benvingut a Pronosticat",
     "welcomeSubtitle": "Crea grups amb amics i pronostica resultats de futbol"
   },
-  "home": {
-    "title": "Inici",
-    "yourGroups": "Els teus grups",
-    "noGroups": "Encara no pertanyes a cap grup",
-    "createGroup": "Crea un grup",
-    "joinGroup": "Uneix-te a un grup",
-    "upcomingMatches": "Pròxims partits",
-    "yourPoints": "Els teus punts",
-    "activePredictions": "Pronòstics actius",
-    "recentResults": "Resultats recents"
+  "topbar": {
+    "committed": "{points} EN JOC"
+  },
+  "jornada": {
+    "title": "Jornada {round} · {competition}",
+    "roundClose": "TANCA {time}",
+    "hint": "Encara tens {count, plural, one {# partit} other {# partits}} sense pronòstic.",
+    "hintNone": "Ja has fet tots els pronòstics d'aquesta jornada.",
+    "noMatches": "No hi ha partits en aquesta jornada",
+    "ctaPredict": "FES EL PRONÒSTIC",
+    "ctaPredicted": "PRONÒSTIC {home}-{away}",
+    "ctaLocked": "VAS DIR {home}-{away}",
+    "ctaNone": "SENSE PRONÒSTIC",
+    "statusOpen": "OBERT",
+    "statusLive": "EN JOC",
+    "statusFinished": "FINALITZAT"
   },
   "predictions": {
-    "title": "Pronòstics",
-    "round": "Jornada {round}",
-    "noMatches": "No hi ha partits en aquesta jornada",
-    "predict": "Pronostica",
-    "edit": "Edita",
-    "cancel": "Cancel·la",
-    "lock": "Confirmar",
-    "wager": "Aposta",
-    "wagerPlaceholder": "Punts a apostar",
-    "locked": "Bloquejat",
-    "yourPrediction": "El teu pronòstic",
-    "matchStarted": "Partit començat",
-    "matchFinished": "Partit acabat"
+    "title": "Els meus pronòstics",
+    "statMade": "PRONÒSTICS J{round}",
+    "statExact": "RESULTATS CLAVATS",
+    "statPoints": "PUNTS AQUESTA J.",
+    "noPredictions": "Encara no has fet cap pronòstic aquesta jornada.",
+    "reserved": "res."
   },
-  "standings": {
+  "sheet": {
+    "stakeLabel": "PUNTS APOSTATS",
+    "exactLabel": "SI CLAVES EL RESULTAT",
+    "outLabel": "SI NOMÉS ENCERTES QUI GUANYA",
+    "lockNote": "Els punts es descompten quan xiula l'àrbitre. Fins llavors, canvia'l o cancel·la'l sense cost.",
+    "cancelLabel": "CANCEL·LA EL PRONÒSTIC",
+    "ctaNew": "BLOQUEJA EL PRONÒSTIC",
+    "ctaEdit": "ACTUALITZA EL PRONÒSTIC",
+    "local": "Local",
+    "visitant": "Visitant"
+  },
+  "group": {
     "title": "Classificació",
-    "player": "Jugador",
+    "note": "{count} JUGADORS",
+    "invite": "+ FICA-HI MÉS GENT",
+    "manage": "Gestiona el grup",
+    "inviteCode": "CODI D'ENTRADA",
+    "members": "JUGADORS",
+    "yourRole": "EL TEU ROL",
+    "competition": "COMPETICIÓ",
+    "admin": "Administrador",
+    "member": "Membre",
+    "switch": "CANVIA DE GRUP →",
     "points": "Punts",
     "correctResults": "Resultats exactes",
     "correctOutcomes": "Resultats parcials",
     "matchesPredicted": "Partits pronosticats",
-    "noMembers": "No hi ha membres al grup"
-  },
-  "group": {
-    "title": "Grup",
-    "yourGroups": "Els teus grups",
-    "create": "Crea un grup nou",
-    "join": "Uneix-te amb codi",
-    "switch": "Canvia de grup",
-    "manage": "Gestiona el grup",
-    "name": "Nom del grup",
-    "competition": "Competició",
-    "inviteCode": "Codi d'invitació",
-    "members": "Membres",
-    "startingPoints": "Punts inicials",
-    "leave": "Surt del grup",
-    "delete": "Elimina el grup",
-    "copyCode": "Copia codi",
+    "noMembers": "No hi ha membres al grup",
     "codeCopied": "Codi copiat!",
-    "joinCodePlaceholder": "Introdueix el codi d'invitació",
-    "createSubmit": "Crea grup",
-    "joinSubmit": "Uneix-te",
     "competitions": {
       "laliga": "LaLiga",
       "premier_league": "Premier League",
       "champions_league": "Champions League"
     }
+  },
+  "groupsSheet": {
+    "title": "Els meus grups",
+    "meta": "{members} JUGADORS · {rank}è DE {total}",
+    "roleAdmin": "ADMIN",
+    "roleMember": "MEMBRE",
+    "createNew": "+ CREA UN GRUP NOU",
+    "joinCode": "UNEIX-TE AMB UN CODI"
+  },
+  "rival": {
+    "meta": "{points} PUNTS · {delta} AQUESTA JORNADA",
+    "totalCorrect": "ENCERTS TOTALS",
+    "exactResults": "RESULTATS EXACTES",
+    "streak": "RATXA ACTUAL",
+    "predictionsTitle": "Pronòstics jornada {round}",
+    "hidden": "OCULT FINS AL XIULET",
+    "masked": "· ·"
+  },
+  "perfil": {
+    "title": "Perfil",
+    "balance": "SALDO DISPONIBLE",
+    "committed": "COMPROMESOS",
+    "thisWeek": "AQUESTA SETMANA",
+    "historyTitle": "Historial de jornades",
+    "historyRound": "Jornada {round} · {competition}",
+    "historyMeta": "{count} PRONÒSTICS · {exact} EXACTES",
+    "viewOnboarding": "VEURE ONBOARDING / CREAR GRUP",
+    "signOut": "Sortir",
+    "noHistory": "Encara no tens jornades tancades."
+  },
+  "onboarding": {
+    "createTitle": "Fes la teva penya",
+    "createBody": "Crea un grup, reparteix 1.000 punts a cadascú i que guanyi qui més en sàpiga. Sense diners, només orgull.",
+    "nameLabel": "NOM DEL GRUP",
+    "namePlaceholder": "Els Colgats FC",
+    "competitionLabel": "COMPETICIÓ",
+    "createCta": "CREA EL GRUP",
+    "haveCodeAlt": "TINC UN CODI D'ENTRADA",
+    "joinTitle": "Tens un codi?",
+    "joinBody": "Introdueix el codi d'entrada que t'ha passat qui porta el grup.",
+    "codeLabel": "CODI D'ENTRADA",
+    "codePlaceholder": "COLGATS-3F9",
+    "joinCta": "UNEIX-TE AL GRUP",
+    "createInsteadAlt": "CREA UN GRUP NOU",
+    "pointsTitle": "Reparteix punts",
+    "pointsBody": "Tothom arrenca igual. A partir d'aquí, cadascú s'ho fa.",
+    "startingPointsLabel": "PUNTS INICIALS PER JUGADOR",
+    "maxWagerLabel": "APOSTA MÀXIMA PER PARTIT",
+    "continueCta": "CONTINUA",
+    "inviteTitle": "Convida la penya",
+    "inviteBody": "Comparteix el codi. Sense gent no hi ha pica-pica.",
+    "groupCodeLabel": "CODI DEL GRUP",
+    "finishCta": "A LA JORNADA",
+    "error": "No s'ha pogut completar. Comprova les dades i torna-ho a provar."
   },
   "match": {
     "vs": "vs",

@@ -1,43 +1,58 @@
 @import "tailwindcss";
 
 :root {
-  --background: #1a2332;
-  --foreground: #e8edf2;
-  --surface: #243044;
-  --surface-hover: #2d3a52;
-  --border: #3d4f6f;
-  --teal: #2dd4bf;
-  --teal-dark: #14b8a6;
-  --teal-muted: #115e59;
-  --muted: #8899aa;
-  --danger: #ef4444;
-  --success: #22c55e;
+  --page-bg: #0b1116;
+  --background: #10181f;
+  --header-bg: #0d141a;
+  --surface: #141f27;
+  --surface-hover: #1b2831;
+  --highlight-bg: #0f1922;
+  --border: #24333e;
+  --border-strong: #2e4150;
+  --foreground: #e6eef2;
+  --text-secondary: #a9c0cc;
+  --muted: #7b93a2;
+  --teal: #1fd6b8;
+  --teal-dark: #17b89d;
+  --danger: #c97b84;
 }
 
 @theme inline {
+  --color-page-bg: var(--page-bg);
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-header-bg: var(--header-bg);
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
+  --color-highlight-bg: var(--highlight-bg);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-text-secondary: var(--text-secondary);
+  --color-muted: var(--muted);
   --color-teal: var(--teal);
   --color-teal-dark: var(--teal-dark);
-  --color-teal-muted: var(--teal-muted);
-  --color-muted: var(--muted);
   --color-danger: var(--danger);
-  --color-success: var(--success);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-archivo);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 body {
-  background: var(--background);
+  background: var(--page-bg);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 * {
   border-radius: 0 !important;
+}
+
+.label-mono {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
 }
 
 input[type="range"].wager-slider {

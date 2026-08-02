@@ -10,7 +10,7 @@ const variants = {
   secondary:
     "bg-surface text-foreground border-2 border-border hover:bg-surface-hover",
   ghost: "bg-transparent text-foreground border-2 border-transparent hover:border-border",
-  danger: "bg-danger text-foreground border-2 border-danger",
+  danger: "bg-transparent text-danger border-2 border-danger/50 hover:bg-danger/10",
 };
 
 const sizes = {

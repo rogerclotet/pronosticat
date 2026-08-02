@@ -1,6 +1,8 @@
 import { useTranslations } from "next-intl";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Pill } from "@/components/ui/pill";
+import { cn, formatKickoff, teamCode } from "@/lib/utils";
+
+type MatchStatus = "scheduled" | "live" | "finished" | "postponed" | "cancelled";
 
 type MatchCardProps = {
   homeTeam: string;
@@ -8,12 +10,11 @@ type MatchCardProps = {
   homeScore?: number | null;
   awayScore?: number | null;
   kickoff: Date;
-  status: "scheduled" | "live" | "finished" | "postponed" | "cancelled";
+  status: MatchStatus;
   homeTeamCrest?: string | null;
   awayTeamCrest?: string | null;
-  prediction?: { homeScore: number; awayScore: number; wager: number } | null;
-  locked?: boolean;
-  onClick?: () => void;
+  prediction?: { homeScore: number; awayScore: number; wager: number; settled?: number | null } | null;
+  onOpenPrediction?: () => void;
 };
 
 export function MatchCard({
@@ -26,79 +27,90 @@ export function MatchCard({
   homeTeamCrest,
   awayTeamCrest,
   prediction,
-  locked,
-  onClick,
+  onOpenPrediction,
 }: MatchCardProps) {
-  const t = useTranslations("match");
-  const tPred = useTranslations("predictions");
-
-  const statusLabel = {
-    scheduled: t("scheduled"),
-    live: t("live"),
-    finished: t("finished"),
-    postponed: t("postponed"),
-    cancelled: t("cancelled"),
-  }[status];
-
+  const t = useTranslations("jornada");
   const showScore = status === "finished" || status === "live";
+  const open = status === "scheduled";
+
+  const pill =
+    status === "finished" || status === "postponed" || status === "cancelled"
+      ? { tone: "muted" as const, label: t("statusFinished") }
+      : status === "live"
+        ? { tone: "live" as const, label: t("statusLive") }
+        : { tone: "open" as const, label: t("statusOpen") };
+
+  const cta = prediction
+    ? prediction.settled != null
+      ? {
+          label: t("ctaLocked", { home: prediction.homeScore, away: prediction.awayScore }),
+          right: `+${prediction.settled}`,
+          className: "bg-teal/10 text-teal",
+        }
+      : {
+          label: open
+            ? t("ctaPredicted", { home: prediction.homeScore, away: prediction.awayScore })
+            : t("ctaLocked", { home: prediction.homeScore, away: prediction.awayScore }),
+          right: `${prediction.wager} PTS`,
+          className: "bg-highlight-bg text-text-secondary",
+        }
+    : open
+      ? { label: t("ctaPredict"), right: "→", className: "bg-teal text-background" }
+      : { label: t("ctaNone"), right: "—", className: "bg-highlight-bg text-muted" };
 
   return (
-    <Card
-      className={cn(onClick && "cursor-pointer hover:bg-surface-hover")}
-      onClick={onClick}
-    >
-      <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-wider text-muted">
-        <span>{kickoff.toLocaleDateString("ca-ES", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-        <span className={cn(status === "live" && "text-teal font-bold")}>{statusLabel}</span>
+    <div className="border-2 border-border bg-surface">
+      <div className="flex items-center justify-between border-b-2 border-border bg-background px-2.5 py-1.5">
+        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
+          {formatKickoff(kickoff)}
+        </span>
+        <Pill tone={pill.tone}>{pill.label}</Pill>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <TeamBlock name={homeTeam} crest={homeTeamCrest} align="left" />
-        <div className="flex shrink-0 flex-col items-center px-2">
-          {showScore ? (
-            <span className="text-2xl font-bold tabular-nums">
-              {homeScore ?? "-"} : {awayScore ?? "-"}
-            </span>
-          ) : (
-            <span className="text-sm font-bold uppercase text-muted">{t("vs")}</span>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-2.5 py-3.5">
+        <TeamBlock name={homeTeam} crest={homeTeamCrest} />
+        <span
+          className={cn(
+            "min-w-[54px] text-center font-mono text-base font-bold",
+            showScore ? "text-foreground" : "text-muted",
           )}
-        </div>
-        <TeamBlock name={awayTeam} crest={awayTeamCrest} align="right" />
+        >
+          {showScore ? `${homeScore ?? "-"} - ${awayScore ?? "-"}` : "vs"}
+        </span>
+        <TeamBlock name={awayTeam} crest={awayTeamCrest} />
       </div>
 
-      {prediction && (
-        <div className="mt-3 flex items-center justify-between border-t-2 border-border pt-2 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="text-muted">{tPred("yourPrediction")}</span>
-            <span className="font-bold tabular-nums text-teal">
-              {prediction.homeScore} : {prediction.awayScore}
-            </span>
-          </div>
-          <span className="font-bold">
-            {locked ? tPred("locked") : `${prediction.wager} pts`}
-          </span>
-        </div>
-      )}
-    </Card>
+      <button
+        type="button"
+        onClick={open ? onOpenPrediction : undefined}
+        disabled={!open}
+        className={cn(
+          "flex w-full items-center justify-between gap-2 border-t-2 border-border px-2.5 py-2.5 text-left font-mono text-[10.5px] font-bold tracking-[0.09em]",
+          open && "cursor-pointer",
+          cta.className,
+        )}
+      >
+        <span>{cta.label}</span>
+        <span>{cta.right}</span>
+      </button>
+    </div>
   );
 }
 
-function TeamBlock({
-  name,
-  crest,
-  align,
-}: {
-  name: string;
-  crest?: string | null;
-  align: "left" | "right";
-}) {
+function TeamBlock({ name, crest }: { name: string; crest?: string | null }) {
   return (
-    <div className={cn("flex flex-1 items-center gap-2", align === "right" && "flex-row-reverse")}>
-      {crest && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={crest} alt="" className="h-8 w-8 object-contain" />
-      )}
-      <span className="text-sm font-bold leading-tight">{name}</span>
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="flex h-[38px] w-[38px] items-center justify-center border-2 border-border-strong">
+        {crest ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={crest} alt="" className="h-6 w-6 object-contain" />
+        ) : (
+          <span className="font-mono text-xs font-bold text-text-secondary">
+            {teamCode(name)}
+          </span>
+        )}
+      </div>
+      <span className="text-center font-sans text-xs font-semibold leading-tight">{name}</span>
     </div>
   );
 }

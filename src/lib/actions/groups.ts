@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, and, desc, sql, count, sum } from "drizzle-orm";
+import { eq, and, desc, sql, count, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   groups,
@@ -51,6 +51,21 @@ export async function getUserGroups(userId: string) {
     with: { group: true },
   });
   return memberships.map((m) => ({ ...m.group, isAdmin: m.isAdmin, points: m.points }));
+}
+
+export async function getUserGroupsWithMeta(userId: string) {
+  const base = await getUserGroups(userId);
+  return Promise.all(
+    base.map(async (g) => {
+      const members = await db
+        .select({ userId: groupMembers.userId, points: groupMembers.points })
+        .from(groupMembers)
+        .where(eq(groupMembers.groupId, g.id))
+        .orderBy(desc(groupMembers.points));
+      const rank = members.findIndex((m) => m.userId === userId) + 1;
+      return { ...g, memberCount: members.length, rank: rank || members.length };
+    }),
+  );
 }
 
 export async function getMemberPoints(userId: string, groupId: string) {
@@ -198,6 +213,7 @@ export async function getUserPredictions(
     where: and(
       eq(predictions.userId, userId),
       eq(predictions.groupId, groupId),
+      inArray(predictions.matchId, matchIds),
     ),
   });
 }
