@@ -81,6 +81,7 @@ export const groups = pgTable("groups", {
   competition: competitionEnum("competition").notNull(),
   inviteCode: text("invite_code").notNull().unique(),
   startingPoints: integer("starting_points").notNull().default(1000),
+  maxWagerPerMatch: integer("max_wager_per_match").notNull().default(100),
   createdById: text("created_by_id")
     .notNull()
     .references(() => user.id),

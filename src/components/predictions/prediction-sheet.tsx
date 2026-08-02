@@ -21,6 +21,7 @@ type PredictionSheetProps = {
   };
   existing?: { id: string; homeScore: number; awayScore: number; wager: number } | null;
   maxPoints: number;
+  maxWagerPerMatch: number;
 };
 
 function clampWager(value: number, min: number, max: number) {
@@ -34,10 +35,11 @@ export function PredictionSheet({
   match,
   existing,
   maxPoints,
+  maxWagerPerMatch,
 }: PredictionSheetProps) {
   const t = useTranslations("sheet");
   const tCommon = useTranslations("common");
-  const maxWager = Math.min(POINTS.MAX_WAGER, maxPoints + (existing?.wager ?? 0));
+  const maxWager = Math.min(maxWagerPerMatch, maxPoints + (existing?.wager ?? 0));
 
   const [homeScore, setHomeScore] = useState(existing?.homeScore ?? 0);
   const [awayScore, setAwayScore] = useState(existing?.awayScore ?? 0);

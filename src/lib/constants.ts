@@ -17,11 +17,14 @@ export const COMPETITIONS: Record<
   },
 };
 
+/** Server + client router cache TTL in seconds (5 minutes). */
+export const DATA_CACHE_TTL = 300;
+
 export const POINTS = {
   EXACT_RESULT_MULTIPLIER: 3,
   OUTCOME_MULTIPLIER: 1,
   MIN_WAGER: 10,
-  MAX_WAGER: 400,
+  MAX_WAGER: 100,
   DEFAULT_STARTING: 1000,
 } as const;
 

@@ -20,10 +20,10 @@ import {
 } from "@/lib/constants";
 import {
   fetchCompetitionMatches,
-  fetchCurrentMatchday,
   mapMatchStatus,
 } from "@/lib/football/api";
-import { revalidatePath } from "next/cache";
+import { getCurrentRoundMatches as fetchCurrentRoundMatches } from "@/lib/queries/matches";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function getActiveGroup(userId: string) {
   const active = await db.query.userActiveGroup.findFirst({
@@ -82,11 +82,13 @@ export async function createGroup(data: {
   name: string;
   competition: Competition;
   startingPoints?: number;
+  maxWagerPerMatch?: number;
 }) {
   const session = await requireSession();
   const id = generateId();
   const inviteCode = generateInviteCode();
   const startingPoints = data.startingPoints ?? POINTS.DEFAULT_STARTING;
+  const maxWagerPerMatch = data.maxWagerPerMatch ?? POINTS.MAX_WAGER;
 
   await db.insert(groups).values({
     id,
@@ -94,6 +96,7 @@ export async function createGroup(data: {
     competition: data.competition,
     inviteCode,
     startingPoints,
+    maxWagerPerMatch,
     createdById: session.user.id,
   });
 
@@ -108,6 +111,32 @@ export async function createGroup(data: {
   await setActiveGroup(id);
   revalidatePath("/");
   return { id, inviteCode };
+}
+
+export async function updateGroupSettings(data: {
+  groupId: string;
+  maxWagerPerMatch: number;
+}) {
+  const session = await requireSession();
+
+  const member = await db.query.groupMembers.findFirst({
+    where: and(
+      eq(groupMembers.userId, session.user.id),
+      eq(groupMembers.groupId, data.groupId),
+      eq(groupMembers.isAdmin, true),
+    ),
+  });
+  if (!member) throw new Error("Not authorized");
+  if (data.maxWagerPerMatch < POINTS.MIN_WAGER) {
+    throw new Error("Invalid max wager");
+  }
+
+  await db
+    .update(groups)
+    .set({ maxWagerPerMatch: data.maxWagerPerMatch, updatedAt: new Date() })
+    .where(eq(groups.id, data.groupId));
+
+  revalidatePath("/");
 }
 
 export async function joinGroup(inviteCode: string) {
@@ -186,21 +215,13 @@ export async function syncMatches(competition: Competition) {
         },
       });
   }
+
+  revalidateTag("matches", "max");
 }
 
+/** Server action wrapper for client components (e.g. rival sheet). */
 export async function getCurrentRoundMatches(competition: Competition) {
-  const config = COMPETITIONS[competition];
-  const matchday = await fetchCurrentMatchday(config.footballDataCode);
-
-  await syncMatches(competition);
-
-  return db.query.matches.findMany({
-    where: and(
-      eq(matches.competition, competition),
-      eq(matches.matchday, matchday),
-    ),
-    orderBy: [matches.kickoff],
-  });
+  return fetchCurrentRoundMatches(competition);
 }
 
 export async function getUserPredictions(
@@ -227,7 +248,11 @@ export async function savePrediction(data: {
 }) {
   const session = await requireSession();
 
-  if (data.wager < POINTS.MIN_WAGER || data.wager > POINTS.MAX_WAGER) {
+  const group = await db.query.groups.findFirst({
+    where: eq(groups.id, data.groupId),
+  });
+  if (!group) throw new Error("Group not found");
+  if (data.wager < POINTS.MIN_WAGER || data.wager > group.maxWagerPerMatch) {
     throw new Error("Invalid wager");
   }
 
@@ -279,6 +304,7 @@ export async function savePrediction(data: {
 
   revalidatePath("/predictions");
   revalidatePath("/");
+  revalidateTag("predictions", "max");
 }
 
 export async function deletePrediction(predictionId: string) {
@@ -297,6 +323,8 @@ export async function deletePrediction(predictionId: string) {
 
   await db.delete(predictions).where(eq(predictions.id, predictionId));
   revalidatePath("/predictions");
+  revalidatePath("/");
+  revalidateTag("predictions", "max");
 }
 
 export async function getStandings(groupId: string) {

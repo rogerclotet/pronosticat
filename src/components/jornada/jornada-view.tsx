@@ -35,6 +35,7 @@ type JornadaViewProps = {
   matchday: number;
   competition: Competition;
   maxPoints: number;
+  maxWagerPerMatch: number;
 };
 
 export function JornadaView({
@@ -44,6 +45,7 @@ export function JornadaView({
   matchday,
   competition,
   maxPoints,
+  maxWagerPerMatch,
 }: JornadaViewProps) {
   const t = useTranslations("jornada");
   const tGroup = useTranslations("group");
@@ -128,6 +130,7 @@ export function JornadaView({
           }}
           existing={selectedPred ?? null}
           maxPoints={maxPoints}
+          maxWagerPerMatch={maxWagerPerMatch}
         />
       )}
     </div>
