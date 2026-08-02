@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+:root {
+  --page-bg: #0b1116;
+  --background: #10181f;
+  --header-bg: #0d141a;
+  --surface: #141f27;
+  --surface-hover: #1b2831;
+  --highlight-bg: #0f1922;
+  --border: #24333e;
+  --border-strong: #2e4150;
+  --foreground: #e6eef2;
+  --text-secondary: #a9c0cc;
+  --muted: #7b93a2;
+  --teal: #1fd6b8;
+  --teal-dark: #17b89d;
+  --danger: #c97b84;
+}
+
+@theme inline {
+  --color-page-bg: var(--page-bg);
+  --color-background: var(--background);
+  --color-header-bg: var(--header-bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-highlight-bg: var(--highlight-bg);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-text-secondary: var(--text-secondary);
+  --color-muted: var(--muted);
+  --color-teal: var(--teal);
+  --color-teal-dark: var(--teal-dark);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-archivo);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+* {
+  border-radius: 0 !important;
+}
+
+.label-mono {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+}
+
+input[type="range"].wager-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.5rem;
+  background: var(--border);
+  cursor: pointer;
+}
+
+input[type="range"].wager-slider:focus {
+  outline: none;
+}
+
+input[type="range"].wager-slider:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+input[type="range"].wager-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: var(--teal);
+  border: 2px solid var(--foreground);
+  cursor: pointer;
+}
+
+input[type="range"].wager-slider::-moz-range-thumb {
+  width: 1.25rem;
+  height: 1.25rem;
+  background: var(--teal);
+  border: 2px solid var(--foreground);
+  cursor: pointer;
+}
+
+input[type="range"].wager-slider::-moz-range-track {
+  height: 0.5rem;
+  background: var(--border);
+}

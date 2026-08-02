@@ -1,0 +1,49 @@
+services:
+  db:
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pronosticat}:${POSTGRES_PASSWORD:-pronosticat}@db:5432/${POSTGRES_DB:-pronosticat}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    profiles: [full]
+    build:
+      context: .
+      target: dev
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      # Override host env files — inside Docker the DB host is `db`, not localhost
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pronosticat}:${POSTGRES_PASSWORD:-pronosticat}@db:5432/${POSTGRES_DB:-pronosticat}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-min-32-characters-long}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-onboarding@resend.dev}
+      FOOTBALL_DATA_API_KEY: ${FOOTBALL_DATA_API_KEY:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+      # Mask host env files so Next.js uses container environment instead
+      - ./docker/empty.env:/app/.env:ro
+      - ./docker/empty.env:/app/.env.local:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  app_node_modules:

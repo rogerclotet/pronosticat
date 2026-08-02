@@ -1,0 +1,8 @@
+version: 2
+
+secret:
+  # .env.example only holds placeholder/example values for local setup, never
+  # real credentials — GitGuardian's generic-password detector otherwise
+  # flags POSTGRES_PASSWORD=pronosticat as a hardcoded secret.
+  ignored_paths:
+    - '.env.example'
