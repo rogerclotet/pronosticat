@@ -100,16 +100,16 @@ export function MatchCard({
 function TeamBlock({ name, crest }: { name: string; crest?: string | null }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <div className="flex h-[38px] w-[38px] items-center justify-center border-2 border-border-strong">
-        {crest ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={crest} alt="" className="h-6 w-6 object-contain" />
-        ) : (
+      {crest ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={crest} alt="" className="h-[38px] w-[38px] object-contain" />
+      ) : (
+        <div className="flex h-[38px] w-[38px] items-center justify-center">
           <span className="font-mono text-xs font-bold text-text-secondary">
             {teamCode(name)}
           </span>
-        )}
-      </div>
+        </div>
+      )}
       <span className="text-center font-sans text-xs font-semibold leading-tight">{name}</span>
     </div>
   );

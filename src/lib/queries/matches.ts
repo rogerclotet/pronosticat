@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { matches } from "@/lib/db/schema";
 import { COMPETITIONS, DATA_CACHE_TTL, type Competition } from "@/lib/constants";
 import { fetchCurrentMatchday } from "@/lib/football/api";
-import { syncMatches } from "@/lib/actions/groups";
+import { syncMatchesToDb } from "@/lib/sync/matches";
 
 const getCachedRoundMatches = unstable_cache(
   async (competition: Competition, matchday: number) =>
@@ -20,23 +20,28 @@ const getCachedRoundMatches = unstable_cache(
 );
 
 export async function getCurrentRoundMatches(competition: Competition) {
-  const config = COMPETITIONS[competition];
-  const matchday = await fetchCurrentMatchday(config.footballDataCode);
+  try {
+    const config = COMPETITIONS[competition];
+    const matchday = await fetchCurrentMatchday(config.footballDataCode);
 
-  let roundMatches = await getCachedRoundMatches(competition, matchday);
+    let roundMatches = await getCachedRoundMatches(competition, matchday);
 
-  if (roundMatches.length === 0) {
-    await syncMatches(competition);
-    roundMatches = await db.query.matches.findMany({
-      where: and(
-        eq(matches.competition, competition),
-        eq(matches.matchday, matchday),
-      ),
-      orderBy: [matches.kickoff],
-    });
+    if (roundMatches.length === 0) {
+      await syncMatchesToDb(competition);
+      roundMatches = await db.query.matches.findMany({
+        where: and(
+          eq(matches.competition, competition),
+          eq(matches.matchday, matchday),
+        ),
+        orderBy: [matches.kickoff],
+      });
+    }
+
+    return roundMatches;
+  } catch (error) {
+    console.error("[pronosticat] getCurrentRoundMatches failed:", error);
+    throw error;
   }
-
-  return roundMatches;
 }
 
 export async function getCurrentMatchday(competition: Competition) {
