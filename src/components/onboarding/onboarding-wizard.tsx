@@ -87,7 +87,6 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
               <Input
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder={t("codePlaceholder")}
                 maxLength={6}
                 required
               />
@@ -117,7 +116,6 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={t("namePlaceholder")}
                 required
               />
             ),
