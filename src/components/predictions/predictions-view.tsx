@@ -31,6 +31,7 @@ type PredictionsViewProps = {
   groupId: string;
   matchday: number;
   maxPoints: number;
+  maxWagerPerMatch: number;
 };
 
 export function PredictionsView({
@@ -39,6 +40,7 @@ export function PredictionsView({
   groupId,
   matchday,
   maxPoints,
+  maxWagerPerMatch,
 }: PredictionsViewProps) {
   const t = useTranslations("predictions");
   const tJornada = useTranslations("jornada");
@@ -157,6 +159,7 @@ export function PredictionsView({
           }}
           existing={selectedPred ?? null}
           maxPoints={maxPoints}
+          maxWagerPerMatch={maxWagerPerMatch}
         />
       )}
     </div>

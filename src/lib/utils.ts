@@ -11,11 +11,15 @@ export function teamCode(name: string): string {
 }
 
 export function formatKickoff(date: Date): string {
-  return date.toLocaleDateString("ca-ES", {
+  const datePart = date.toLocaleDateString("ca-ES", {
     weekday: "short",
     day: "numeric",
-    month: "short",
+    month: "long",
+  });
+  const timePart = date.toLocaleTimeString("ca-ES", {
     hour: "2-digit",
     minute: "2-digit",
+    hourCycle: "h23",
   });
+  return `${datePart}, ${timePart}`;
 }
