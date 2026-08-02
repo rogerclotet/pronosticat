@@ -10,16 +10,20 @@ export function teamCode(name: string): string {
   return name.slice(0, 3).toUpperCase();
 }
 
+const KICKOFF_TIME_ZONE = "Europe/Madrid";
+
 export function formatKickoff(date: Date): string {
   const datePart = date.toLocaleDateString("ca-ES", {
     weekday: "short",
     day: "numeric",
     month: "long",
+    timeZone: KICKOFF_TIME_ZONE,
   });
   const timePart = date.toLocaleTimeString("ca-ES", {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
+    timeZone: KICKOFF_TIME_ZONE,
   });
   return `${datePart}, ${timePart}`;
 }
