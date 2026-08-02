@@ -39,8 +39,8 @@ export function PredictionSheet({
   const tCommon = useTranslations("common");
   const maxWager = Math.min(POINTS.MAX_WAGER, maxPoints + (existing?.wager ?? 0));
 
-  const [homeScore, setHomeScore] = useState(existing?.homeScore ?? 1);
-  const [awayScore, setAwayScore] = useState(existing?.awayScore ?? 1);
+  const [homeScore, setHomeScore] = useState(existing?.homeScore ?? 0);
+  const [awayScore, setAwayScore] = useState(existing?.awayScore ?? 0);
   const [wager, setWager] = useState(
     clampWager(existing?.wager ?? POINTS.MIN_WAGER, POINTS.MIN_WAGER, maxWager),
   );
