@@ -5,9 +5,10 @@ import { Resend } from "resend";
 import { db } from "./db";
 import * as schema from "./db/schema";
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const resendApiKey = process.env.RESEND_API_KEY?.trim();
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
+const emailFrom =
+  process.env.EMAIL_FROM?.trim() || "onboarding@resend.dev";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -25,16 +26,29 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }) => {
+        console.log(`[auth] Magic link requested for ${email}`);
+
         if (!resend) {
-          console.log(`Magic link for ${email}: ${url}`);
+          console.log(
+            `[auth] RESEND_API_KEY not set — magic link for ${email}: ${url}`,
+          );
           return;
         }
-        await resend.emails.send({
-          from: process.env.EMAIL_FROM ?? "onboarding@resend.dev",
+
+        const { data, error } = await resend.emails.send({
+          from: emailFrom,
           to: email,
           subject: "Inicia sessió a Pronosticat",
           html: `<p>Fes clic per iniciar sessió:</p><a href="${url}">${url}</a>`,
         });
+        if (error) {
+          console.error(
+            `[auth] Failed to send magic link to ${email} (from=${emailFrom}):`,
+            error,
+          );
+          throw new Error(error.message);
+        }
+        console.log(`[auth] Magic link email sent to ${email} (id=${data?.id})`);
       },
     }),
   ],
