@@ -47,7 +47,7 @@ set -a
 set +a
 export DATABASE_URL="postgresql://pronosticat:pronosticat@localhost:${POSTGRES_PORT}/pronosticat"
 export BETTER_AUTH_URL="http://localhost:$CONDUCTOR_PORT"
-pnpm dev -- --port $CONDUCTOR_PORT
+pnpm exec next dev -p $CONDUCTOR_PORT
 """
 default = true
 icon = "play"
