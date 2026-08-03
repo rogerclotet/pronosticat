@@ -118,6 +118,24 @@ npm run dev
 
 L'endpoint `/api/cron/sync` sincronitza partits des de football-data.org, bloqueja prediccions i assigna punts. Configura un cron job amb el header `Authorization: Bearer <CRON_SECRET>`.
 
+Només es sincronitzen competicions amb grups actius (no totes les lligues configurades). Les pàgines llegeixen partits des de la base de dades; l'API externa només s'usa al cron.
+
+**Pla gratuït de football-data.org:** màxim 10 crides/minut. L'app limita internament a 8 crides/minut i reintenta un cop davant un 429.
+
+**Freqüència recomanada del cron:**
+
+| Context | Interval |
+| --- | --- |
+| Dies de partit (jornada en curs) | Cada 5–10 minuts |
+| Fora de temporada / sense partits | Cada 30–60 minuts |
+| Mínim segur | No més ràpid que 1/min si tens 3+ competicions actives |
+
+Exemple amb cron (cada 10 min en temporada):
+
+```bash
+*/10 * * * * curl -s -H "Authorization: Bearer $CRON_SECRET" https://your-domain/api/cron/sync
+```
+
 ## PWA
 
 L'app es pot instal·lar com a PWA en dispositius mòbils. El manifest i service worker es generen automàticament en producció.
