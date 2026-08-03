@@ -238,7 +238,7 @@ function OnboardingScreen({
   step: { index: number; total: number } | null;
 }) {
   return (
-    <form onSubmit={onSubmit} className="flex min-h-full flex-col bg-header-bg">
+    <form onSubmit={onSubmit} className="mx-auto flex min-h-full w-full max-w-lg flex-col bg-header-bg">
       <div className="flex flex-1 flex-col gap-4 overflow-auto px-5 pb-5 pt-16">
         <h1 className="font-sans text-[34px] font-extrabold uppercase leading-[0.95] tracking-tight">
           {title}
