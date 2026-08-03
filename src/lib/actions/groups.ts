@@ -18,7 +18,7 @@ import {
   type Competition,
 } from "@/lib/constants";
 import { getCurrentRoundMatches as fetchCurrentRoundMatches } from "@/lib/queries/matches";
-import { syncMatchesToDb } from "@/lib/sync/matches";
+import { syncMatches as syncCompetitionMatches } from "@/lib/sync/run";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function getActiveGroup(userId: string) {
@@ -180,8 +180,7 @@ export async function setActiveGroup(groupId: string) {
 }
 
 export async function syncMatches(competition: Competition) {
-  await syncMatchesToDb(competition);
-  revalidateTag("matches", "max");
+  await syncCompetitionMatches(competition);
 }
 
 /** Server action wrapper for client components (e.g. rival sheet). */

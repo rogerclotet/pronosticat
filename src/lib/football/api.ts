@@ -1,3 +1,6 @@
+import { DATA_CACHE_TTL } from "@/lib/constants";
+import { withFootballApiRateLimit } from "@/lib/football/rate-limit";
+
 export type FootballDataMatch = {
   id: number;
   utcDate: string;
@@ -14,7 +17,18 @@ export type FootballDataResponse = {
   matches: FootballDataMatch[];
 };
 
+export class FootballDataRateLimitError extends Error {
+  retryAfterSeconds: number;
+
+  constructor(retryAfterSeconds: number) {
+    super(`Football Data API rate limited (retry after ${retryAfterSeconds}s)`);
+    this.name = "FootballDataRateLimitError";
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
 const BASE_URL = "https://api.football-data.org/v4";
+const ACTIVE_STATUSES = new Set(["SCHEDULED", "IN_PLAY", "PAUSED", "LIVE"]);
 
 function getHeaders(): HeadersInit {
   return {
@@ -22,17 +36,59 @@ function getHeaders(): HeadersInit {
   };
 }
 
+function parseRetryAfter(header: string | null): number {
+  if (!header) return 60;
+  const seconds = Number.parseInt(header, 10);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : 60;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchFootballData(url: string): Promise<Response> {
+  return withFootballApiRateLimit(async () => {
+    const res = await fetch(url, {
+      headers: getHeaders(),
+      next: { revalidate: DATA_CACHE_TTL },
+    });
+
+    if (res.status === 429) {
+      const retryAfterSeconds = parseRetryAfter(res.headers.get("Retry-After"));
+      console.warn(
+        `[pronosticat] Football Data API 429, retry after ${retryAfterSeconds}s`,
+      );
+      await sleep(retryAfterSeconds * 1000);
+      const retry = await fetch(url, {
+        headers: getHeaders(),
+        next: { revalidate: DATA_CACHE_TTL },
+      });
+      if (retry.status === 429) {
+        throw new FootballDataRateLimitError(retryAfterSeconds);
+      }
+      return retry;
+    }
+
+    return res;
+  });
+}
+
+/** Current matchday from a matches payload (same logic as the API's scheduled/live filter). */
+export function deriveCurrentMatchday(apiMatches: FootballDataMatch[]): number {
+  const matchdays = apiMatches
+    .filter((m) => ACTIVE_STATUSES.has(m.status))
+    .map((m) => m.matchday)
+    .filter((d): d is number => d !== null);
+
+  return matchdays.length > 0 ? Math.min(...matchdays) : 1;
+}
+
 export async function fetchCompetitionMatches(
   competitionCode: string,
-  matchday?: number,
 ): Promise<FootballDataMatch[]> {
   const params = new URLSearchParams({ status: "SCHEDULED,LIVE,FINISHED" });
-  if (matchday !== undefined) {
-    params.set("matchday", String(matchday));
-  }
-
   const url = `${BASE_URL}/competitions/${competitionCode}/matches?${params}`;
-  const res = await fetch(url, { headers: getHeaders(), next: { revalidate: 300 } });
+  const res = await fetchFootballData(url);
 
   if (!res.ok) {
     throw new Error(`Football Data API error: ${res.status}`);
@@ -40,23 +96,6 @@ export async function fetchCompetitionMatches(
 
   const data: FootballDataResponse = await res.json();
   return data.matches ?? [];
-}
-
-export async function fetchCurrentMatchday(
-  competitionCode: string,
-): Promise<number> {
-  const url = `${BASE_URL}/competitions/${competitionCode}/matches?status=SCHEDULED,LIVE`;
-  const res = await fetch(url, { headers: getHeaders(), next: { revalidate: 300 } });
-
-  if (!res.ok) return 1;
-
-  const data: FootballDataResponse = await res.json();
-  if (data.matches.length === 0) return 1;
-
-  const matchdays = data.matches
-    .map((m) => m.matchday)
-    .filter((d): d is number => d !== null);
-  return matchdays.length > 0 ? Math.min(...matchdays) : 1;
 }
 
 export function mapMatchStatus(

@@ -2,9 +2,8 @@ import { unstable_cache } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches } from "@/lib/db/schema";
-import { COMPETITIONS, DATA_CACHE_TTL, type Competition } from "@/lib/constants";
-import { fetchCurrentMatchday } from "@/lib/football/api";
-import { syncMatchesToDb } from "@/lib/sync/matches";
+import { DATA_CACHE_TTL, type Competition } from "@/lib/constants";
+import { getCurrentMatchdayFromDb } from "@/lib/queries/matchday";
 
 type MatchRow = typeof matches.$inferSelect;
 
@@ -32,27 +31,10 @@ const getCachedRoundMatches = unstable_cache(
 
 export async function getCurrentRoundMatches(competition: Competition) {
   try {
-    const config = COMPETITIONS[competition];
-    const matchday = await fetchCurrentMatchday(config.footballDataCode);
-
-    let roundMatches = hydrateMatchDates(
+    const matchday = await getCurrentMatchdayFromDb(competition);
+    return hydrateMatchDates(
       await getCachedRoundMatches(competition, matchday),
     );
-
-    if (roundMatches.length === 0) {
-      await syncMatchesToDb(competition);
-      roundMatches = hydrateMatchDates(
-        await db.query.matches.findMany({
-          where: and(
-            eq(matches.competition, competition),
-            eq(matches.matchday, matchday),
-          ),
-          orderBy: [matches.kickoff],
-        }),
-      );
-    }
-
-    return roundMatches;
   } catch (error) {
     console.error("[pronosticat] getCurrentRoundMatches failed:", error);
     throw error;
@@ -60,6 +42,5 @@ export async function getCurrentRoundMatches(competition: Competition) {
 }
 
 export async function getCurrentMatchday(competition: Competition) {
-  const config = COMPETITIONS[competition];
-  return fetchCurrentMatchday(config.footballDataCode);
+  return getCurrentMatchdayFromDb(competition);
 }

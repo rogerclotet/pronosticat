@@ -3,12 +3,8 @@
 import { eq, and, lte, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, predictions, groupMembers } from "@/lib/db/schema";
-import {
-  calculatePointsAwarded,
-  COMPETITIONS,
-  type Competition,
-} from "@/lib/constants";
-import { syncMatches } from "@/lib/actions/groups";
+import { calculatePointsAwarded } from "@/lib/constants";
+import { syncActiveCompetitions } from "@/lib/sync/run";
 
 export async function lockStartedPredictions() {
   const now = new Date();
@@ -100,9 +96,7 @@ export async function awardFinishedMatchPoints() {
 }
 
 export async function runSyncAndScore() {
-  for (const competition of Object.keys(COMPETITIONS) as Competition[]) {
-    await syncMatches(competition);
-  }
+  await syncActiveCompetitions();
   await lockStartedPredictions();
   await awardFinishedMatchPoints();
 }
