@@ -2,20 +2,16 @@
 
 file_include_globs = """
 .env.local
+.env
 """
 
 [scripts]
 setup = """
-if [ -f "$CONDUCTOR_ROOT_PATH/.env.local" ]; then
-  cp "$CONDUCTOR_ROOT_PATH/.env.local" .env.local
-fi
 [ -f .env ] || cp .env.example .env
+docker compose -f compose.yaml -f compose.dev.yaml up -d --build db migrate
 """
-archive = """
-export COMPOSE_PROJECT_NAME="pronosticat-${CONDUCTOR_PORT:-3000}"
-docker compose -f compose.yaml -f compose.dev.yaml --profile full down
-"""
-run_mode = "concurrent"
+archive = "docker compose -f compose.yaml -f compose.dev.yaml --profile full down"
+run_mode = "nonconcurrent"
 
 [scripts.run.dev]
 command = """
@@ -23,15 +19,11 @@ set -a
 [ -f .env.local ] && . ./.env.local
 [ -f .env ] && . ./.env
 set +a
-export COMPOSE_PROJECT_NAME="pronosticat-${CONDUCTOR_PORT:-3000}"
-export POSTGRES_PORT=$((CONDUCTOR_PORT + 1))
-export APP_PORT=$CONDUCTOR_PORT
-export BETTER_AUTH_URL="http://localhost:$CONDUCTOR_PORT"
 docker compose -f compose.yaml -f compose.dev.yaml --profile full up --build
 """
 default = true
 icon = "play"
 
 preview_urls = [
-  { url = "http://localhost:$CONDUCTOR_PORT" }
+  { url = "http://localhost:3000" }
 ]
