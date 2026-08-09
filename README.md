@@ -15,22 +15,23 @@ PWA per pronosticar resultats de futbol amb amics. Crea grups, aposta punts i co
 
 ### Desenvolupament local
 
-Només PostgreSQL (recomanat: app amb `npm run dev` a l'host):
-
-```bash
-cp .env.example .env
-npm run docker:dev:db
-npm run db:push
-npm run dev
-```
-
-Amb `DATABASE_URL=postgresql://pronosticat:pronosticat@localhost:5432/pronosticat`.
-
-Tot l'stack en Docker (hot reload):
+Tot l'stack en Docker (PostgreSQL + migració + app amb hot reload):
 
 ```bash
 cp .env.example .env
 npm run docker:dev:full
+```
+
+L'app queda disponible a `http://localhost:3000` (o el port definit a `APP_PORT`).
+
+Alternativa només PostgreSQL (app amb `npm run dev` a l'host):
+
+```bash
+cp .env.example .env
+# DATABASE_URL=postgresql://pronosticat:pronosticat@localhost:5432/pronosticat
+npm run docker:dev:db
+npm run db:push
+npm run dev
 ```
 
 ### Producció
@@ -135,6 +136,86 @@ Exemple amb cron (cada 10 min en temporada):
 ```bash
 */10 * * * * curl -s -H "Authorization: Bearer $CRON_SECRET" https://your-domain/api/cron/sync
 ```
+
+## Proves manuals (dev fixtures)
+
+En desenvolupament (`NODE_ENV=development`) pots crear partits ficticis i simular el cicle complet de pronòstics sense esperar a la temporada real ni cridar football-data.org.
+
+Obre **`/dev/fixtures`** al navegador per usar la pàgina d'administració visual (recomanat). També pots usar els endpoints API directament amb curl.
+
+### Flux recomanat
+
+1. Crea un grup per a la competició que vols provar (ex. LaLiga).
+2. Crea un partit de prova (kickoff d'aquí a 1 hora per defecte):
+
+```bash
+curl -X POST http://localhost:3000/api/dev/fixtures \
+  -H "Content-Type: application/json" \
+  -d '{
+    "competition": "laliga",
+    "homeTeam": "Equip A",
+    "awayTeam": "Equip B",
+    "matchday": 1
+  }'
+```
+
+3. Obre l'app, fes un pronòstic al partit fictici.
+4. Simula l'inici del partit (kickoff al passat) i executa el scoring:
+
+```bash
+# Substitueix MATCH_ID pel id retornat (ex. laliga--900012345)
+curl -X PATCH "http://localhost:3000/api/dev/fixtures/MATCH_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "kickoff": "2020-01-01T12:00:00.000Z",
+    "runScore": true
+  }'
+```
+
+Això bloqueja el pronòstic i descompta l'aposta.
+
+5. Simula el resultat final:
+
+```bash
+curl -X PATCH "http://localhost:3000/api/dev/fixtures/MATCH_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "finished",
+    "homeScore": 2,
+    "awayScore": 1,
+    "runScore": true
+  }'
+```
+
+6. Refresca l'app: hauries de veure els punts assignats segons el resultat.
+
+### Endpoints dev
+
+| Mètode | Ruta | Descripció |
+| --- | --- | --- |
+| `GET` | `/api/dev/fixtures` | Llista partits ficticis (`?competition=laliga` opcional) |
+| `POST` | `/api/dev/fixtures` | Crea un partit fictici |
+| `PATCH` | `/api/dev/fixtures/[matchId]` | Actualitza estat, resultat o kickoff. Passa `"runScore": true` per executar lock + assignació |
+| `DELETE` | `/api/dev/fixtures/[matchId]` | Elimina un partit fictici |
+| `POST` | `/api/dev/score` | Executa només lock + assignació (sense sync amb l'API externa) |
+
+Els partits ficticis tenen `externalId` negatiu per distingir-los dels partits reals. Només es poden modificar o eliminar aquests partits.
+
+En producció els endpoints retornen 404 tret que activis `DEV_FIXTURES_ENABLED=true`. Opcionalment pots protegir-los amb `DEV_FIXTURES_SECRET` o reutilitzar `CRON_SECRET` com a Bearer token.
+
+## Tests automatitzats
+
+```bash
+npm run test
+```
+
+Els tests unitaris cobreixen:
+
+- Càlcul de punts (`calculatePointsAwarded`)
+- Client football-data.org (fetch mockat, retry 429, mapatge d'estats)
+- Sync de partits cap a la BD (API mockada)
+
+Encara no hi ha tests d'integració per a `lockStartedPredictions` / `awardFinishedMatchPoints` amb base de dades real; el flux dev de fixtures cobreix aquesta part en proves manuals.
 
 ## PWA
 

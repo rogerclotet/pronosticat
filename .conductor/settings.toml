@@ -6,48 +6,28 @@ file_include_globs = """
 
 [scripts]
 setup = """
-pnpm install
 if [ -f "$CONDUCTOR_ROOT_PATH/.env.local" ]; then
   cp "$CONDUCTOR_ROOT_PATH/.env.local" .env.local
-elif [ -L .env.local ]; then
-  rm .env.local
 fi
-export POSTGRES_PORT=$((CONDUCTOR_PORT + 1))
-export APP_PORT=$CONDUCTOR_PORT
-export BETTER_AUTH_URL="http://localhost:$CONDUCTOR_PORT"
-if [ -f .env ]; then
-  grep -v -E '^(POSTGRES_PORT|APP_PORT|DATABASE_URL|BETTER_AUTH_URL)=' .env > .env.tmp
-  mv .env.tmp .env
-fi
-cat >> .env <<EOF
-POSTGRES_PORT=$POSTGRES_PORT
-APP_PORT=$APP_PORT
-DATABASE_URL=postgresql://pronosticat:pronosticat@localhost:${POSTGRES_PORT}/pronosticat
-BETTER_AUTH_URL=http://localhost:$CONDUCTOR_PORT
-EOF
-docker compose -f compose.yaml -f compose.dev.yaml up -d db
-until docker compose -f compose.yaml -f compose.dev.yaml exec -T db pg_isready -U pronosticat -d pronosticat >/dev/null 2>&1; do
-  sleep 1
-done
-docker compose -f compose.yaml -f compose.dev.yaml run --rm migrate
+[ -f .env ] || cp .env.example .env
 """
 archive = """
+export COMPOSE_PROJECT_NAME="pronosticat-${CONDUCTOR_PORT:-3000}"
 docker compose -f compose.yaml -f compose.dev.yaml --profile full down
 """
 run_mode = "concurrent"
 
 [scripts.run.dev]
 command = """
-export POSTGRES_PORT=$((CONDUCTOR_PORT + 1))
-export APP_PORT=$CONDUCTOR_PORT
-export DATABASE_URL="postgresql://pronosticat:pronosticat@localhost:${POSTGRES_PORT}/pronosticat"
-export BETTER_AUTH_URL="http://localhost:$CONDUCTOR_PORT"
 set -a
+[ -f .env.local ] && . ./.env.local
 [ -f .env ] && . ./.env
 set +a
-export DATABASE_URL="postgresql://pronosticat:pronosticat@localhost:${POSTGRES_PORT}/pronosticat"
+export COMPOSE_PROJECT_NAME="pronosticat-${CONDUCTOR_PORT:-3000}"
+export POSTGRES_PORT=$((CONDUCTOR_PORT + 1))
+export APP_PORT=$CONDUCTOR_PORT
 export BETTER_AUTH_URL="http://localhost:$CONDUCTOR_PORT"
-pnpm exec next dev -p $CONDUCTOR_PORT
+docker compose -f compose.yaml -f compose.dev.yaml --profile full up --build
 """
 default = true
 icon = "play"

@@ -95,6 +95,11 @@ export async function awardFinishedMatchPoints() {
   }
 }
 
+export async function runScoreOnly() {
+  await lockStartedPredictions();
+  await awardFinishedMatchPoints();
+}
+
 export async function runSyncAndScore() {
   await syncActiveCompetitions();
   await lockStartedPredictions();
