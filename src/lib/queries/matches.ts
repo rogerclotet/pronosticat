@@ -37,15 +37,6 @@ export async function getRoundMatches(
 }
 
 export async function getCurrentRoundMatches(competition: Competition) {
-  try {
-    const matchday = await getCurrentMatchdayFromDb(competition);
-    return getRoundMatches(competition, matchday);
-  } catch (error) {
-    console.error("[pronosticat] getCurrentRoundMatches failed:", error);
-    throw error;
-  }
-}
-
-export async function getCurrentMatchday(competition: Competition) {
-  return getCurrentMatchdayFromDb(competition);
+  const matchday = await getCurrentMatchdayFromDb(competition);
+  return getRoundMatches(competition, matchday);
 }

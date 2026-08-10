@@ -85,19 +85,3 @@ export async function getCurrentRoundBoard(
 
   return { round, slots, matches: roundMatches };
 }
-
-export async function getRoundBoardById(
-  roundId: string,
-): Promise<RoundBoard | null> {
-  const round = await db.query.rounds.findFirst({
-    where: eq(rounds.id, roundId),
-  });
-  if (!round) return null;
-
-  const [slots, roundMatches] = await Promise.all([
-    loadSlots(round.id),
-    getRoundMatches(round.competition, round.matchday),
-  ]);
-
-  return { round, slots, matches: roundMatches };
-}
