@@ -7,6 +7,7 @@ import { SegmentedBar } from "@/components/ui/progress-bar";
 import { SlotCard } from "@/components/challenges/slot-card";
 import { ChallengeSheet } from "@/components/challenges/challenge-sheet";
 import {
+  describePickTeams,
   type BoardMatch,
   type BoardRound,
   type BoardSlotView,
@@ -60,6 +61,19 @@ export function PredictionsView({
     : undefined;
 
   const openSlot = slots.find((slot) => slot.id === openSlotId) ?? null;
+
+  // A team already anchoring another pick this round can't be picked again:
+  // map its name to the (translated) challenge already holding it.
+  const teamsInUse = new Map<string, string>();
+  if (openSlot) {
+    for (const slot of slots) {
+      if (slot.id === openSlot.id) continue;
+      const entry = entryBySlot.get(slot.id);
+      for (const team of describePickTeams(slot, entry, matches)) {
+        teamsInUse.set(team.name, tChallenge(`${slot.slug}.name`));
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col gap-3.5 p-4 pb-6">
@@ -155,6 +169,7 @@ export function PredictionsView({
               ? tChallenge(`${jokerSlug}.name`)
               : null
           }
+          teamsInUse={teamsInUse}
         />
       )}
     </div>

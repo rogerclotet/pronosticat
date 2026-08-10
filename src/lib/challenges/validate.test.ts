@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeTarget } from "./validate";
+import { normalizeTarget, teamsClaimed } from "./validate";
 import { MAX_PREDICTED_SCORE } from "@/lib/constants";
 
 describe("normalizeTarget", () => {
@@ -80,5 +80,33 @@ describe("normalizeTarget", () => {
 
   it("rejects a missing number", () => {
     expect(() => normalizeTarget("number", {})).toThrow("Pick a number");
+  });
+});
+
+describe("teamsClaimed", () => {
+  const match = { homeTeam: "Barça", awayTeam: "Madrid" };
+
+  it("claims only the picked side for a team challenge", () => {
+    expect(teamsClaimed("team", { targetSide: "home" }, match)).toEqual([
+      "Barça",
+    ]);
+    expect(teamsClaimed("team", { targetSide: "away" }, match)).toEqual([
+      "Madrid",
+    ]);
+  });
+
+  it("claims both sides for a match or match_score challenge", () => {
+    expect(teamsClaimed("match", { targetSide: null }, match)).toEqual([
+      "Barça",
+      "Madrid",
+    ]);
+    expect(teamsClaimed("match_score", { targetSide: null }, match)).toEqual([
+      "Barça",
+      "Madrid",
+    ]);
+  });
+
+  it("claims nothing for a number challenge", () => {
+    expect(teamsClaimed("number", { targetSide: null }, match)).toEqual([]);
   });
 });

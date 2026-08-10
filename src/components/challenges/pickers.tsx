@@ -10,74 +10,124 @@ export function MatchPicker({
   matches,
   selectedId,
   onSelect,
+  teamsInUse = EMPTY_TEAMS_IN_USE,
 }: {
   matches: BoardMatch[];
   selectedId: string | null;
   onSelect: (matchId: string) => void;
+  teamsInUse?: Map<string, string>;
 }) {
+  const t = useTranslations("sheet");
+
   return (
     <div className="flex flex-col gap-1.5">
-      {matches.map((match) => (
-        <button
-          key={match.id}
-          type="button"
-          onClick={() => onSelect(match.id)}
-          className={cn(
-            "flex items-center justify-between gap-2.5 border-2 px-2.5 py-2.5 text-left",
-            match.id === selectedId
-              ? "border-teal bg-highlight-bg"
-              : "border-border bg-surface",
-          )}
-        >
-          <span className="font-sans text-[12.5px] font-semibold">
-            {match.homeTeam} – {match.awayTeam}
-          </span>
-          <span className="font-mono text-[9px] uppercase tracking-[0.09em] text-muted">
-            {formatKickoff(new Date(match.kickoff))}
-          </span>
-        </button>
-      ))}
+      {matches.map((match) => {
+        const takenTeam = teamsInUse.has(match.homeTeam)
+          ? match.homeTeam
+          : teamsInUse.has(match.awayTeam)
+            ? match.awayTeam
+            : null;
+        const disabled = takenTeam !== null;
+
+        return (
+          <div key={match.id} className="flex flex-col gap-1">
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onSelect(match.id)}
+              className={cn(
+                "flex items-center justify-between gap-2.5 border-2 px-2.5 py-2.5 text-left",
+                disabled
+                  ? "border-border bg-surface opacity-50"
+                  : match.id === selectedId
+                    ? "border-teal bg-highlight-bg"
+                    : "border-border bg-surface",
+              )}
+            >
+              <span className="font-sans text-[12.5px] font-semibold">
+                {match.homeTeam} – {match.awayTeam}
+              </span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.09em] text-muted">
+                {formatKickoff(new Date(match.kickoff))}
+              </span>
+            </button>
+            {takenTeam && (
+              <p className="px-0.5 font-sans text-[10px] leading-snug text-text-secondary">
+                {t("teamTakenNote", {
+                  team: takenTeam,
+                  challenge: teamsInUse.get(takenTeam)!,
+                })}
+              </p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
+
+const EMPTY_TEAMS_IN_USE: Map<string, string> = new Map();
 
 export function TeamPicker({
   matches,
   selectedMatchId,
   selectedSide,
   onSelect,
+  teamsInUse = EMPTY_TEAMS_IN_USE,
 }: {
   matches: BoardMatch[];
   selectedMatchId: string | null;
   selectedSide: TargetSide | null;
   onSelect: (matchId: string, side: TargetSide) => void;
+  teamsInUse?: Map<string, string>;
 }) {
+  const t = useTranslations("sheet");
+
   return (
     <div className="flex flex-col gap-1.5">
       {matches.map((match) => (
-        <div key={match.id} className="flex">
+        <div key={match.id} className="flex flex-col gap-1">
+          <div className="flex">
+            {(["home", "away"] as const).map((side) => {
+              const selected =
+                match.id === selectedMatchId && side === selectedSide;
+              const name = teamName(match, side);
+              const disabled = teamsInUse.has(name);
+              return (
+                <button
+                  key={side}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onSelect(match.id, side)}
+                  className={cn(
+                    "flex flex-1 items-center gap-2 border-2 px-2 py-2.5 text-left",
+                    side === "away" && "-ml-0.5",
+                    disabled
+                      ? "border-border bg-surface opacity-50"
+                      : selected
+                        ? "border-teal bg-highlight-bg"
+                        : "border-border bg-surface",
+                  )}
+                >
+                  <TeamMark match={match} side={side} />
+                  <span className="font-sans text-[12px] font-semibold leading-tight">
+                    {name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
           {(["home", "away"] as const).map((side) => {
-            const selected =
-              match.id === selectedMatchId && side === selectedSide;
-            return (
-              <button
+            const name = teamName(match, side);
+            const challenge = teamsInUse.get(name);
+            return challenge ? (
+              <p
                 key={side}
-                type="button"
-                onClick={() => onSelect(match.id, side)}
-                className={cn(
-                  "flex flex-1 items-center gap-2 border-2 px-2 py-2.5 text-left",
-                  side === "away" && "-ml-0.5",
-                  selected
-                    ? "border-teal bg-highlight-bg"
-                    : "border-border bg-surface",
-                )}
+                className="px-0.5 font-sans text-[10px] leading-snug text-text-secondary"
               >
-                <TeamMark match={match} side={side} />
-                <span className="font-sans text-[12px] font-semibold leading-tight">
-                  {teamName(match, side)}
-                </span>
-              </button>
-            );
+                {t("teamTakenNote", { team: name, challenge })}
+              </p>
+            ) : null;
           })}
         </div>
       ))}

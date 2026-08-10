@@ -126,6 +126,7 @@
     "jokerLabel": "FES SERVIR EL JÒQUER",
     "jokerNote": "Dobla el premi i dobla el càstig. Un per jornada.",
     "jokerTakenNote": "Ja el tens posat a «{challenge}».",
+  "teamTakenNote": "{team} ja és a «{challenge}» aquesta jornada.",
     "lockNote": "Pots canviar-ho fins que comenci el primer partit de la jornada.",
     "cancelLabel": "TREU LA JUGADA",
     "ctaNew": "BLOQUEJA LA JUGADA",
