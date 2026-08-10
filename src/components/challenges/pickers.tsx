@@ -102,6 +102,7 @@ export function TeamPicker({
                   className={cn(
                     "flex flex-1 items-center gap-2 border-2 px-2 py-2.5 text-left",
                     side === "away" && "-ml-0.5",
+                    selected && "relative z-10",
                     disabled
                       ? "border-border bg-surface opacity-50"
                       : selected
