@@ -1,11 +1,9 @@
-"use server";
-
-import { eq, and, desc, gte, isNull, isNotNull, count, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { entries, rounds } from "@/lib/db/schema";
 import { getChallenge } from "@/lib/challenges/registry";
 import { JOKER_MULTIPLIER } from "@/lib/constants";
-import { getMemberPoints } from "./groups";
+import { getMemberPoints } from "@/lib/queries/groups";
 
 export type PendingStake = {
   picks: number;
@@ -64,7 +62,7 @@ export async function getWeeklyDelta(
         gte(rounds.settledAt, since),
       ),
     );
-  return row?.total ?? 0;
+  return Number(row?.total ?? 0);
 }
 
 export async function getProfileSummary(userId: string, groupId: string) {
@@ -88,12 +86,12 @@ export async function getMatchdayHistory(
   userId: string,
   groupId: string,
 ): Promise<MatchdayHistoryRow[]> {
-  return db
+  const rows = await db
     .select({
       matchday: rounds.matchday,
       picks: count(entries.id),
-      hits: sql<number>`count(case when ${entries.pointsAwarded} > 0 then 1 end)`,
-      misses: sql<number>`count(case when ${entries.pointsAwarded} < 0 then 1 end)`,
+      hits: count(sql`case when ${entries.pointsAwarded} > 0 then 1 end`),
+      misses: count(sql`case when ${entries.pointsAwarded} < 0 then 1 end`),
       netDelta: sql<number>`coalesce(sum(${entries.pointsAwarded}), 0)`,
     })
     .from(entries)
@@ -107,6 +105,8 @@ export async function getMatchdayHistory(
     )
     .groupBy(rounds.matchday)
     .orderBy(desc(rounds.matchday));
+
+  return rows.map((row) => ({ ...row, netDelta: Number(row.netDelta) }));
 }
 
 export type RivalStats = {
@@ -135,7 +135,7 @@ export async function getRivalStats(
     (e) => e.isJoker && (e.pointsAwarded ?? 0) > 0,
   ).length;
 
-  // Streak = consecutive hits from the most recent round backwards.
+  // Streak = consecutive winning picks from the most recent round backwards.
   const byRecency = settled
     .slice()
     .sort((a, b) => b.round.matchday - a.round.matchday);

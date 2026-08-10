@@ -5,7 +5,7 @@ import {
   toBoardRound,
   toEntryView,
 } from "@/components/challenges/types";
-import { getMatchdayHistory } from "@/lib/actions/stats";
+import { getMatchdayHistory } from "@/lib/queries/stats";
 import {
   getCachedActiveGroup,
   getCachedRoundBoard,

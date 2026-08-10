@@ -6,18 +6,17 @@ import { useRouter } from "@/i18n/routing";
 import { Sheet } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getUserGroupsWithMeta, setActiveGroup } from "@/lib/actions/groups";
+import { getMyGroups, setActiveGroup } from "@/lib/actions/groups";
 
-type GroupWithMeta = Awaited<ReturnType<typeof getUserGroupsWithMeta>>[number];
+type GroupWithMeta = Awaited<ReturnType<typeof getMyGroups>>[number];
 
 type GroupsSheetProps = {
   isOpen: boolean;
   onClose: () => void;
-  userId: string;
   activeGroupId?: string;
 };
 
-export function GroupsSheet({ isOpen, onClose, userId, activeGroupId }: GroupsSheetProps) {
+export function GroupsSheet({ isOpen, onClose, activeGroupId }: GroupsSheetProps) {
   const t = useTranslations("groupsSheet");
   const router = useRouter();
   const [groups, setGroups] = useState<GroupWithMeta[] | null>(null);
@@ -26,13 +25,13 @@ export function GroupsSheet({ isOpen, onClose, userId, activeGroupId }: GroupsSh
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
-    getUserGroupsWithMeta(userId).then((data) => {
+    getMyGroups().then((data) => {
       if (!cancelled) setGroups(data);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOpen, userId]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

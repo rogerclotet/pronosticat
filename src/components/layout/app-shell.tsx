@@ -6,22 +6,17 @@ import { BottomNav } from "./bottom-nav";
 import { TopBar } from "./top-bar";
 import { GroupsSheet } from "@/components/groups/groups-sheet";
 import { RivalSheet } from "@/components/groups/rival-sheet";
-import type { Competition } from "@/lib/constants";
 
 type AppShellProps = {
   children: React.ReactNode;
   groupName: string;
-  userId: string;
   activeGroupId: string;
-  competition: Competition;
 };
 
 export function AppShell({
   children,
   groupName,
-  userId,
   activeGroupId,
-  competition,
 }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -47,15 +42,15 @@ export function AppShell({
       <GroupsSheet
         isOpen={sheet === "groups"}
         onClose={closeSheet}
-        userId={userId}
         activeGroupId={activeGroupId}
       />
       {rivalId && (
         <RivalSheet
+          // Remount per rival so a previous rival's data never shows through.
+          key={rivalId}
           isOpen={sheet === "rival"}
           onClose={closeSheet}
           groupId={activeGroupId}
-          competition={competition}
           rivalUserId={rivalId}
         />
       )}

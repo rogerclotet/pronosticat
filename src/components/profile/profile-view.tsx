@@ -3,7 +3,7 @@ import { Link } from "@/i18n/routing";
 import { SegmentedBar } from "@/components/ui/progress-bar";
 import { SignOutButton } from "@/components/profile/sign-out-button";
 import type { Competition } from "@/lib/constants";
-import type { MatchdayHistoryRow, PendingStake } from "@/lib/actions/stats";
+import type { MatchdayHistoryRow, PendingStake } from "@/lib/queries/stats";
 
 type ProfileViewProps = {
   summary: { balance: number; pending: PendingStake; weeklyDelta: number };

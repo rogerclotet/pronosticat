@@ -12,7 +12,6 @@ type StandingRow = {
   userId: string;
   name: string;
   points: number;
-  picksSettled: number;
   hits: number;
   misses: number;
 };

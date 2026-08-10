@@ -1,5 +1,5 @@
 import { GroupTabView } from "@/components/groups/group-tab-view";
-import { getStandings, getGroupMembers } from "@/lib/actions/groups";
+import { getStandings, getGroupMembers } from "@/lib/queries/groups";
 import { getCachedActiveGroup, getCachedSession } from "@/lib/queries/cached";
 
 export async function GroupContent() {
@@ -18,14 +18,7 @@ export async function GroupContent() {
 
   return (
     <GroupTabView
-      standings={standings.map((s) => ({
-        userId: s.userId,
-        name: s.name,
-        points: s.points,
-        picksSettled: s.picksSettled,
-        hits: Number(s.hits),
-        misses: Number(s.misses),
-      }))}
+      standings={standings}
       activeGroup={{
         id: activeGroup.id,
         name: activeGroup.name,

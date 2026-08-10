@@ -5,7 +5,7 @@ import {
   devFixturesUnauthorizedResponse,
   isDevFixturesEnabled,
 } from "@/lib/dev/guard";
-import { runScoreOnly } from "@/lib/actions/scoring";
+import { runScoreOnly } from "@/lib/rounds/scoring";
 
 export async function POST(request: Request) {
   if (!isDevFixturesEnabled()) return devFixturesDisabledResponse();
