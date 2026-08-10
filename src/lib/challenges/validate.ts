@@ -49,6 +49,27 @@ function requireScore(value: number | null | undefined): number {
 }
 
 /**
+ * The team(s) a pick commits: one side for a team challenge, both sides for
+ * a challenge scoped to the whole match. Used to enforce that a team can
+ * only anchor one pick per round.
+ */
+export function teamsClaimed(
+  kind: ChallengeTargetKind,
+  target: Pick<NormalizedTarget, "targetSide">,
+  match: { homeTeam: string; awayTeam: string },
+): string[] {
+  switch (kind) {
+    case "team":
+      return [target.targetSide === "home" ? match.homeTeam : match.awayTeam];
+    case "match":
+    case "match_score":
+      return [match.homeTeam, match.awayTeam];
+    case "number":
+      return [];
+  }
+}
+
+/**
  * Shape-check a pick against its challenge and drop anything the challenge
  * doesn't use, so a crafted payload can't smuggle extra fields into storage.
  * Whether the match belongs to this round is checked separately, against the DB.

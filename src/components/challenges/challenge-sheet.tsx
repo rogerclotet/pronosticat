@@ -28,6 +28,8 @@ type ChallengeSheetProps = {
   existing: EntryView | null;
   /** Name of the challenge already carrying the joker, if it isn't this one. */
   jokerHolder: string | null;
+  /** Team name -> name of the challenge that already picked it this round. */
+  teamsInUse: Map<string, string>;
 };
 
 export function ChallengeSheet({
@@ -37,6 +39,7 @@ export function ChallengeSheet({
   matches,
   existing,
   jokerHolder,
+  teamsInUse,
 }: ChallengeSheetProps) {
   const t = useTranslations("sheet");
   const tChallenge = useTranslations("challenges");
@@ -149,6 +152,7 @@ export function ChallengeSheet({
                 setMatchId(id);
                 setSide(nextSide);
               }}
+              teamsInUse={teamsInUse}
             />
           </>
         ) : (
@@ -158,6 +162,7 @@ export function ChallengeSheet({
               matches={matches}
               selectedId={matchId}
               onSelect={setMatchId}
+              teamsInUse={teamsInUse}
             />
           </>
         )}

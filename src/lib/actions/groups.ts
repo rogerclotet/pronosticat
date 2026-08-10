@@ -19,7 +19,11 @@ import {
   type Competition,
 } from "@/lib/constants";
 import { getChallenge } from "@/lib/challenges/registry";
-import { normalizeTarget, type EntryInput } from "@/lib/challenges/validate";
+import {
+  normalizeTarget,
+  teamsClaimed,
+  type EntryInput,
+} from "@/lib/challenges/validate";
 import { getCurrentRoundMatches as fetchCurrentRoundMatches } from "@/lib/queries/matches";
 import { getCurrentRoundBoard } from "@/lib/queries/round-board";
 import { syncMatches as syncCompetitionMatches } from "@/lib/sync/run";
@@ -249,6 +253,11 @@ export async function saveEntry(data: SaveEntryInput) {
       ),
     });
     if (!match) throw new Error("Match is not in this round");
+
+    const teams = teamsClaimed(challenge.targetKind, target, match);
+    if (teams.length > 0) {
+      await assertTeamsFree(session.user.id, data.groupId, round.id, slot.id, teams);
+    }
   }
 
   const isJoker = data.isJoker ?? false;
@@ -299,6 +308,44 @@ async function assertJokerFree(
     ),
   });
   if (other) throw new Error("Joker already used this round");
+}
+
+/**
+ * A team can only anchor one pick per round: picking a whole match commits
+ * both its teams, so it clashes with any other pick anchored to either side.
+ */
+async function assertTeamsFree(
+  userId: string,
+  groupId: string,
+  roundId: string,
+  slotId: string,
+  teams: string[],
+) {
+  const others = await db.query.entries.findMany({
+    where: and(
+      eq(entries.userId, userId),
+      eq(entries.groupId, groupId),
+      eq(entries.roundId, roundId),
+      ne(entries.roundChallengeId, slotId),
+    ),
+    with: { roundChallenge: true, targetMatch: true },
+  });
+
+  for (const other of others) {
+    if (!other.targetMatch) continue;
+    const otherChallenge = getChallenge(other.roundChallenge.slug);
+    if (!otherChallenge) continue;
+
+    const otherTeams = teamsClaimed(
+      otherChallenge.targetKind,
+      other,
+      other.targetMatch,
+    );
+    const clash = teams.find((team) => otherTeams.includes(team));
+    if (clash) {
+      throw new Error(`${clash} is already picked in another challenge this round`);
+    }
+  }
 }
 
 export async function deleteEntry(entryId: string) {
