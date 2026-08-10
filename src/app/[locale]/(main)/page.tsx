@@ -1,11 +1,11 @@
 import { Suspense } from "react";
-import { JornadaSkeleton } from "@/components/jornada/jornada-skeleton";
-import { JornadaContent } from "@/components/jornada/jornada-content";
+import { PredictionsSkeleton } from "@/components/predictions/predictions-skeleton";
+import { PredictionsContent } from "@/components/predictions/predictions-content";
 
-export default function JornadaPage() {
+export default function HomePage() {
   return (
-    <Suspense fallback={<JornadaSkeleton />}>
-      <JornadaContent />
+    <Suspense fallback={<PredictionsSkeleton />}>
+      <PredictionsContent />
     </Suspense>
   );
 }

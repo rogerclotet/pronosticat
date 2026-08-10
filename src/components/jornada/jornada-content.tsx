@@ -1,10 +1,10 @@
-import { JornadaView } from "@/components/jornada/jornada-view";
-import { getCurrentMatchday, getCurrentRoundMatches } from "@/lib/queries/matches";
+import { getTranslations } from "next-intl/server";
+import { ChallengeBoard } from "@/components/challenges/challenge-board";
+import { toBoardMatch, toBoardRound } from "@/components/challenges/types";
 import {
   getCachedActiveGroup,
-  getCachedMemberPoints,
+  getCachedRoundBoard,
   getCachedSession,
-  getCachedUserPredictions,
 } from "@/lib/queries/cached";
 
 export async function JornadaContent() {
@@ -14,43 +14,17 @@ export async function JornadaContent() {
   const activeGroup = await getCachedActiveGroup(session.user.id);
   if (!activeGroup) return null;
 
-  const roundMatches = await getCurrentRoundMatches(activeGroup.competition);
-  const matchday =
-    roundMatches[0]?.matchday ??
-    (await getCurrentMatchday(activeGroup.competition));
-  const matchIds = roundMatches.map((m) => m.id);
-
-  const [userPreds, maxPoints] = await Promise.all([
-    getCachedUserPredictions(session.user.id, activeGroup.id, matchIds),
-    getCachedMemberPoints(session.user.id, activeGroup.id),
-  ]);
+  const board = await getCachedRoundBoard(activeGroup.competition);
+  if (!board) {
+    const t = await getTranslations("board");
+    return <p className="p-4 text-sm text-muted">{t("notReady")}</p>;
+  }
 
   return (
-    <JornadaView
-      matches={roundMatches.map((m) => ({
-        id: m.id,
-        homeTeam: m.homeTeam,
-        awayTeam: m.awayTeam,
-        homeScore: m.homeScore,
-        awayScore: m.awayScore,
-        kickoff: m.kickoff.toISOString(),
-        status: m.status,
-        homeTeamCrest: m.homeTeamCrest,
-        awayTeamCrest: m.awayTeamCrest,
-      }))}
-      predictions={userPreds.map((p) => ({
-        id: p.id,
-        matchId: p.matchId,
-        homeScore: p.homeScore,
-        awayScore: p.awayScore,
-        wager: p.wager,
-        pointsAwarded: p.pointsAwarded,
-      }))}
-      groupId={activeGroup.id}
-      matchday={matchday}
+    <ChallengeBoard
+      round={toBoardRound(board.round)}
+      matches={board.matches.map(toBoardMatch)}
       competition={activeGroup.competition}
-      maxPoints={maxPoints}
-      maxWagerPerMatch={activeGroup.maxWagerPerMatch}
     />
   );
 }

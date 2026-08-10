@@ -29,8 +29,10 @@ FROM base AS migrator
 COPY package.json package-lock.json ./
 RUN npm install
 COPY drizzle.config.ts ./
+COPY drizzle ./drizzle
+COPY scripts/db-reset.mjs ./scripts/
 COPY src/lib/db ./src/lib/db
-CMD ["npm", "run", "db:push"]
+CMD ["npm", "run", "db:migrate"]
 
 FROM base AS runner
 ENV NODE_ENV=production

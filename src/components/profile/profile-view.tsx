@@ -3,10 +3,10 @@ import { Link } from "@/i18n/routing";
 import { SegmentedBar } from "@/components/ui/progress-bar";
 import { SignOutButton } from "@/components/profile/sign-out-button";
 import type { Competition } from "@/lib/constants";
-import type { MatchdayHistoryRow } from "@/lib/actions/stats";
+import type { MatchdayHistoryRow, PendingStake } from "@/lib/actions/stats";
 
 type ProfileViewProps = {
-  summary: { balance: number; committedPoints: number; weeklyDelta: number };
+  summary: { balance: number; pending: PendingStake; weeklyDelta: number };
   history: MatchdayHistoryRow[];
   competition: Competition;
 };
@@ -24,8 +24,14 @@ export async function ProfileView({ summary, history, competition }: ProfileView
         <span className="font-mono text-4xl font-bold text-teal">{summary.balance}</span>
         <div className="mt-1 flex">
           <div className="flex-1 border-2 border-border p-2.5">
-            <div className="font-mono text-sm font-bold">{summary.committedPoints}</div>
-            <div className="label-mono mt-1.5">{t("committed")}</div>
+            <div className="font-mono text-sm font-bold">{summary.pending.picks}</div>
+            <div className="label-mono mt-1.5">{t("pending")}</div>
+          </div>
+          <div className="-ml-0.5 flex-1 border-2 border-border p-2.5">
+            <div className="font-mono text-sm font-bold">
+              {summary.pending.worstCase}…+{summary.pending.bestCase}
+            </div>
+            <div className="label-mono mt-1.5">{t("swing")}</div>
           </div>
           <div className="-ml-0.5 flex-1 border-2 border-border p-2.5">
             <div
@@ -50,9 +56,8 @@ export async function ProfileView({ summary, history, competition }: ProfileView
       ) : (
         <div className="flex flex-col gap-2.5">
           {history.map((h) => {
-            const hitPct = h.matchesPredicted > 0 ? (h.hit / h.matchesPredicted) * 100 : 0;
-            const partialPct =
-              h.matchesPredicted > 0 ? (h.partial / h.matchesPredicted) * 100 : 0;
+            const hitPct = h.picks > 0 ? (h.hits / h.picks) * 100 : 0;
+            const missPct = h.picks > 0 ? (h.misses / h.picks) * 100 : 0;
             const netLabel = h.netDelta >= 0 ? `+${h.netDelta}` : `${h.netDelta}`;
             return (
               <div key={h.matchday} className="border-2 border-border bg-surface">
@@ -62,7 +67,7 @@ export async function ProfileView({ summary, history, competition }: ProfileView
                       {t("historyRound", { round: h.matchday, competition: competitionLabel })}
                     </span>
                     <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-muted">
-                      {t("historyMeta", { count: h.matchesPredicted, exact: h.hit })}
+                      {t("historyMeta", { count: h.picks, hits: h.hits })}
                     </span>
                   </div>
                   <span
@@ -77,7 +82,7 @@ export async function ProfileView({ summary, history, competition }: ProfileView
                 <SegmentedBar
                   segments={[
                     { pct: hitPct, tone: "hit" },
-                    { pct: partialPct, tone: "partial" },
+                    { pct: missPct, tone: "partial" },
                   ]}
                 />
               </div>

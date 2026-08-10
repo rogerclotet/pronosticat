@@ -2,62 +2,85 @@
 
 import { eq, and, desc, gte, isNull, isNotNull, count, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, predictions } from "@/lib/db/schema";
-import { POINTS } from "@/lib/constants";
+import { entries, rounds } from "@/lib/db/schema";
+import { getChallenge } from "@/lib/challenges/registry";
+import { JOKER_MULTIPLIER } from "@/lib/constants";
 import { getMemberPoints } from "./groups";
 
-export async function getCommittedPoints(
+export type PendingStake = {
+  picks: number;
+  bestCase: number;
+  worstCase: number;
+};
+
+/**
+ * What the picks already made but not yet settled are worth. Slots cost
+ * nothing to play, so the number that matters is the swing they carry.
+ */
+export async function getPendingStake(
+  userId: string,
+  groupId: string,
+): Promise<PendingStake> {
+  const pending = await db.query.entries.findMany({
+    where: and(
+      eq(entries.userId, userId),
+      eq(entries.groupId, groupId),
+      isNull(entries.pointsAwarded),
+    ),
+    with: { roundChallenge: true },
+  });
+
+  return pending.reduce<PendingStake>(
+    (acc, entry) => {
+      const challenge = getChallenge(entry.roundChallenge.slug);
+      if (!challenge) return acc;
+      const multiplier = entry.isJoker ? JOKER_MULTIPLIER : 1;
+      return {
+        picks: acc.picks + 1,
+        bestCase: acc.bestCase + challenge.reward * multiplier,
+        worstCase: acc.worstCase + challenge.penalty * multiplier,
+      };
+    },
+    { picks: 0, bestCase: 0, worstCase: 0 },
+  );
+}
+
+export async function getWeeklyDelta(
   userId: string,
   groupId: string,
 ): Promise<number> {
-  const [row] = await db
-    .select({ total: sql<number>`coalesce(sum(${predictions.wager}), 0)` })
-    .from(predictions)
-    .where(
-      and(
-        eq(predictions.userId, userId),
-        eq(predictions.groupId, groupId),
-        isNotNull(predictions.lockedAt),
-        isNull(predictions.pointsAwarded),
-      ),
-    );
-  return row?.total ?? 0;
-}
-
-export async function getWeeklyDelta(userId: string, groupId: string): Promise<number> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const [row] = await db
     .select({
-      total: sql<number>`coalesce(sum(${predictions.pointsAwarded} - ${predictions.wager}), 0)`,
+      total: sql<number>`coalesce(sum(${entries.pointsAwarded}), 0)`,
     })
-    .from(predictions)
-    .innerJoin(matches, eq(predictions.matchId, matches.id))
+    .from(entries)
+    .innerJoin(rounds, eq(entries.roundId, rounds.id))
     .where(
       and(
-        eq(predictions.userId, userId),
-        eq(predictions.groupId, groupId),
-        isNotNull(predictions.pointsAwarded),
-        gte(matches.kickoff, since),
+        eq(entries.userId, userId),
+        eq(entries.groupId, groupId),
+        isNotNull(entries.pointsAwarded),
+        gte(rounds.settledAt, since),
       ),
     );
   return row?.total ?? 0;
 }
 
 export async function getProfileSummary(userId: string, groupId: string) {
-  const [balance, committedPoints, weeklyDelta] = await Promise.all([
+  const [balance, pending, weeklyDelta] = await Promise.all([
     getMemberPoints(userId, groupId),
-    getCommittedPoints(userId, groupId),
+    getPendingStake(userId, groupId),
     getWeeklyDelta(userId, groupId),
   ]);
-  return { balance, committedPoints, weeklyDelta };
+  return { balance, pending, weeklyDelta };
 }
 
 export type MatchdayHistoryRow = {
   matchday: number;
-  matchesPredicted: number;
-  hit: number;
-  partial: number;
-  miss: number;
+  picks: number;
+  hits: number;
+  misses: number;
   netDelta: number;
 };
 
@@ -67,29 +90,28 @@ export async function getMatchdayHistory(
 ): Promise<MatchdayHistoryRow[]> {
   return db
     .select({
-      matchday: matches.matchday,
-      matchesPredicted: count(predictions.id),
-      hit: sql<number>`count(case when ${predictions.pointsAwarded} >= ${predictions.wager} * ${POINTS.EXACT_RESULT_MULTIPLIER} then 1 end)`,
-      partial: sql<number>`count(case when ${predictions.pointsAwarded} > 0 and ${predictions.pointsAwarded} < ${predictions.wager} * ${POINTS.EXACT_RESULT_MULTIPLIER} then 1 end)`,
-      miss: sql<number>`count(case when ${predictions.pointsAwarded} = 0 then 1 end)`,
-      netDelta: sql<number>`coalesce(sum(${predictions.pointsAwarded} - ${predictions.wager}), 0)`,
+      matchday: rounds.matchday,
+      picks: count(entries.id),
+      hits: sql<number>`count(case when ${entries.pointsAwarded} > 0 then 1 end)`,
+      misses: sql<number>`count(case when ${entries.pointsAwarded} < 0 then 1 end)`,
+      netDelta: sql<number>`coalesce(sum(${entries.pointsAwarded}), 0)`,
     })
-    .from(predictions)
-    .innerJoin(matches, eq(predictions.matchId, matches.id))
+    .from(entries)
+    .innerJoin(rounds, eq(entries.roundId, rounds.id))
     .where(
       and(
-        eq(predictions.userId, userId),
-        eq(predictions.groupId, groupId),
-        isNotNull(predictions.pointsAwarded),
+        eq(entries.userId, userId),
+        eq(entries.groupId, groupId),
+        isNotNull(entries.pointsAwarded),
       ),
     )
-    .groupBy(matches.matchday)
-    .orderBy(desc(matches.matchday));
+    .groupBy(rounds.matchday)
+    .orderBy(desc(rounds.matchday));
 }
 
 export type RivalStats = {
-  totalCorrect: number;
-  exactResults: number;
+  hits: number;
+  jokersLanded: number;
   currentStreak: number;
 };
 
@@ -97,42 +119,32 @@ export async function getRivalStats(
   groupId: string,
   rivalUserId: string,
 ): Promise<RivalStats> {
-  const [agg] = await db
-    .select({
-      exactResults: sql<number>`count(case when ${predictions.pointsAwarded} >= ${predictions.wager} * ${POINTS.EXACT_RESULT_MULTIPLIER} then 1 end)`,
-      correctOutcomes: sql<number>`count(case when ${predictions.pointsAwarded} > 0 and ${predictions.pointsAwarded} < ${predictions.wager} * ${POINTS.EXACT_RESULT_MULTIPLIER} then 1 end)`,
-    })
-    .from(predictions)
-    .where(
-      and(
-        eq(predictions.userId, rivalUserId),
-        eq(predictions.groupId, groupId),
-        isNotNull(predictions.pointsAwarded),
-      ),
-    );
-
-  const recent = await db.query.predictions.findMany({
+  const settled = await db.query.entries.findMany({
     where: and(
-      eq(predictions.userId, rivalUserId),
-      eq(predictions.groupId, groupId),
-      isNotNull(predictions.pointsAwarded),
+      eq(entries.userId, rivalUserId),
+      eq(entries.groupId, groupId),
+      isNotNull(entries.pointsAwarded),
     ),
-    with: { match: true },
-    limit: 30,
+    with: { round: true },
+    orderBy: [desc(entries.updatedAt)],
+    limit: 60,
   });
-  const sorted = recent
+
+  const hits = settled.filter((e) => (e.pointsAwarded ?? 0) > 0).length;
+  const jokersLanded = settled.filter(
+    (e) => e.isJoker && (e.pointsAwarded ?? 0) > 0,
+  ).length;
+
+  // Streak = consecutive hits from the most recent round backwards.
+  const byRecency = settled
     .slice()
-    .sort((a, b) => b.match.kickoff.getTime() - a.match.kickoff.getTime());
+    .sort((a, b) => b.round.matchday - a.round.matchday);
 
   let currentStreak = 0;
-  for (const p of sorted) {
-    if ((p.pointsAwarded ?? 0) > 0) currentStreak++;
+  for (const entry of byRecency) {
+    if ((entry.pointsAwarded ?? 0) > 0) currentStreak++;
     else break;
   }
 
-  return {
-    exactResults: agg?.exactResults ?? 0,
-    totalCorrect: (agg?.exactResults ?? 0) + (agg?.correctOutcomes ?? 0),
-    currentStreak,
-  };
+  return { hits, jokersLanded, currentStreak };
 }

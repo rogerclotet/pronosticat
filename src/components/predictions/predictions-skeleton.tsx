@@ -1,16 +1,17 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-function PredictionRowSkeleton() {
+function SlotCardSkeleton() {
   return (
     <div className="border-2 border-border bg-surface">
-      <div className="flex items-center justify-between gap-2 border-b-2 border-border bg-background px-2.5 py-1.5">
+      <div className="flex items-center justify-between border-b-2 border-border bg-background px-2.5 py-1.5">
+        <Skeleton className="h-4 w-24" />
         <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-5 w-14" />
       </div>
-      <div className="flex items-center justify-between gap-2.5 p-2.5">
-        <Skeleton className="h-4 flex-1" />
-        <Skeleton className="h-8 w-12" />
-        <Skeleton className="h-4 w-14" />
+      <div className="px-2.5 py-2">
+        <Skeleton className="h-3 w-3/4" />
+      </div>
+      <div className="border-t-2 border-border px-2.5 py-2.5">
+        <Skeleton className="h-4 w-full" />
       </div>
     </div>
   );
@@ -35,9 +36,14 @@ export function PredictionsSkeleton() {
         ))}
       </div>
 
+      <div className="flex items-center justify-between gap-2.5 border-2 border-teal bg-highlight-bg px-3 py-2.5">
+        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-4 w-10" />
+      </div>
+
       <div className="flex flex-col gap-2.5">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <PredictionRowSkeleton key={i} />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SlotCardSkeleton key={i} />
         ))}
       </div>
     </div>

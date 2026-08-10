@@ -12,9 +12,9 @@ type StandingRow = {
   userId: string;
   name: string;
   points: number;
-  matchesPredicted: number;
-  correctResults: number;
-  correctOutcomes: number;
+  picksSettled: number;
+  hits: number;
+  misses: number;
 };
 
 type GroupTabViewProps = {
@@ -86,7 +86,12 @@ export function GroupTabView({
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <div className="flex flex-1 flex-col gap-1.5">
-                  <span className="font-sans text-[12.5px] font-semibold">{row.name}</span>
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="font-sans text-[12.5px] font-semibold">{row.name}</span>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-muted">
+                      {row.hits}✓ {row.misses}✗
+                    </span>
+                  </span>
                   <ProgressBar
                     pct={(row.points / maxPoints) * 100}
                     color={isMe ? "teal" : "muted"}

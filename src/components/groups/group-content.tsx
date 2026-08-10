@@ -22,9 +22,9 @@ export async function GroupContent() {
         userId: s.userId,
         name: s.name,
         points: s.points,
-        matchesPredicted: s.matchesPredicted,
-        correctResults: Number(s.correctResults),
-        correctOutcomes: Number(s.correctOutcomes),
+        picksSettled: s.picksSettled,
+        hits: Number(s.hits),
+        misses: Number(s.misses),
       }))}
       activeGroup={{
         id: activeGroup.id,

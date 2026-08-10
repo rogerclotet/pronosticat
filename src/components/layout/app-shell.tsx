@@ -11,8 +11,6 @@ import type { Competition } from "@/lib/constants";
 type AppShellProps = {
   children: React.ReactNode;
   groupName: string;
-  balance: number;
-  committedPoints: number;
   userId: string;
   activeGroupId: string;
   competition: Competition;
@@ -21,8 +19,6 @@ type AppShellProps = {
 export function AppShell({
   children,
   groupName,
-  balance,
-  committedPoints,
   userId,
   activeGroupId,
   competition,
@@ -38,14 +34,14 @@ export function AppShell({
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-background">
+    <div className="flex min-h-dvh flex-1 flex-col bg-background">
       <TopBar
         groupName={groupName}
-        balance={balance}
-        committedPoints={committedPoints}
         onOpenGroups={() => router.push(`${pathname}?sheet=groups`)}
       />
-      <main className="mx-auto w-full max-w-lg flex-1 pb-20">{children}</main>
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col bg-background pb-20">
+        {children}
+      </main>
       <BottomNav />
 
       <GroupsSheet

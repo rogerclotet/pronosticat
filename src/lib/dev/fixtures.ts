@@ -1,7 +1,8 @@
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, asc, desc, eq, lt } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
-import { matches } from "@/lib/db/schema";
+import { matches, rounds } from "@/lib/db/schema";
+import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
 import {
   COMPETITIONS,
   type Competition,
@@ -64,6 +65,7 @@ export async function createDevMatch(input: CreateDevMatchInput) {
     kickoff,
   });
 
+  await ensureCompetitionRounds(competition);
   revalidateMatchCache();
 
   return db.query.matches.findFirst({ where: eq(matches.id, id) });
@@ -100,6 +102,37 @@ export async function deleteDevMatch(matchId: string) {
 
   await db.delete(matches).where(eq(matches.id, matchId));
   revalidateMatchCache();
+}
+
+/**
+ * Drag every dev fixture of a matchday into the past at once, so a whole round
+ * can be locked with one click instead of one per match.
+ */
+export async function simulateDevRoundKickoff(
+  competition: Competition,
+  matchday: number,
+) {
+  const kickoff = new Date(Date.now() - 60 * 60 * 1000);
+
+  await db
+    .update(matches)
+    .set({ kickoff, updatedAt: new Date() })
+    .where(
+      and(
+        lt(matches.externalId, 0),
+        eq(matches.competition, competition),
+        eq(matches.matchday, matchday),
+      ),
+    );
+
+  revalidateMatchCache();
+}
+
+export async function listRounds() {
+  return db.query.rounds.findMany({
+    orderBy: [asc(rounds.competition), asc(rounds.matchday)],
+    with: { challenges: true },
+  });
 }
 
 export async function listDevMatches(competition?: Competition) {

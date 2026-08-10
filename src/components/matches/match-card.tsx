@@ -13,10 +13,9 @@ type MatchCardProps = {
   status: MatchStatus;
   homeTeamCrest?: string | null;
   awayTeamCrest?: string | null;
-  prediction?: { homeScore: number; awayScore: number; wager: number; settled?: number | null } | null;
-  onOpenPrediction?: () => void;
 };
 
+/** Read-only fixture card: picks live on the challenge board, not on the match. */
 export function MatchCard({
   homeTeam,
   awayTeam,
@@ -26,12 +25,9 @@ export function MatchCard({
   status,
   homeTeamCrest,
   awayTeamCrest,
-  prediction,
-  onOpenPrediction,
 }: MatchCardProps) {
   const t = useTranslations("jornada");
   const showScore = status === "finished" || status === "live";
-  const open = status === "scheduled";
 
   const pill =
     status === "finished" || status === "postponed" || status === "cancelled"
@@ -39,24 +35,6 @@ export function MatchCard({
       : status === "live"
         ? { tone: "live" as const, label: t("statusLive") }
         : { tone: "open" as const, label: t("statusOpen") };
-
-  const cta = prediction
-    ? prediction.settled != null
-      ? {
-          label: t("ctaLocked", { home: prediction.homeScore, away: prediction.awayScore }),
-          right: `+${prediction.settled}`,
-          className: "bg-teal/10 text-teal",
-        }
-      : {
-          label: open
-            ? t("ctaPredicted", { home: prediction.homeScore, away: prediction.awayScore })
-            : t("ctaLocked", { home: prediction.homeScore, away: prediction.awayScore }),
-          right: `${prediction.wager} PTS`,
-          className: "bg-highlight-bg text-text-secondary",
-        }
-    : open
-      ? { label: t("ctaPredict"), right: "→", className: "bg-teal text-background" }
-      : { label: t("ctaNone"), right: "—", className: "bg-highlight-bg text-muted" };
 
   return (
     <div className="border-2 border-border bg-surface">
@@ -79,20 +57,6 @@ export function MatchCard({
         </span>
         <TeamBlock name={awayTeam} crest={awayTeamCrest} />
       </div>
-
-      <button
-        type="button"
-        onClick={open ? onOpenPrediction : undefined}
-        disabled={!open}
-        className={cn(
-          "flex w-full items-center justify-between gap-2 border-t-2 border-border px-2.5 py-2.5 text-left font-mono text-[10.5px] font-bold tracking-[0.09em]",
-          open && "cursor-pointer",
-          cta.className,
-        )}
-      >
-        <span>{cta.label}</span>
-        <span>{cta.right}</span>
-      </button>
     </div>
   );
 }

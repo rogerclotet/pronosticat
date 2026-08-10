@@ -1,68 +1,65 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { StatTile } from "@/components/ui/stat-tile";
-import { Pill } from "@/components/ui/pill";
-import { PredictionSheet } from "@/components/predictions/prediction-sheet";
-import { POINTS } from "@/lib/constants";
-import { cn, formatKickoff } from "@/lib/utils";
-
-type Match = {
-  id: string;
-  homeTeam: string;
-  awayTeam: string;
-  kickoff: string;
-  status: "scheduled" | "live" | "finished" | "postponed" | "cancelled";
-};
-
-type Prediction = {
-  id: string;
-  matchId: string;
-  homeScore: number;
-  awayScore: number;
-  wager: number;
-  pointsAwarded: number | null;
-};
+import { SegmentedBar } from "@/components/ui/progress-bar";
+import { SlotCard } from "@/components/challenges/slot-card";
+import { ChallengeSheet } from "@/components/challenges/challenge-sheet";
+import {
+  type BoardMatch,
+  type BoardRound,
+  type BoardSlotView,
+  type EntryView,
+} from "@/components/challenges/types";
+import type { MatchdayHistoryRow } from "@/lib/actions/stats";
+import type { Competition } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 type PredictionsViewProps = {
-  matches: Match[];
-  predictions: Prediction[];
+  round: BoardRound;
+  slots: BoardSlotView[];
+  matches: BoardMatch[];
+  entries: EntryView[];
+  history: MatchdayHistoryRow[];
   groupId: string;
-  matchday: number;
-  maxPoints: number;
-  maxWagerPerMatch: number;
+  competition: Competition;
 };
 
 export function PredictionsView({
+  round,
+  slots,
   matches,
-  predictions,
+  entries,
+  history,
   groupId,
-  matchday,
-  maxPoints,
-  maxWagerPerMatch,
+  competition,
 }: PredictionsViewProps) {
   const t = useTranslations("predictions");
-  const tJornada = useTranslations("jornada");
-  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const tBoard = useTranslations("board");
+  const tChallenge = useTranslations("challenges");
+  const tGroup = useTranslations("group");
+  const tPerfil = useTranslations("perfil");
 
-  const matchMap = new Map(matches.map((m) => [m.id, m]));
+  const [openSlotId, setOpenSlotId] = useState<string | null>(null);
 
-  const stats = useMemo(() => {
-    const exact = predictions.filter(
-      (p) => p.pointsAwarded != null && p.pointsAwarded >= p.wager * POINTS.EXACT_RESULT_MULTIPLIER,
-    ).length;
-    const pointsThisRound = predictions.reduce(
-      (sum, p) => (p.pointsAwarded != null ? sum + (p.pointsAwarded - p.wager) : sum),
-      0,
-    );
-    return { made: predictions.length, exact, pointsThisRound };
-  }, [predictions]);
+  const entryBySlot = new Map(entries.map((e) => [e.roundChallengeId, e]));
+  const played = slots.filter((slot) => entryBySlot.has(slot.id));
+  const hits = entries.filter((e) => (e.pointsAwarded ?? 0) > 0).length;
+  const pointsThisRound = entries.reduce(
+    (sum, e) => sum + (e.pointsAwarded ?? 0),
+    0,
+  );
 
-  const selectedMatch = selectedMatchId ? matchMap.get(selectedMatchId) : null;
-  const selectedPred = selectedMatchId
-    ? predictions.find((p) => p.matchId === selectedMatchId)
-    : null;
+  const isOpen = round.status === "open";
+  const remaining = slots.length - played.length;
+
+  const jokerEntry = entries.find((e) => e.isJoker);
+  const jokerSlug = jokerEntry
+    ? slots.find((s) => s.id === jokerEntry.roundChallengeId)?.slug
+    : undefined;
+
+  const openSlot = slots.find((slot) => slot.id === openSlotId) ?? null;
 
   return (
     <div className="flex flex-col gap-3.5 p-4 pb-6">
@@ -71,97 +68,135 @@ export function PredictionsView({
       </div>
 
       <div className="flex">
-        <StatTile label={t("statMade", { round: matchday })} value={stats.made} className="flex-1" />
         <StatTile
-          label={t("statExact")}
-          value={stats.exact}
+          label={t("statMade", { round: round.matchday })}
+          value={`${played.length}/${slots.length}`}
+          className="flex-1"
+        />
+        <StatTile
+          label={t("statHits")}
+          value={hits}
           accent="teal"
           className="-ml-0.5 flex-1"
         />
         <StatTile
           label={t("statPoints")}
-          value={stats.pointsThisRound >= 0 ? `+${stats.pointsThisRound}` : stats.pointsThisRound}
-          accent="teal"
+          value={pointsThisRound > 0 ? `+${pointsThisRound}` : pointsThisRound}
+          accent={pointsThisRound >= 0 ? "teal" : "danger"}
           className="-ml-0.5 flex-1"
         />
       </div>
 
-      {predictions.length === 0 ? (
-        <p className="text-sm text-muted">{t("noPredictions")}</p>
-      ) : (
-        <div className="flex flex-col gap-2.5">
-          {predictions.map((p) => {
-            const match = matchMap.get(p.matchId);
-            if (!match) return null;
-            const open = match.status === "scheduled";
-            const settled = p.pointsAwarded != null;
-            const delta = settled
-              ? `+${p.pointsAwarded}`
-              : open
-                ? `-${p.wager} ${t("reserved")}`
-                : `-${p.wager}`;
-
-            return (
-              <button
-                key={p.id}
-                type="button"
-                disabled={!open}
-                onClick={open ? () => setSelectedMatchId(p.matchId) : undefined}
-                className={cn(
-                  "w-full border-2 border-border bg-surface text-left",
-                  open && "cursor-pointer",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2 border-b-2 border-border bg-background px-2.5 py-1.5">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
-                    {formatKickoff(new Date(match.kickoff))}
-                  </span>
-                  <Pill tone={settled ? "teal" : open ? "open" : "muted"}>
-                    {settled
-                      ? tJornada("statusFinished")
-                      : open
-                        ? tJornada("statusOpen")
-                        : tJornada("statusLive")}
-                  </Pill>
-                </div>
-                <div className="flex items-center justify-between gap-2.5 p-2.5">
-                  <span className="flex-1 font-sans text-[12.5px] font-semibold">
-                    {match.homeTeam} – {match.awayTeam}
-                  </span>
-                  <span className="border-2 border-border-strong px-2 py-1.5 font-mono text-sm font-bold">
-                    {p.homeScore}-{p.awayScore}
-                  </span>
-                  <span
-                    className={cn(
-                      "min-w-[56px] text-right font-mono text-xs font-bold",
-                      settled ? "text-teal" : "text-muted",
-                    )}
-                  >
-                    {delta}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
+      {slots.length > 0 && (
+        <div className="flex items-center justify-between gap-2.5 border-2 border-teal bg-highlight-bg px-3 py-2.5">
+          <span className="font-sans text-[11.5px] font-semibold leading-snug text-text-secondary">
+            {!isOpen
+              ? tBoard("hintLocked")
+              : remaining > 0
+                ? tBoard("hint", { count: remaining })
+                : tBoard("hintNone")}
+          </span>
+          <span className="font-mono text-xs font-bold text-teal">
+            {tBoard("progress", { used: played.length, total: slots.length })}
+          </span>
         </div>
       )}
 
-      {selectedMatch && (
-        <PredictionSheet
-          isOpen
-          onClose={() => setSelectedMatchId(null)}
+      {slots.length === 0 ? (
+        <p className="text-sm text-muted">{tBoard("notReady")}</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-2.5">
+          {slots.map((slot) => (
+            <SlotCard
+              key={slot.id}
+              slot={slot}
+              entry={entryBySlot.get(slot.id)}
+              matches={matches}
+              interactive={isOpen}
+              onOpen={() => setOpenSlotId(slot.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <>
+          <div className="mt-1.5 border-b-2 border-border pb-2 font-sans text-[13.5px] font-extrabold uppercase">
+            {t("historyTitle")}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {history.map((row) => (
+              <RoundHistoryCard
+                key={row.matchday}
+                row={row}
+                label={tPerfil("historyRound", {
+                  round: row.matchday,
+                  competition: tGroup(`competitions.${competition}`),
+                })}
+                meta={tPerfil("historyMeta", {
+                  count: row.picks,
+                  hits: row.hits,
+                })}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {openSlot && (
+        <ChallengeSheet
+          onClose={() => setOpenSlotId(null)}
           groupId={groupId}
-          match={{
-            id: selectedMatch.id,
-            homeTeam: selectedMatch.homeTeam,
-            awayTeam: selectedMatch.awayTeam,
-            kickoff: new Date(selectedMatch.kickoff),
-          }}
-          existing={selectedPred ?? null}
-          maxPoints={maxPoints}
-          maxWagerPerMatch={maxWagerPerMatch}
+          slot={openSlot}
+          matches={matches}
+          existing={entryBySlot.get(openSlot.id) ?? null}
+          jokerHolder={
+            jokerSlug && jokerSlug !== openSlot.slug
+              ? tChallenge(`${jokerSlug}.name`)
+              : null
+          }
         />
       )}
+    </div>
+  );
+}
+
+function RoundHistoryCard({
+  row,
+  label,
+  meta,
+}: {
+  row: MatchdayHistoryRow;
+  label: string;
+  meta: string;
+}) {
+  const hitPct = row.picks > 0 ? (row.hits / row.picks) * 100 : 0;
+  const missPct = row.picks > 0 ? (row.misses / row.picks) * 100 : 0;
+
+  return (
+    <div className="flex flex-col border-2 border-border bg-surface">
+      <div className="flex items-start justify-between gap-1 p-2">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate font-sans text-[10.5px] font-semibold">{label}</span>
+          <span className="font-mono text-[8px] uppercase tracking-[0.08em] text-muted">
+            {meta}
+          </span>
+        </div>
+        <span
+          className={cn(
+            "shrink-0 font-mono text-xs font-bold",
+            row.netDelta >= 0 ? "text-teal" : "text-danger",
+          )}
+        >
+          {row.netDelta >= 0 ? `+${row.netDelta}` : row.netDelta}
+        </span>
+      </div>
+      <SegmentedBar
+        segments={[
+          { pct: hitPct, tone: "hit" },
+          { pct: missPct, tone: "partial" },
+        ]}
+      />
     </div>
   );
 }
