@@ -2,7 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, roundChallenges, rounds } from "@/lib/db/schema";
 import { CORE_CHALLENGE_SLUGS, getChallenge } from "@/lib/challenges/registry";
-import type { ChallengeTargetKind } from "@/lib/challenges/types";
+import type { ChallengeTargetKind, TargetSide } from "@/lib/challenges/types";
 import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
 import { getCurrentRound } from "@/lib/queries/matchday";
 import { getRoundMatches } from "@/lib/queries/matches";
@@ -22,6 +22,7 @@ export type BoardSlot = {
   slug: string;
   position: number;
   targetKind: ChallengeTargetKind;
+  requiredSide?: TargetSide;
   reward: number;
   penalty: number;
 };
@@ -49,6 +50,7 @@ async function loadSlots(roundId: string): Promise<BoardSlot[]> {
         slug: row.slug,
         position: row.position,
         targetKind: challenge.targetKind,
+        requiredSide: challenge.requiredSide,
         reward: challenge.reward,
         penalty: challenge.penalty,
       },

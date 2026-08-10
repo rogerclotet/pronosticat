@@ -72,6 +72,18 @@ describe("normalizeTarget", () => {
     ).toThrow("Pick a scoreline");
   });
 
+  it("accepts the required side for a one-sided team challenge", () => {
+    expect(
+      normalizeTarget("team", { targetMatchId: "a", targetSide: "away" }, "away"),
+    ).toMatchObject({ targetMatchId: "a", targetSide: "away" });
+  });
+
+  it("rejects the wrong side for a one-sided team challenge", () => {
+    expect(() =>
+      normalizeTarget("team", { targetMatchId: "a", targetSide: "home" }, "away"),
+    ).toThrow("only takes the away team");
+  });
+
   it("keeps only the number for a number challenge", () => {
     expect(
       normalizeTarget("number", { numericValue: 24, targetMatchId: "a" }),

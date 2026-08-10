@@ -73,22 +73,26 @@ export function TeamPicker({
   selectedMatchId,
   selectedSide,
   onSelect,
+  requiredSide,
   teamsInUse = EMPTY_TEAMS_IN_USE,
 }: {
   matches: BoardMatch[];
   selectedMatchId: string | null;
   selectedSide: TargetSide | null;
   onSelect: (matchId: string, side: TargetSide) => void;
+  /** When set, only that side of each fixture can be picked. */
+  requiredSide?: TargetSide;
   teamsInUse?: Map<string, string>;
 }) {
   const t = useTranslations("sheet");
+  const sides = requiredSide ? ([requiredSide] as const) : (["home", "away"] as const);
 
   return (
     <div className="flex flex-col gap-1.5">
       {matches.map((match) => (
         <div key={match.id} className="flex flex-col gap-1">
           <div className="flex">
-            {(["home", "away"] as const).map((side) => {
+            {sides.map((side, i) => {
               const selected =
                 match.id === selectedMatchId && side === selectedSide;
               const name = teamName(match, side);
@@ -101,7 +105,8 @@ export function TeamPicker({
                   onClick={() => onSelect(match.id, side)}
                   className={cn(
                     "flex flex-1 items-center gap-2 border-2 px-2 py-2.5 text-left",
-                    side === "away" && "-ml-0.5",
+                    // Collapse the shared border between adjacent sides.
+                    i > 0 && "-ml-0.5",
                     selected && "relative z-10",
                     disabled
                       ? "border-border bg-surface opacity-50"
@@ -118,7 +123,7 @@ export function TeamPicker({
               );
             })}
           </div>
-          {(["home", "away"] as const).map((side) => {
+          {sides.map((side) => {
             const name = teamName(match, side);
             const challenge = teamsInUse.get(name);
             return challenge ? (

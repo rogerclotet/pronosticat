@@ -31,9 +31,15 @@ function requireMatch(input: EntryInput): string {
   return input.targetMatchId;
 }
 
-function requireSide(input: EntryInput): TargetSide {
+function requireSide(
+  input: EntryInput,
+  requiredSide: TargetSide | undefined,
+): TargetSide {
   if (input.targetSide !== "home" && input.targetSide !== "away") {
     throw new Error("Pick a team");
+  }
+  if (requiredSide && input.targetSide !== requiredSide) {
+    throw new Error(`This challenge only takes the ${requiredSide} team`);
   }
   return input.targetSide;
 }
@@ -77,6 +83,7 @@ export function teamsClaimed(
 export function normalizeTarget(
   kind: ChallengeTargetKind,
   input: EntryInput,
+  requiredSide?: TargetSide,
 ): NormalizedTarget {
   switch (kind) {
     case "match":
@@ -86,7 +93,7 @@ export function normalizeTarget(
       return {
         ...EMPTY,
         targetMatchId: requireMatch(input),
-        targetSide: requireSide(input),
+        targetSide: requireSide(input, requiredSide),
       };
 
     case "match_score":

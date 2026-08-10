@@ -10,6 +10,7 @@ const PENALTY = -20;
 export const upset: ChallengeDefinition = {
   slug: "upset",
   targetKind: "team",
+  requiredSide: "away",
   reward: REWARD,
   penalty: PENALTY,
   score: (target, round) => {

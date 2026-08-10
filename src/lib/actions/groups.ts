@@ -179,7 +179,7 @@ export async function saveEntry(data: SaveEntryInput) {
     throw new Error("Round is not part of this group's competition");
   }
 
-  const target = normalizeTarget(challenge.targetKind, data);
+  const target = normalizeTarget(challenge.targetKind, data, challenge.requiredSide);
   if (target.targetMatchId) {
     const match = await db.query.matches.findFirst({
       where: and(
