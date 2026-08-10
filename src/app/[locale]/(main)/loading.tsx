@@ -1,5 +1,5 @@
-import { JornadaSkeleton } from "@/components/jornada/jornada-skeleton";
+import { PredictionsSkeleton } from "@/components/predictions/predictions-skeleton";
 
 export default function Loading() {
-  return <JornadaSkeleton />;
+  return <PredictionsSkeleton />;
 }

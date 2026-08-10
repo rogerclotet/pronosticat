@@ -21,12 +21,21 @@ export const COMPETITIONS: Record<
 export const DATA_CACHE_TTL = 300;
 
 export const POINTS = {
-  EXACT_RESULT_MULTIPLIER: 3,
-  OUTCOME_MULTIPLIER: 1,
-  MIN_WAGER: 10,
-  MAX_WAGER: 100,
   DEFAULT_STARTING: 1000,
 } as const;
+
+/** The joker doubles both the reward and the penalty of the pick it is attached to. */
+export const JOKER_MULTIPLIER = 2;
+
+/**
+ * A round normally settles once every match is finished. Postponements would
+ * otherwise freeze the board forever, so after this grace period past the last
+ * kickoff the round settles with whatever was actually played.
+ */
+export const ROUND_SETTLE_GRACE_HOURS = 48;
+
+/** Upper bound for a predicted scoreline, so a crafted payload can't store nonsense. */
+export const MAX_PREDICTED_SCORE = 20;
 
 export function getOutcome(
   homeScore: number,
@@ -35,25 +44,6 @@ export function getOutcome(
   if (homeScore > awayScore) return "home";
   if (homeScore < awayScore) return "away";
   return "draw";
-}
-
-export function calculatePointsAwarded(
-  predictedHome: number,
-  predictedAway: number,
-  actualHome: number,
-  actualAway: number,
-  wager: number,
-): number {
-  const exactMatch =
-    predictedHome === actualHome && predictedAway === actualAway;
-  if (exactMatch) return wager * POINTS.EXACT_RESULT_MULTIPLIER;
-
-  const predictedOutcome = getOutcome(predictedHome, predictedAway);
-  const actualOutcome = getOutcome(actualHome, actualAway);
-  if (predictedOutcome === actualOutcome) {
-    return wager * POINTS.OUTCOME_MULTIPLIER;
-  }
-  return 0;
 }
 
 export function generateInviteCode(): string {

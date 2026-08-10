@@ -1,11 +1,5 @@
-import { Suspense } from "react";
-import { PredictionsSkeleton } from "@/components/predictions/predictions-skeleton";
-import { PredictionsContent } from "@/components/predictions/predictions-content";
+import { redirect } from "next/navigation";
 
-export default function PredictionsPage() {
-  return (
-    <Suspense fallback={<PredictionsSkeleton />}>
-      <PredictionsContent />
-    </Suspense>
-  );
+export default function PredictionsRedirectPage() {
+  redirect("/");
 }

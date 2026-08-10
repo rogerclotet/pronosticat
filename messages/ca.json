@@ -5,7 +5,7 @@
   },
   "nav": {
     "jornada": "Jornada",
-    "predictions": "Pronòstics",
+    "predictions": "Prediccions",
     "group": "Grup",
     "perfil": "Perfil"
   },
@@ -20,41 +20,128 @@
     "welcome": "Benvingut a Pronosticat",
     "welcomeSubtitle": "Crea grups amb amics i pronostica resultats de futbol"
   },
-  "topbar": {
-    "committed": "{points} EN JOC"
+  "challenges": {
+    "exact_score": {
+      "name": "El clàssic",
+      "rule": "Tria un partit i clava'n el resultat.",
+      "targetLabel": "PARTIT I RESULTAT"
+    },
+    "goal_fest": {
+      "name": "La golejada",
+      "rule": "El partit amb més gols de la jornada.",
+      "targetLabel": "PARTIT"
+    },
+    "thrashing": {
+      "name": "La pallissa",
+      "rule": "El partit amb més diferència de gols.",
+      "targetLabel": "PARTIT"
+    },
+    "goal_machine": {
+      "name": "La màquina",
+      "rule": "L'equip que marqui més gols de tota la jornada.",
+      "targetLabel": "EQUIP"
+    },
+    "banker": {
+      "name": "El segur",
+      "rule": "Un equip que guanya segur. Si falla, fa mal igual.",
+      "targetLabel": "EQUIP"
+    },
+    "the_bore": {
+      "name": "El rotllo",
+      "rule": "El partit amb menys gols de la jornada.",
+      "targetLabel": "PARTIT"
+    },
+    "upset": {
+      "name": "La sorpresa",
+      "rule": "Un equip visitant que guanya.",
+      "targetLabel": "EQUIP VISITANT"
+    },
+    "clean_sheet": {
+      "name": "Porteria a zero",
+      "rule": "Un equip que no encaixa cap gol.",
+      "targetLabel": "EQUIP"
+    },
+    "blank": {
+      "name": "Es queden a zero",
+      "rule": "Un equip que no marca cap gol.",
+      "targetLabel": "EQUIP"
+    },
+    "choke": {
+      "name": "El pringat",
+      "rule": "Un equip que perd el partit.",
+      "targetLabel": "EQUIP"
+    },
+    "draw_pick": {
+      "name": "L'empat",
+      "rule": "Un partit que acaba en empat.",
+      "targetLabel": "PARTIT"
+    },
+    "btts": {
+      "name": "Marquen tots dos",
+      "rule": "Un partit on marquen els dos equips.",
+      "targetLabel": "PARTIT"
+    },
+    "comeback": {
+      "name": "La remuntada",
+      "rule": "Un partit on qui anava perdent a la mitja part no perd al final.",
+      "targetLabel": "PARTIT"
+    },
+    "total_goals": {
+      "name": "El comptador",
+      "rule": "Quants gols hi haurà en tota la jornada.",
+      "targetLabel": "NOMBRE"
+    },
+    "home_wins": {
+      "name": "Mando de casa",
+      "rule": "Quants equips de casa guanyaran la jornada.",
+      "targetLabel": "NOMBRE"
+    }
   },
-  "jornada": {
+  "board": {
     "title": "Jornada {round} · {competition}",
-    "roundClose": "TANCA {time}",
-    "hint": "Encara tens {count, plural, one {# partit} other {# partits}} sense pronòstic.",
-    "hintNone": "Ja has fet tots els pronòstics d'aquesta jornada.",
+    "closes": "TANCA {time}",
+    "closed": "JORNADA TANCADA",
+    "settled": "JORNADA TANCADA I PAGADA",
+    "progress": "{used}/{total}",
+    "hint": "Et queden {count, plural, one {# casella} other {# caselles}} per omplir.",
+    "hintNone": "Tauler complet. Ara toca patir.",
+    "hintLocked": "La jornada ja ha començat. Res a tocar.",
+    "notReady": "El tauler d'aquesta jornada encara no està preparat.",
     "noMatches": "No hi ha partits en aquesta jornada",
-    "ctaPredict": "FES EL PRONÒSTIC",
-    "ctaPredicted": "PRONÒSTIC {home}-{away}",
-    "ctaLocked": "VAS DIR {home}-{away}",
-    "ctaNone": "SENSE PRONÒSTIC",
-    "statusOpen": "OBERT",
-    "statusLive": "EN JOC",
-    "statusFinished": "FINALITZAT"
-  },
-  "predictions": {
-    "title": "Els meus pronòstics",
-    "statMade": "PRONÒSTICS J{round}",
-    "statExact": "RESULTATS CLAVATS",
-    "statPoints": "PUNTS AQUESTA J.",
-    "noPredictions": "Encara no has fet cap pronòstic aquesta jornada.",
-    "reserved": "res."
+    "fixturesTitle": "Partits de la jornada",
+    "empty": "TRIA",
+    "payout": "+{reward} / {penalty}",
+    "jokerBadge": "JÒQUER",
+    "jokerFree": "Encara tens el jòquer",
+    "jokerUsed": "Jòquer a «{challenge}»",
+    "resultHit": "+{points}",
+    "resultMiss": "{points}",
+    "resultVoid": "ANUL·LADA"
   },
   "sheet": {
-    "stakeLabel": "PUNTS APOSTATS",
-    "exactLabel": "SI CLAVES EL RESULTAT",
-    "outLabel": "SI NOMÉS ENCERTES QUI GUANYA",
-    "lockNote": "Els punts es descompten quan xiula l'àrbitre. Fins llavors, canvia'l o cancel·la'l sense cost.",
-    "cancelLabel": "CANCEL·LA EL PRONÒSTIC",
-    "ctaNew": "BLOQUEJA EL PRONÒSTIC",
-    "ctaEdit": "ACTUALITZA EL PRONÒSTIC",
+    "pickMatch": "TRIA EL PARTIT",
+    "pickTeam": "TRIA L'EQUIP",
+    "pickScore": "EL TEU RESULTAT",
+    "pickNumber": "EL TEU NÚMERO",
+    "pickMatchFirst": "Tria un partit per posar-hi resultat.",
+    "jokerLabel": "FES SERVIR EL JÒQUER",
+    "jokerNote": "Dobla el premi i dobla el càstig. Un per jornada.",
+    "jokerTakenNote": "Ja el tens posat a «{challenge}».",
+    "lockNote": "Pots canviar-ho fins que comenci el primer partit de la jornada.",
+    "cancelLabel": "TREU LA JUGADA",
+    "ctaNew": "BLOQUEJA LA JUGADA",
+    "ctaEdit": "ACTUALITZA LA JUGADA",
+    "rewardLabel": "SI L'ENCERTES",
+    "penaltyLabel": "SI FALLES",
     "local": "Local",
     "visitant": "Visitant"
+  },
+  "predictions": {
+    "title": "Les meves jugades",
+    "statMade": "JUGADES J{round}",
+    "statHits": "ENCERTS",
+    "statPoints": "PUNTS AQUESTA JORNADA",
+    "historyTitle": "Jornades anteriors"
   },
   "group": {
     "title": "Classificació",
@@ -69,9 +156,9 @@
     "member": "Membre",
     "switch": "CANVIA DE GRUP →",
     "points": "Punts",
-    "correctResults": "Resultats exactes",
-    "correctOutcomes": "Resultats parcials",
-    "matchesPredicted": "Partits pronosticats",
+    "hits": "Encerts",
+    "misses": "Fallades",
+    "picksSettled": "Jugades resoltes",
     "noMembers": "No hi ha membres al grup",
     "codeCopied": "Codi copiat!",
     "competitions": {
@@ -90,21 +177,23 @@
   },
   "rival": {
     "meta": "{points} PUNTS · {delta} AQUESTA JORNADA",
-    "totalCorrect": "ENCERTS TOTALS",
-    "exactResults": "RESULTATS EXACTES",
+    "hits": "ENCERTS TOTALS",
+    "jokers": "JÒQUERS CLAVATS",
     "streak": "RATXA ACTUAL",
-    "predictionsTitle": "Pronòstics jornada {round}",
+    "predictionsTitle": "Jugades jornada {round}",
     "hidden": "OCULT FINS AL XIULET",
-    "masked": "· ·"
+    "masked": "· ·",
+    "noPicks": "Encara no ha posat res al tauler."
   },
   "perfil": {
     "title": "Perfil",
-    "balance": "SALDO DISPONIBLE",
-    "committed": "COMPROMESOS",
+    "balance": "PUNTS",
+    "pending": "JUGADES OBERTES",
     "thisWeek": "AQUESTA SETMANA",
+    "swing": "EN JOC",
     "historyTitle": "Historial de jornades",
     "historyRound": "Jornada {round} · {competition}",
-    "historyMeta": "{count} PRONÒSTICS · {exact} EXACTES",
+    "historyMeta": "{count} JUGADES · {hits} ENCERTS",
     "viewOnboarding": "VEURE ONBOARDING / CREAR GRUP",
     "signOut": "Sortir",
     "noHistory": "Encara no tens jornades tancades."
@@ -121,11 +210,6 @@
     "codeLabel": "CODI D'ENTRADA",
     "joinCta": "UNEIX-TE AL GRUP",
     "createInsteadAlt": "CREA UN GRUP NOU",
-    "pointsTitle": "Reparteix punts",
-    "pointsBody": "Tothom arrenca igual. A partir d'aquí, cadascú s'ho fa.",
-    "startingPointsLabel": "PUNTS INICIALS PER JUGADOR",
-    "maxWagerLabel": "APOSTA MÀXIMA PER PARTIT",
-    "continueCta": "CONTINUA",
     "inviteTitle": "Convida la penya",
     "inviteBody": "Comparteix el codi. Sense gent no hi ha pica-pica.",
     "groupCodeLabel": "CODI DEL GRUP",
@@ -139,6 +223,11 @@
     "finished": "Acabat",
     "postponed": "Ajornat",
     "cancelled": "Cancel·lat"
+  },
+  "jornada": {
+    "statusOpen": "OBERT",
+    "statusLive": "EN JOC",
+    "statusFinished": "FINALITZAT"
   },
   "common": {
     "loading": "Carregant...",

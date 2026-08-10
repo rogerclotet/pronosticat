@@ -1,11 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { getCommittedPoints } from "@/lib/actions/stats";
-import {
-  getCachedActiveGroup,
-  getCachedMemberPoints,
-  getCachedSession,
-} from "@/lib/queries/cached";
+import { getCachedActiveGroup, getCachedSession } from "@/lib/queries/cached";
 
 export default async function MainLayout({
   children,
@@ -22,16 +17,9 @@ export default async function MainLayout({
     redirect("/onboarding");
   }
 
-  const [balance, committedPoints] = await Promise.all([
-    getCachedMemberPoints(session.user.id, activeGroup.id),
-    getCommittedPoints(session.user.id, activeGroup.id),
-  ]);
-
   return (
     <AppShell
       groupName={activeGroup.name}
-      balance={balance}
-      committedPoints={committedPoints}
       userId={session.user.id}
       activeGroupId={activeGroup.id}
       competition={activeGroup.competition}

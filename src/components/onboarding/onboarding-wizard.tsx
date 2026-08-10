@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
-import { createGroup, joinGroup, updateGroupSettings } from "@/lib/actions/groups";
+import { createGroup, joinGroup } from "@/lib/actions/groups";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { POINTS, type Competition } from "@/lib/constants";
+import type { Competition } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-type View = "create-1" | "create-2" | "create-3" | "join";
+type View = "create-1" | "create-2" | "join";
 
-const CREATE_STEPS: View[] = ["create-1", "create-2", "create-3"];
+const CREATE_STEPS: View[] = ["create-1", "create-2"];
 
 export function OnboardingWizard({ initialMode }: { initialMode: "create" | "join" }) {
   const t = useTranslations("onboarding");
@@ -23,8 +23,6 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
   const [competition, setCompetition] = useState<Competition>("laliga");
   const [code, setCode] = useState("");
   const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [groupId, setGroupId] = useState<string | null>(null);
-  const [maxWagerPerMatch, setMaxWagerPerMatch] = useState<number>(POINTS.MAX_WAGER);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +32,6 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
     setError(null);
     try {
       const group = await createGroup({ name, competition });
-      setGroupId(group.id);
       setInviteCode(group.inviteCode);
       setView("create-2");
     } catch {
@@ -51,21 +48,6 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
     try {
       await joinGroup(code);
       router.replace("/");
-    } catch {
-      setError(t("error"));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleCreateStep2(e: React.FormEvent) {
-    e.preventDefault();
-    if (!groupId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      await updateGroupSettings({ groupId, maxWagerPerMatch });
-      setView("create-3");
     } catch {
       setError(t("error"));
     } finally {
@@ -148,39 +130,6 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
     );
   }
 
-  if (view === "create-2") {
-    return (
-      <OnboardingScreen
-        title={t("pointsTitle")}
-        body={t("pointsBody")}
-        onSubmit={handleCreateStep2}
-        error={error}
-        loading={loading}
-        fields={[
-          {
-            label: t("startingPointsLabel"),
-            input: <StaticValue value={POINTS.DEFAULT_STARTING} accent />,
-          },
-          {
-            label: t("maxWagerLabel"),
-            input: (
-              <Input
-                type="number"
-                min={POINTS.MIN_WAGER}
-                step={10}
-                value={maxWagerPerMatch}
-                onChange={(e) => setMaxWagerPerMatch(Number(e.target.value))}
-                required
-              />
-            ),
-          },
-        ]}
-        cta={t("continueCta")}
-        step={{ index: 1, total: CREATE_STEPS.length }}
-      />
-    );
-  }
-
   return (
     <OnboardingScreen
       title={t("inviteTitle")}
@@ -196,7 +145,7 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
         },
       ]}
       cta={t("finishCta")}
-      step={{ index: 2, total: CREATE_STEPS.length }}
+      step={{ index: 1, total: CREATE_STEPS.length }}
     />
   );
 }

@@ -1,107 +1,148 @@
 "use server";
 
-import { eq, and, lte, isNull } from "drizzle-orm";
+import { and, eq, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, predictions, groupMembers } from "@/lib/db/schema";
-import { calculatePointsAwarded } from "@/lib/constants";
+import {
+  entries,
+  groupMembers,
+  matches,
+  rounds,
+} from "@/lib/db/schema";
+import { scoreEntry } from "@/lib/challenges/score";
+import {
+  isRoundSettleable,
+  toResolvedMatches,
+} from "@/lib/rounds/lifecycle";
+import { ensureRounds } from "@/lib/rounds/ensure";
 import { syncActiveCompetitions } from "@/lib/sync/run";
 
-export async function lockStartedPredictions() {
+/** Reflect kickoffs in match status between syncs (and for dev fixtures). */
+async function markKickedOffMatchesLive(now: Date) {
+  await db
+    .update(matches)
+    .set({ status: "live", updatedAt: now })
+    .where(and(eq(matches.status, "scheduled"), lte(matches.kickoff, now)));
+}
+
+/**
+ * Close the board at the round's first kickoff. Nothing is charged here — the
+ * slots are free, points only move at settlement.
+ */
+export async function lockOpenRounds() {
   const now = new Date();
-  const startedMatches = await db.query.matches.findMany({
-    where: and(eq(matches.status, "scheduled"), lte(matches.kickoff, now)),
-  });
+  await markKickedOffMatchesLive(now);
 
-  for (const match of startedMatches) {
-    await db
-      .update(matches)
-      .set({ status: "live", updatedAt: now })
-      .where(eq(matches.id, match.id));
+  const due = await db
+    .select({ id: rounds.id })
+    .from(rounds)
+    .where(and(eq(rounds.status, "open"), lte(rounds.lockAt, now)));
 
-    const unlockedPreds = await db.query.predictions.findMany({
-      where: and(
-        eq(predictions.matchId, match.id),
-        isNull(predictions.lockedAt),
-      ),
+  for (const { id } of due) {
+    await db.transaction(async (tx) => {
+      const claimed = await tx
+        .update(rounds)
+        .set({ status: "locked", updatedAt: now })
+        .where(and(eq(rounds.id, id), eq(rounds.status, "open")))
+        .returning({ id: rounds.id });
+      if (claimed.length === 0) return;
+
+      await tx
+        .update(entries)
+        .set({ lockedAt: now, updatedAt: now })
+        .where(and(eq(entries.roundId, id), isNull(entries.lockedAt)));
     });
-
-    for (const pred of unlockedPreds) {
-      await db
-        .update(predictions)
-        .set({ lockedAt: now })
-        .where(eq(predictions.id, pred.id));
-
-      const member = await db.query.groupMembers.findFirst({
-        where: and(
-          eq(groupMembers.userId, pred.userId),
-          eq(groupMembers.groupId, pred.groupId),
-        ),
-      });
-
-      if (member) {
-        await db
-          .update(groupMembers)
-          .set({ points: member.points - pred.wager })
-          .where(eq(groupMembers.id, member.id));
-      }
-    }
   }
 }
 
-export async function awardFinishedMatchPoints() {
-  const finishedMatches = await db.query.matches.findMany({
-    where: eq(matches.status, "finished"),
+export async function settleLockedRounds() {
+  const now = new Date();
+  const locked = await db.query.rounds.findMany({
+    where: eq(rounds.status, "locked"),
   });
 
-  for (const match of finishedMatches) {
-    if (match.homeScore === null || match.awayScore === null) continue;
-
-    const preds = await db.query.predictions.findMany({
+  for (const round of locked) {
+    const roundMatches = await db.query.matches.findMany({
       where: and(
-        eq(predictions.matchId, match.id),
-        isNull(predictions.pointsAwarded),
+        eq(matches.competition, round.competition),
+        eq(matches.matchday, round.matchday),
       ),
     });
+    if (!isRoundSettleable(roundMatches, now)) continue;
 
-    for (const pred of preds) {
-      const awarded = calculatePointsAwarded(
-        pred.homeScore,
-        pred.awayScore,
-        match.homeScore,
-        match.awayScore,
-        pred.wager,
+    await settleRound(round.id, toResolvedMatches(roundMatches), now);
+  }
+}
+
+async function settleRound(
+  id: string,
+  resolved: ReturnType<typeof toResolvedMatches>,
+  now: Date,
+) {
+  await db.transaction(async (tx) => {
+    // Claiming the round first makes this row the mutex: a concurrent cron tick
+    // blocks here, then finds the round settled and does nothing.
+    const claimed = await tx
+      .update(rounds)
+      .set({ status: "settled", settledAt: now, updatedAt: now })
+      .where(and(eq(rounds.id, id), eq(rounds.status, "locked")))
+      .returning({ id: rounds.id });
+    if (claimed.length === 0) return;
+
+    const pending = await tx.query.entries.findMany({
+      where: and(eq(entries.roundId, id), isNull(entries.pointsAwarded)),
+      with: { roundChallenge: true },
+    });
+
+    const deltas = new Map<string, number>();
+
+    for (const entry of pending) {
+      const points = scoreEntry(
+        entry.roundChallenge.slug,
+        {
+          matchId: entry.targetMatchId,
+          side: entry.targetSide,
+          predictedHome: entry.predictedHome,
+          predictedAway: entry.predictedAway,
+          numericValue: entry.numericValue,
+          isJoker: entry.isJoker,
+        },
+        resolved,
       );
 
-      await db
-        .update(predictions)
-        .set({ pointsAwarded: awarded })
-        .where(eq(predictions.id, pred.id));
+      // A void pick scores nothing rather than counting as a miss.
+      await tx
+        .update(entries)
+        .set({ pointsAwarded: points ?? 0, updatedAt: now })
+        .where(eq(entries.id, entry.id));
 
-      if (awarded > 0) {
-        const member = await db.query.groupMembers.findFirst({
-          where: and(
-            eq(groupMembers.userId, pred.userId),
-            eq(groupMembers.groupId, pred.groupId),
-          ),
-        });
-        if (member) {
-          await db
-            .update(groupMembers)
-            .set({ points: member.points + awarded })
-            .where(eq(groupMembers.id, member.id));
-        }
+      if (points) {
+        const key = `${entry.groupId}:${entry.userId}`;
+        deltas.set(key, (deltas.get(key) ?? 0) + points);
       }
     }
-  }
+
+    for (const [key, delta] of deltas) {
+      const [groupId, userId] = key.split(":");
+      await tx
+        .update(groupMembers)
+        .set({ points: sql`${groupMembers.points} + ${delta}` })
+        .where(
+          and(
+            eq(groupMembers.groupId, groupId),
+            eq(groupMembers.userId, userId),
+          ),
+        );
+    }
+  });
 }
 
 export async function runScoreOnly() {
-  await lockStartedPredictions();
-  await awardFinishedMatchPoints();
+  await ensureRounds();
+  await lockOpenRounds();
+  await settleLockedRounds();
 }
 
 export async function runSyncAndScore() {
   await syncActiveCompetitions();
-  await lockStartedPredictions();
-  await awardFinishedMatchPoints();
+  await runScoreOnly();
 }

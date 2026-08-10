@@ -29,12 +29,17 @@ const getCachedRoundMatches = unstable_cache(
   { revalidate: DATA_CACHE_TTL, tags: ["matches"] },
 );
 
+export async function getRoundMatches(
+  competition: Competition,
+  matchday: number,
+) {
+  return hydrateMatchDates(await getCachedRoundMatches(competition, matchday));
+}
+
 export async function getCurrentRoundMatches(competition: Competition) {
   try {
     const matchday = await getCurrentMatchdayFromDb(competition);
-    return hydrateMatchDates(
-      await getCachedRoundMatches(competition, matchday),
-    );
+    return getRoundMatches(competition, matchday);
   } catch (error) {
     console.error("[pronosticat] getCurrentRoundMatches failed:", error);
     throw error;

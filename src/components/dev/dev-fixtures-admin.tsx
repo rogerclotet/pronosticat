@@ -13,9 +13,19 @@ import {
   finishMatchAction,
   runDevScoreAction,
   simulateKickoffAction,
+  simulateRoundKickoffAction,
   updateDevFixtureAction,
 } from "@/lib/dev/actions";
 import { cn, formatKickoff } from "@/lib/utils";
+
+type DevRound = {
+  id: string;
+  competition: Competition;
+  matchday: number;
+  status: "open" | "locked" | "settled";
+  lockAt: Date;
+  challengeCount: number;
+};
 
 type DevMatch = {
   id: string;
@@ -31,6 +41,7 @@ type DevMatch = {
 
 type DevFixturesAdminProps = {
   initialMatches: DevMatch[];
+  rounds: DevRound[];
 };
 
 const COMPETITION_OPTIONS = Object.keys(COMPETITIONS) as Competition[];
@@ -56,7 +67,16 @@ function statusTone(
   return "danger";
 }
 
-export function DevFixturesAdmin({ initialMatches }: DevFixturesAdminProps) {
+function roundTone(status: DevRound["status"]): "open" | "live" | "muted" {
+  if (status === "open") return "open";
+  if (status === "locked") return "live";
+  return "muted";
+}
+
+export function DevFixturesAdmin({
+  initialMatches,
+  rounds,
+}: DevFixturesAdminProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<Competition | "all">("all");
   const [message, setMessage] = useState<string | null>(null);
@@ -109,8 +129,8 @@ export function DevFixturesAdmin({ initialMatches }: DevFixturesAdminProps) {
           Dev Fixtures
         </h1>
         <p className="text-sm text-text-secondary">
-          Create fake matches, simulate kickoff, set results, and run wager
-          scoring without curl or football-data.org.
+          Create fake matches, lock a round, set results, and settle the
+          challenge board without curl or football-data.org.
         </p>
       </header>
 
@@ -125,6 +145,53 @@ export function DevFixturesAdmin({ initialMatches }: DevFixturesAdminProps) {
           {error ?? message}
         </Card>
       )}
+
+      <Card className="flex flex-col gap-4">
+        <h2 className="font-bold uppercase tracking-wide">Rounds</h2>
+        {rounds.length === 0 ? (
+          <p className="text-sm text-muted">
+            No rounds yet. Create fixtures, then hit “Run scoring” to build the
+            boards.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {rounds.map((round) => (
+              <div
+                key={round.id}
+                className="flex flex-wrap items-center justify-between gap-3 border-2 border-border bg-background px-3 py-2"
+              >
+                <div className="flex flex-col gap-1">
+                  <span className="font-mono text-sm font-bold">
+                    {COMPETITION_LABELS[round.competition]} · J{round.matchday}
+                  </span>
+                  <span className="font-mono text-[10px] text-muted">
+                    {round.challengeCount} challenges · locks{" "}
+                    {formatKickoff(round.lockAt)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Pill tone={roundTone(round.status)}>{round.status}</Pill>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={isPending || round.status !== "open"}
+                    onClick={() =>
+                      runAction(async () => {
+                        await simulateRoundKickoffAction(
+                          round.competition,
+                          round.matchday,
+                        );
+                      }, `Locked ${COMPETITION_LABELS[round.competition]} J${round.matchday}`)
+                    }
+                  >
+                    Lock round
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       <Card className="flex flex-col gap-4">
         <h2 className="font-bold uppercase tracking-wide">Create fixture</h2>

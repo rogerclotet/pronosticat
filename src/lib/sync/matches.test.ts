@@ -42,7 +42,7 @@ function makeMatch(overrides: Partial<FootballDataMatch> = {}): FootballDataMatc
       shortName: "Fake",
       crest: "https://example.com/fake.png",
     },
-    score: { fullTime: { home: 2, away: 1 } },
+    score: { fullTime: { home: 2, away: 1 }, halfTime: { home: 1, away: 0 } },
     ...overrides,
   };
 }
@@ -70,6 +70,8 @@ describe("syncMatchesToDb", () => {
       awayTeamCrest: "https://example.com/fake.png",
       homeScore: 2,
       awayScore: 1,
+      homeScoreHt: 1,
+      awayScoreHt: 0,
       matchday: 4,
       status: mapMatchStatus("FINISHED"),
       kickoff: new Date("2026-08-03T20:00:00Z"),
@@ -79,9 +81,40 @@ describe("syncMatchesToDb", () => {
         set: expect.objectContaining({
           homeScore: 2,
           awayScore: 1,
+          homeScoreHt: 1,
+          awayScoreHt: 0,
           status: "finished",
         }),
       }),
+    );
+  });
+
+  it("moves rescheduled fixtures on conflict, so round deadlines follow", async () => {
+    vi.mocked(fetchCompetitionMatches).mockResolvedValue([
+      makeMatch({ utcDate: "2026-08-10T18:00:00Z", matchday: 5 }),
+    ]);
+
+    await syncMatchesToDb("laliga");
+
+    expect(mockOnConflictDoUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        set: expect.objectContaining({
+          kickoff: new Date("2026-08-10T18:00:00Z"),
+          matchday: 5,
+        }),
+      }),
+    );
+  });
+
+  it("tolerates a payload without half-time scores", async () => {
+    vi.mocked(fetchCompetitionMatches).mockResolvedValue([
+      makeMatch({ score: { fullTime: { home: null, away: null } } }),
+    ]);
+
+    await syncMatchesToDb("laliga");
+
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({ homeScoreHt: null, awayScoreHt: null }),
     );
   });
 

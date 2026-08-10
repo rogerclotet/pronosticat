@@ -10,6 +10,7 @@ export type FootballDataMatch = {
   awayTeam: { id: number; name: string; shortName: string; crest: string };
   score: {
     fullTime: { home: number | null; away: number | null };
+    halfTime?: { home: number | null; away: number | null };
   };
 };
 

@@ -1,12 +1,13 @@
 "use server";
 
-import { eq, and, desc, sql, count, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, count, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
+  entries,
   groups,
   groupMembers,
   matches,
-  predictions,
+  roundChallenges,
   userActiveGroup,
   user,
 } from "@/lib/db/schema";
@@ -17,7 +18,10 @@ import {
   POINTS,
   type Competition,
 } from "@/lib/constants";
+import { getChallenge } from "@/lib/challenges/registry";
+import { normalizeTarget, type EntryInput } from "@/lib/challenges/validate";
 import { getCurrentRoundMatches as fetchCurrentRoundMatches } from "@/lib/queries/matches";
+import { getCurrentRoundBoard } from "@/lib/queries/round-board";
 import { syncMatches as syncCompetitionMatches } from "@/lib/sync/run";
 import { revalidatePath, revalidateTag } from "next/cache";
 
@@ -78,13 +82,11 @@ export async function createGroup(data: {
   name: string;
   competition: Competition;
   startingPoints?: number;
-  maxWagerPerMatch?: number;
 }) {
   const session = await requireSession();
   const id = generateId();
   const inviteCode = generateInviteCode();
   const startingPoints = data.startingPoints ?? POINTS.DEFAULT_STARTING;
-  const maxWagerPerMatch = data.maxWagerPerMatch ?? POINTS.MAX_WAGER;
 
   await db.insert(groups).values({
     id,
@@ -92,7 +94,6 @@ export async function createGroup(data: {
     competition: data.competition,
     inviteCode,
     startingPoints,
-    maxWagerPerMatch,
     createdById: session.user.id,
   });
 
@@ -111,7 +112,7 @@ export async function createGroup(data: {
 
 export async function updateGroupSettings(data: {
   groupId: string;
-  maxWagerPerMatch: number;
+  name: string;
 }) {
   const session = await requireSession();
 
@@ -123,13 +124,13 @@ export async function updateGroupSettings(data: {
     ),
   });
   if (!member) throw new Error("Not authorized");
-  if (data.maxWagerPerMatch < POINTS.MIN_WAGER) {
-    throw new Error("Invalid max wager");
-  }
+
+  const name = data.name.trim();
+  if (!name) throw new Error("Invalid group name");
 
   await db
     .update(groups)
-    .set({ maxWagerPerMatch: data.maxWagerPerMatch, updatedAt: new Date() })
+    .set({ name, updatedAt: new Date() })
     .where(eq(groups.id, data.groupId));
 
   revalidatePath("/");
@@ -183,49 +184,52 @@ export async function syncMatches(competition: Competition) {
   await syncCompetitionMatches(competition);
 }
 
-/** Server action wrapper for client components (e.g. rival sheet). */
+/** Server action wrappers for client components (e.g. rival sheet). */
 export async function getCurrentRoundMatches(competition: Competition) {
   return fetchCurrentRoundMatches(competition);
 }
 
-export async function getUserPredictions(
+export async function getRoundBoardForClient(competition: Competition) {
+  return getCurrentRoundBoard(competition);
+}
+
+export async function getUserEntries(
   userId: string,
   groupId: string,
-  matchIds: string[],
+  roundId: string,
 ) {
-  if (matchIds.length === 0) return [];
-  return db.query.predictions.findMany({
+  return db.query.entries.findMany({
     where: and(
-      eq(predictions.userId, userId),
-      eq(predictions.groupId, groupId),
-      inArray(predictions.matchId, matchIds),
+      eq(entries.userId, userId),
+      eq(entries.groupId, groupId),
+      eq(entries.roundId, roundId),
     ),
+    with: { roundChallenge: true, targetMatch: true },
   });
 }
 
-export async function savePrediction(data: {
+export type SaveEntryInput = EntryInput & {
   groupId: string;
-  matchId: string;
-  homeScore: number;
-  awayScore: number;
-  wager: number;
-}) {
+  roundChallengeId: string;
+  isJoker?: boolean;
+};
+
+export async function saveEntry(data: SaveEntryInput) {
   const session = await requireSession();
 
-  const group = await db.query.groups.findFirst({
-    where: eq(groups.id, data.groupId),
+  const slot = await db.query.roundChallenges.findFirst({
+    where: eq(roundChallenges.id, data.roundChallengeId),
+    with: { round: true },
   });
-  if (!group) throw new Error("Group not found");
-  if (data.wager < POINTS.MIN_WAGER || data.wager > group.maxWagerPerMatch) {
-    throw new Error("Invalid wager");
+  if (!slot) throw new Error("Challenge not found");
+
+  const { round } = slot;
+  if (round.status !== "open" || new Date() >= round.lockAt) {
+    throw new Error("Round already locked");
   }
 
-  const match = await db.query.matches.findFirst({
-    where: eq(matches.id, data.matchId),
-  });
-  if (!match) throw new Error("Match not found");
-  if (match.status !== "scheduled") throw new Error("Match already started");
-  if (new Date() >= match.kickoff) throw new Error("Match already started");
+  const challenge = getChallenge(slot.slug);
+  if (!challenge) throw new Error("Challenge not available");
 
   const member = await db.query.groupMembers.findFirst({
     where: and(
@@ -234,118 +238,114 @@ export async function savePrediction(data: {
     ),
   });
   if (!member) throw new Error("Not a group member");
-  if (member.points < data.wager) throw new Error("Insufficient points");
 
-  const existing = await db.query.predictions.findFirst({
+  const target = normalizeTarget(challenge.targetKind, data);
+  if (target.targetMatchId) {
+    const match = await db.query.matches.findFirst({
+      where: and(
+        eq(matches.id, target.targetMatchId),
+        eq(matches.competition, round.competition),
+        eq(matches.matchday, round.matchday),
+      ),
+    });
+    if (!match) throw new Error("Match is not in this round");
+  }
+
+  const isJoker = data.isJoker ?? false;
+  if (isJoker) await assertJokerFree(session.user.id, data.groupId, round.id, slot.id);
+
+  const existing = await db.query.entries.findFirst({
     where: and(
-      eq(predictions.userId, session.user.id),
-      eq(predictions.groupId, data.groupId),
-      eq(predictions.matchId, data.matchId),
+      eq(entries.userId, session.user.id),
+      eq(entries.groupId, data.groupId),
+      eq(entries.roundChallengeId, slot.id),
     ),
   });
 
   if (existing) {
     await db
-      .update(predictions)
-      .set({
-        homeScore: data.homeScore,
-        awayScore: data.awayScore,
-        wager: data.wager,
-        updatedAt: new Date(),
-      })
-      .where(eq(predictions.id, existing.id));
+      .update(entries)
+      .set({ ...target, isJoker, updatedAt: new Date() })
+      .where(eq(entries.id, existing.id));
   } else {
-    await db.insert(predictions).values({
+    await db.insert(entries).values({
       id: generateId(),
       userId: session.user.id,
       groupId: data.groupId,
-      matchId: data.matchId,
-      homeScore: data.homeScore,
-      awayScore: data.awayScore,
-      wager: data.wager,
+      roundChallengeId: slot.id,
+      roundId: round.id,
+      isJoker,
+      ...target,
     });
   }
 
-  revalidatePath("/predictions");
-  revalidatePath("/");
-  revalidateTag("predictions", "max");
+  revalidateEntries();
 }
 
-export async function deletePrediction(predictionId: string) {
+/** The joker is one per round: refuse rather than silently move it. */
+async function assertJokerFree(
+  userId: string,
+  groupId: string,
+  roundId: string,
+  slotId: string,
+) {
+  const other = await db.query.entries.findFirst({
+    where: and(
+      eq(entries.userId, userId),
+      eq(entries.groupId, groupId),
+      eq(entries.roundId, roundId),
+      eq(entries.isJoker, true),
+      ne(entries.roundChallengeId, slotId),
+    ),
+  });
+  if (other) throw new Error("Joker already used this round");
+}
+
+export async function deleteEntry(entryId: string) {
   const session = await requireSession();
-  const prediction = await db.query.predictions.findFirst({
-    where: eq(predictions.id, predictionId),
-    with: { match: true },
+  const entry = await db.query.entries.findFirst({
+    where: eq(entries.id, entryId),
+    with: { round: true },
   });
 
-  if (!prediction || prediction.userId !== session.user.id) {
-    throw new Error("Not found");
-  }
-  if (prediction.lockedAt || prediction.match.status !== "scheduled") {
-    throw new Error("Cannot delete locked prediction");
+  if (!entry || entry.userId !== session.user.id) throw new Error("Not found");
+  if (entry.lockedAt || entry.round.status !== "open") {
+    throw new Error("Round already locked");
   }
 
-  await db.delete(predictions).where(eq(predictions.id, predictionId));
-  revalidatePath("/predictions");
+  await db.delete(entries).where(eq(entries.id, entryId));
+  revalidateEntries();
+}
+
+function revalidateEntries() {
   revalidatePath("/");
+  revalidatePath("/jornada");
   revalidateTag("predictions", "max");
 }
 
 export async function getStandings(groupId: string) {
-  const members = await db
+  return db
     .select({
       userId: groupMembers.userId,
       name: user.name,
       points: groupMembers.points,
-      matchesPredicted: count(predictions.id),
-      correctResults: sql<number>`count(case when ${predictions.pointsAwarded} >= ${predictions.wager} * ${POINTS.EXACT_RESULT_MULTIPLIER} then 1 end)`,
-      correctOutcomes: sql<number>`count(case when ${predictions.pointsAwarded} > 0 and ${predictions.pointsAwarded} < ${predictions.wager} * ${POINTS.EXACT_RESULT_MULTIPLIER} then 1 end)`,
+      picksSettled: count(entries.id),
+      hits: sql<number>`count(case when ${entries.pointsAwarded} > 0 then 1 end)`,
+      misses: sql<number>`count(case when ${entries.pointsAwarded} < 0 then 1 end)`,
     })
     .from(groupMembers)
     .innerJoin(user, eq(groupMembers.userId, user.id))
     .leftJoin(
-      predictions,
+      entries,
       and(
-        eq(predictions.userId, groupMembers.userId),
-        eq(predictions.groupId, groupId),
+        eq(entries.userId, groupMembers.userId),
+        eq(entries.groupId, groupId),
+        sql`${entries.pointsAwarded} is not null`,
       ),
     )
     .where(eq(groupMembers.groupId, groupId))
     .groupBy(groupMembers.userId, user.name, groupMembers.points)
     .orderBy(desc(groupMembers.points));
-
-  return members;
-}
-
-export async function getHomeSummary(userId: string, groupId: string) {
-  const points = await getMemberPoints(userId, groupId);
-  const activePredictions = await db
-    .select({ count: count() })
-    .from(predictions)
-    .innerJoin(matches, eq(predictions.matchId, matches.id))
-    .where(
-      and(
-        eq(predictions.userId, userId),
-        eq(predictions.groupId, groupId),
-        eq(matches.status, "scheduled"),
-      ),
-    );
-
-  const recentResults = await db.query.predictions.findMany({
-    where: and(
-      eq(predictions.userId, userId),
-      eq(predictions.groupId, groupId),
-    ),
-    with: { match: true },
-    orderBy: [desc(predictions.updatedAt)],
-    limit: 5,
-  });
-
-  return {
-    points,
-    activePredictions: activePredictions[0]?.count ?? 0,
-    recentResults: recentResults.filter((p) => p.match.status === "finished"),
-  };
 }
 
 export async function getGroupMembers(groupId: string) {

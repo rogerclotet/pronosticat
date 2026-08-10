@@ -1,13 +1,15 @@
 import {
   boolean,
+  index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 export const competitionEnum = pgEnum("competition", [
   "laliga",
@@ -22,6 +24,16 @@ export const matchStatusEnum = pgEnum("match_status", [
   "postponed",
   "cancelled",
 ]);
+
+/** A round is open for picks, locked at first kickoff, then settled once played. */
+export const roundStatusEnum = pgEnum("round_status", [
+  "open",
+  "locked",
+  "settled",
+]);
+
+/** Team targets are addressed as (match, side): a team plays exactly once per round. */
+export const targetSideEnum = pgEnum("target_side", ["home", "away"]);
 
 // Better Auth tables
 export const user = pgTable("user", {
@@ -81,7 +93,6 @@ export const groups = pgTable("groups", {
   competition: competitionEnum("competition").notNull(),
   inviteCode: text("invite_code").notNull().unique(),
   startingPoints: integer("starting_points").notNull().default(1000),
-  maxWagerPerMatch: integer("max_wager_per_match").notNull().default(100),
   createdById: text("created_by_id")
     .notNull()
     .references(() => user.id),
@@ -120,6 +131,8 @@ export const matches = pgTable(
     awayTeamCrest: text("away_team_crest"),
     homeScore: integer("home_score"),
     awayScore: integer("away_score"),
+    homeScoreHt: integer("home_score_ht"),
+    awayScoreHt: integer("away_score_ht"),
     matchday: integer("matchday").notNull(),
     status: matchStatusEnum("status").notNull().default("scheduled"),
     kickoff: timestamp("kickoff").notNull(),
@@ -133,8 +146,45 @@ export const matches = pgTable(
   ],
 );
 
-export const predictions = pgTable(
-  "predictions",
+export const rounds = pgTable(
+  "rounds",
+  {
+    id: text("id").primaryKey(),
+    competition: competitionEnum("competition").notNull(),
+    matchday: integer("matchday").notNull(),
+    status: roundStatusEnum("status").notNull().default("open"),
+    /** First kickoff of the round: the single deadline for every pick. */
+    lockAt: timestamp("lock_at").notNull(),
+    settledAt: timestamp("settled_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("rounds_competition_matchday_idx").on(
+      table.competition,
+      table.matchday,
+    ),
+  ],
+);
+
+/** One slot of the round's board. Global, so every group plays the same challenges. */
+export const roundChallenges = pgTable(
+  "round_challenges",
+  {
+    id: text("id").primaryKey(),
+    roundId: text("round_id")
+      .notNull()
+      .references(() => rounds.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    position: integer("position").notNull(),
+  },
+  (table) => [
+    uniqueIndex("round_challenges_round_slug_idx").on(table.roundId, table.slug),
+  ],
+);
+
+export const entries = pgTable(
+  "entries",
   {
     id: text("id").primaryKey(),
     userId: text("user_id")
@@ -143,23 +193,38 @@ export const predictions = pgTable(
     groupId: text("group_id")
       .notNull()
       .references(() => groups.id, { onDelete: "cascade" }),
-    matchId: text("match_id")
+    roundChallengeId: text("round_challenge_id")
       .notNull()
-      .references(() => matches.id, { onDelete: "cascade" }),
-    homeScore: integer("home_score").notNull(),
-    awayScore: integer("away_score").notNull(),
-    wager: integer("wager").notNull(),
+      .references(() => roundChallenges.id, { onDelete: "cascade" }),
+    /** Denormalized from roundChallenges so the one-joker-per-round index can exist. */
+    roundId: text("round_id")
+      .notNull()
+      .references(() => rounds.id, { onDelete: "cascade" }),
+    targetMatchId: text("target_match_id").references(() => matches.id, {
+      onDelete: "cascade",
+    }),
+    targetSide: targetSideEnum("target_side"),
+    predictedHome: integer("predicted_home"),
+    predictedAway: integer("predicted_away"),
+    numericValue: integer("numeric_value"),
+    /** Reserved for multi-target challenges (e.g. picking three winners). */
+    targetsJson: jsonb("targets_json"),
+    isJoker: boolean("is_joker").notNull().default(false),
     lockedAt: timestamp("locked_at"),
     pointsAwarded: integer("points_awarded"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("predictions_user_group_match_idx").on(
+    uniqueIndex("entries_user_group_challenge_idx").on(
       table.userId,
       table.groupId,
-      table.matchId,
+      table.roundChallengeId,
     ),
+    uniqueIndex("entries_one_joker_per_round_idx")
+      .on(table.userId, table.groupId, table.roundId)
+      .where(sql`${table.isJoker}`),
+    index("entries_round_idx").on(table.roundId),
   ],
 );
 
@@ -177,7 +242,7 @@ export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   groupMembers: many(groupMembers),
-  predictions: many(predictions),
+  entries: many(entries),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -194,7 +259,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
     references: [user.id],
   }),
   members: many(groupMembers),
-  predictions: many(predictions),
+  entries: many(entries),
 }));
 
 export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
@@ -206,17 +271,35 @@ export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
 }));
 
 export const matchesRelations = relations(matches, ({ many }) => ({
-  predictions: many(predictions),
+  entries: many(entries),
 }));
 
-export const predictionsRelations = relations(predictions, ({ one }) => ({
-  user: one(user, { fields: [predictions.userId], references: [user.id] }),
-  group: one(groups, {
-    fields: [predictions.groupId],
-    references: [groups.id],
+export const roundsRelations = relations(rounds, ({ many }) => ({
+  challenges: many(roundChallenges),
+  entries: many(entries),
+}));
+
+export const roundChallengesRelations = relations(
+  roundChallenges,
+  ({ one, many }) => ({
+    round: one(rounds, {
+      fields: [roundChallenges.roundId],
+      references: [rounds.id],
+    }),
+    entries: many(entries),
   }),
-  match: one(matches, {
-    fields: [predictions.matchId],
+);
+
+export const entriesRelations = relations(entries, ({ one }) => ({
+  user: one(user, { fields: [entries.userId], references: [user.id] }),
+  group: one(groups, { fields: [entries.groupId], references: [groups.id] }),
+  roundChallenge: one(roundChallenges, {
+    fields: [entries.roundChallengeId],
+    references: [roundChallenges.id],
+  }),
+  round: one(rounds, { fields: [entries.roundId], references: [rounds.id] }),
+  targetMatch: one(matches, {
+    fields: [entries.targetMatchId],
     references: [matches.id],
   }),
 }));

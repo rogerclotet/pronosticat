@@ -13,6 +13,18 @@ export async function syncMatchesToDb(competition: Competition) {
 
   for (const m of apiMatches) {
     const id = `${competition}-${m.id}`;
+    // Rescheduled fixtures must move on conflict too: the round's deadline is
+    // derived from its first kickoff.
+    const live = {
+      homeScore: m.score.fullTime.home,
+      awayScore: m.score.fullTime.away,
+      homeScoreHt: m.score.halfTime?.home ?? null,
+      awayScoreHt: m.score.halfTime?.away ?? null,
+      matchday: m.matchday ?? 1,
+      status: mapMatchStatus(m.status),
+      kickoff: new Date(m.utcDate),
+    };
+
     await db
       .insert(matches)
       .values({
@@ -23,20 +35,11 @@ export async function syncMatchesToDb(competition: Competition) {
         awayTeam: m.awayTeam.shortName ?? m.awayTeam.name,
         homeTeamCrest: m.homeTeam.crest,
         awayTeamCrest: m.awayTeam.crest,
-        homeScore: m.score.fullTime.home,
-        awayScore: m.score.fullTime.away,
-        matchday: m.matchday ?? 1,
-        status: mapMatchStatus(m.status),
-        kickoff: new Date(m.utcDate),
+        ...live,
       })
       .onConflictDoUpdate({
         target: [matches.externalId, matches.competition],
-        set: {
-          homeScore: m.score.fullTime.home,
-          awayScore: m.score.fullTime.away,
-          status: mapMatchStatus(m.status),
-          updatedAt: new Date(),
-        },
+        set: { ...live, updatedAt: new Date() },
       });
   }
 }

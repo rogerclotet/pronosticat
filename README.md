@@ -1,6 +1,6 @@
 # Pronosticat
 
-PWA per pronosticar resultats de futbol amb amics. Crea grups, aposta punts i competeix per LaLiga, Premier League o Champions League.
+PWA per pronosticar futbol amb amics. Cada jornada porta un tauler de reptes — el resultat exacte, la golejada, la pallissa, la màquina de gols — i cada casella es gasta apuntant-la a un partit o a un equip. Per LaLiga, Premier League o Champions League.
 
 ## Stack
 
@@ -30,7 +30,7 @@ Alternativa només PostgreSQL (app amb `npm run dev` a l'host):
 cp .env.example .env
 # DATABASE_URL=postgresql://pronosticat:pronosticat@localhost:5432/pronosticat
 npm run docker:dev:db
-npm run db:push
+npm run db:migrate
 npm run dev
 ```
 
@@ -42,7 +42,7 @@ Configura `.env` amb secrets reals (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, etc
 npm run docker:prod
 ```
 
-Això construeix la imatge Next.js, aplica l'esquema de base de dades i engega l'app a `http://localhost:3000` (o `APP_PORT`).
+Això construeix la imatge Next.js, aplica les migracions pendents i engega l'app a `http://localhost:3000` (o `APP_PORT`).
 
 ```bash
 npm run docker:prod:logs   # veure logs
@@ -87,10 +87,16 @@ cp .env.example .env.local
 | `FOOTBALL_DATA_API_KEY` | API key de football-data.org |
 | `CRON_SECRET` | Secret per l'endpoint de sincronització |
 
-3. Aplica l'esquema de base de dades:
+3. Aplica les migracions de base de dades:
 
 ```bash
-npm run db:push
+npm run db:migrate
+```
+
+Per canvis d'esquema nous: edita `src/lib/db/schema.ts`, genera una migració amb `npm run db:generate`, i després `npm run db:migrate`. Per esborrar tot i tornar a començar (només dev / reset intencionat):
+
+```bash
+DB_RESET_CONFIRM=yes npm run db:reset
 ```
 
 4. Inicia el servidor de desenvolupament:
@@ -101,23 +107,40 @@ npm run dev
 
 ## Estructura de navegació
 
-- **Inici** — Resum de grups, punts i pròxims partits
-- **Pronòstics** — Partits de la jornada actual amb les teves prediccions
+- **Jugades** — El tauler de reptes de la jornada: hi fas i edites les teves jugades, més l'historial de jornades anteriors
+- **Jornada** — Els partits de la jornada i el seu resultat, només per consultar
 - **Classificació** — Ranking del grup amb estadístiques
 - **Grup** — Gestiona i canvia entre grups
 
-## Sistema de punts
+## Sistema de joc
 
-- Cada jugador comença amb punts inicials (per defecte 1000)
-- Aposta entre 10 i 500 punts per partit
-- Els punts es descompten quan el partit comença
-- Resultat exacte: 3x l'aposta
-- Resultat parcial (1X2 correcte): 1x l'aposta
-- Resultat incorrecte: 0 punts
+Cada jornada és un **tauler de 5 reptes**. Jugar una casella és gratis, però només la
+pots gastar un cop: hi apuntes **un partit** o **un equip** de la jornada.
+
+| Repte | Objectiu | Regla | Premi / càstig |
+| --- | --- | --- | --- |
+| El clàssic | partit + resultat | Clava el resultat exacte | +100 exacte · +25 només 1X2 · −25 |
+| La golejada | partit | El partit amb més gols de la jornada | +80 / −20 |
+| La pallissa | partit | El partit amb més diferència de gols | +80 / −20 |
+| La màquina | equip | L'equip que marca més gols de la jornada | +80 / −20 |
+| El segur | equip | Un equip que guanya | +40 / −40 |
+
+A més, cada jornada inclou **un repte extra** triat a l'atzar d'un pool rotatiu (El rotllo, La sorpresa, El comptador, etc.) — 6 caselles en total.
+
+- Cada jugador comença amb punts inicials (per defecte 1000).
+- Un **jòquer** per jornada dobla el premi i el càstig de la jugada on el poses.
+- Si empaten dos partits (o dos equips) al capdamunt, **totes les jugades empatades encerten**.
+- Tot el tauler **es tanca al primer xiulet de la jornada**: un sol termini per a tothom.
+- Els punts es mouen **només quan la jornada es liquida**, un cop jugats tots els partits.
+  Si algun queda ajornat, la jornada es liquida igualment 48 h després de l'últim
+  partit programat, comptant només el que s'ha jugat.
+
+Els reptes viuen a `src/lib/challenges/definitions/` com a funcions pures; afegir-ne un
+és un fitxer nou més el seu test.
 
 ## Sincronització
 
-L'endpoint `/api/cron/sync` sincronitza partits des de football-data.org, bloqueja prediccions i assigna punts. Configura un cron job amb el header `Authorization: Bearer <CRON_SECRET>`.
+L'endpoint `/api/cron/sync` sincronitza partits des de football-data.org, crea els taulers de la jornada, els bloqueja i els liquida. Configura un cron job amb el header `Authorization: Bearer <CRON_SECRET>`.
 
 Només es sincronitzen competicions amb grups actius (no totes les lligues configurades). Les pàgines llegeixen partits des de la base de dades; l'API externa només s'usa al cron.
 
@@ -139,14 +162,16 @@ Exemple amb cron (cada 10 min en temporada):
 
 ## Proves manuals (dev fixtures)
 
-En desenvolupament (`NODE_ENV=development`) pots crear partits ficticis i simular el cicle complet de pronòstics sense esperar a la temporada real ni cridar football-data.org.
+En desenvolupament (`NODE_ENV=development`) pots crear partits ficticis i simular el cicle complet d'una jornada sense esperar a la temporada real ni cridar football-data.org.
 
 Obre **`/dev/fixtures`** al navegador per usar la pàgina d'administració visual (recomanat). També pots usar els endpoints API directament amb curl.
 
 ### Flux recomanat
 
 1. Crea un grup per a la competició que vols provar (ex. LaLiga).
-2. Crea un partit de prova (kickoff d'aquí a 1 hora per defecte):
+2. Crea **diversos** partits de prova amb el mateix `matchday` (una jornada necessita més
+   d'un partit perquè «la golejada» o «la pallissa» tinguin sentit). Kickoff d'aquí a 1
+   hora per defecte:
 
 ```bash
 curl -X POST http://localhost:3000/api/dev/fixtures \
@@ -159,22 +184,12 @@ curl -X POST http://localhost:3000/api/dev/fixtures \
   }'
 ```
 
-3. Obre l'app, fes un pronòstic al partit fictici.
-4. Simula l'inici del partit (kickoff al passat) i executa el scoring:
-
-```bash
-# Substitueix MATCH_ID pel id retornat (ex. laliga--900012345)
-curl -X PATCH "http://localhost:3000/api/dev/fixtures/MATCH_ID" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "kickoff": "2020-01-01T12:00:00.000Z",
-    "runScore": true
-  }'
-```
-
-Això bloqueja el pronòstic i descompta l'aposta.
-
-5. Simula el resultat final:
+3. Prem **Run scoring** a `/dev/fixtures` (o `POST /api/dev/score`) per crear el tauler
+   de la jornada. Hauria d'aparèixer a la secció **Rounds** amb 5 reptes i estat `open`.
+4. Obre l'app i omple les 5 caselles, amb el jòquer en una.
+5. Prem **Lock round** a la jornada (mou tots els kickoffs al passat i executa el scoring).
+   El tauler passa a `locked` i ja no es pot tocar. **No es descompta res.**
+6. Posa el resultat final de cada partit amb **Finish & score**:
 
 ```bash
 curl -X PATCH "http://localhost:3000/api/dev/fixtures/MATCH_ID" \
@@ -187,7 +202,8 @@ curl -X PATCH "http://localhost:3000/api/dev/fixtures/MATCH_ID" \
   }'
 ```
 
-6. Refresca l'app: hauries de veure els punts assignats segons el resultat.
+7. Quan l'últim partit acaba, la jornada passa a `settled` i els punts s'assignen de cop.
+   Refresca l'app per veure el resultat de cada casella.
 
 ### Endpoints dev
 
@@ -195,9 +211,9 @@ curl -X PATCH "http://localhost:3000/api/dev/fixtures/MATCH_ID" \
 | --- | --- | --- |
 | `GET` | `/api/dev/fixtures` | Llista partits ficticis (`?competition=laliga` opcional) |
 | `POST` | `/api/dev/fixtures` | Crea un partit fictici |
-| `PATCH` | `/api/dev/fixtures/[matchId]` | Actualitza estat, resultat o kickoff. Passa `"runScore": true` per executar lock + assignació |
+| `PATCH` | `/api/dev/fixtures/[matchId]` | Actualitza estat, resultat o kickoff. Passa `"runScore": true` per executar el cicle de jornades |
 | `DELETE` | `/api/dev/fixtures/[matchId]` | Elimina un partit fictici |
-| `POST` | `/api/dev/score` | Executa només lock + assignació (sense sync amb l'API externa) |
+| `POST` | `/api/dev/score` | Executa el cicle de jornades (crea taulers + bloqueja + liquida) sense sync amb l'API externa |
 
 Els partits ficticis tenen `externalId` negatiu per distingir-los dels partits reals. Només es poden modificar o eliminar aquests partits.
 
@@ -211,11 +227,25 @@ npm run test
 
 Els tests unitaris cobreixen:
 
-- Càlcul de punts (`calculatePointsAwarded`)
+- Cada repte del tauler (encert, fallada, empat al capdamunt, objectiu no jugat)
+- El doblatge del jòquer (`scoreEntry`)
+- Validació de jugades (`normalizeTarget`)
+- Quan una jornada es pot liquidar (`isRoundSettleable`, període de gràcia)
 - Client football-data.org (fetch mockat, retry 429, mapatge d'estats)
 - Sync de partits cap a la BD (API mockada)
 
-Encara no hi ha tests d'integració per a `lockStartedPredictions` / `awardFinishedMatchPoints` amb base de dades real; el flux dev de fixtures cobreix aquesta part en proves manuals.
+### Tests d'integració amb Postgres
+
+`src/lib/rounds/settlement.integration.test.ts` executa el cicle complet
+(crear tauler → bloquejar → liquidar) contra un Postgres real. Es salta per defecte;
+per activar-lo cal una base de dades d'usar i llençar, perquè **fa `truncate` de les taules**:
+
+```bash
+docker run -d --name pg -e POSTGRES_USER=p -e POSTGRES_PASSWORD=p \
+  -e POSTGRES_DB=p -p 55099:5432 postgres:16-alpine
+DATABASE_URL=postgresql://p:p@localhost:55099/p npx drizzle-kit migrate
+RUN_DB_TESTS=1 DATABASE_URL=postgresql://p:p@localhost:55099/p npm run test
+```
 
 ## PWA
 

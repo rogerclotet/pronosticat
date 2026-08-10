@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Sheet } from "@/components/ui/sheet";
 import { StatTile } from "@/components/ui/stat-tile";
-import {
-  getCurrentRoundMatches,
-  getUserPredictions,
-  getStandings,
-} from "@/lib/actions/groups";
+import { Pill } from "@/components/ui/pill";
+import { getRoundBoardForClient, getUserEntries, getStandings } from "@/lib/actions/groups";
 import { getRivalStats, getWeeklyDelta, type RivalStats } from "@/lib/actions/stats";
+import {
+  describePick,
+  toBoardMatch,
+  toEntryView,
+  type BoardSlotView,
+} from "@/components/challenges/types";
 import type { Competition } from "@/lib/constants";
 
 type RivalSheetProps = {
@@ -20,14 +23,12 @@ type RivalSheetProps = {
   rivalUserId: string;
 };
 
-type RoundPred = {
-  matchId: string;
-  home: string;
-  away: string;
-  meta: string;
-  open: boolean;
-  homeScore: number;
-  awayScore: number;
+type RivalPick = {
+  slug: string;
+  slot: BoardSlotView;
+  label: string | null;
+  isJoker: boolean;
+  pointsAwarded: number | null;
 };
 
 export function RivalSheet({
@@ -38,87 +39,113 @@ export function RivalSheet({
   rivalUserId,
 }: RivalSheetProps) {
   const t = useTranslations("rival");
-  const tMatch = useTranslations("match");
+  const tChallenge = useTranslations("challenges");
+  const tBoard = useTranslations("board");
   const [stats, setStats] = useState<RivalStats | null>(null);
-  const [preds, setPreds] = useState<RoundPred[]>([]);
+  const [picks, setPicks] = useState<RivalPick[]>([]);
   const [round, setRound] = useState<number | null>(null);
-  const [header, setHeader] = useState<{ name: string; points: number; delta: number } | null>(
-    null,
-  );
+  const [masked, setMasked] = useState(true);
+  const [header, setHeader] = useState<{
+    name: string;
+    points: number;
+    delta: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
 
     (async () => {
-      const [matches, standings, rivalStats, delta] = await Promise.all([
-        getCurrentRoundMatches(competition),
+      const [board, standings, rivalStats, delta] = await Promise.all([
+        getRoundBoardForClient(competition),
         getStandings(groupId),
         getRivalStats(groupId, rivalUserId),
         getWeeklyDelta(rivalUserId, groupId),
       ]);
-      const userPreds = await getUserPredictions(
+      if (cancelled) return;
+
+      const rivalRow = standings.find((s) => s.userId === rivalUserId);
+      setStats(rivalStats);
+      setHeader({
+        name: rivalRow?.name ?? "",
+        points: rivalRow?.points ?? 0,
+        delta,
+      });
+
+      if (!board) {
+        setPicks([]);
+        setRound(null);
+        return;
+      }
+
+      const rivalEntries = await getUserEntries(
         rivalUserId,
         groupId,
-        matches.map((m) => m.id),
+        board.round.id,
       );
-      const predMap = new Map(userPreds.map((p) => [p.matchId, p]));
-      const rows = matches.map((m) => {
-        const p = predMap.get(m.id);
-        const open = m.status === "scheduled";
-        return {
-          matchId: m.id,
-          home: m.homeTeam,
-          away: m.awayTeam,
-          meta: open ? t("hidden") : tMatch(m.status),
-          open,
-          homeScore: p?.homeScore ?? -1,
-          awayScore: p?.awayScore ?? -1,
-        };
-      });
-      const rivalRow = standings.find((s) => s.userId === rivalUserId);
+      if (cancelled) return;
 
-      if (!cancelled) {
-        setPreds(rows.filter((r) => predMap.has(r.matchId) || r.open));
-        setRound(matches[0]?.matchday ?? null);
-        setStats(rivalStats);
-        setHeader({ name: rivalRow?.name ?? "", points: rivalRow?.points ?? 0, delta });
-      }
+      // Picks stay hidden until the round locks, so nobody can copy them.
+      const hidePicks = board.round.status === "open";
+      const boardMatches = board.matches.map(toBoardMatch);
+      const entryBySlot = new Map(
+        rivalEntries.map((e) => [e.roundChallengeId, toEntryView(e)]),
+      );
+
+      setMasked(hidePicks);
+      setRound(board.round.matchday);
+      setPicks(
+        board.slots.flatMap((slot) => {
+          const entry = entryBySlot.get(slot.id);
+          if (!entry) return [];
+          return [
+            {
+              slug: slot.slug,
+              slot,
+              label: hidePicks ? null : describePick(slot, entry, boardMatches),
+              isJoker: entry.isJoker,
+              pointsAwarded: entry.pointsAwarded,
+            },
+          ];
+        }),
+      );
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [isOpen, groupId, competition, rivalUserId, t, tMatch]);
+  }, [isOpen, groupId, competition, rivalUserId]);
 
   if (!isOpen) return null;
 
-  const deltaLabel = header ? (header.delta >= 0 ? `+${header.delta}` : `${header.delta}`) : "";
+  const deltaLabel = header
+    ? header.delta >= 0
+      ? `+${header.delta}`
+      : `${header.delta}`
+    : "";
 
   return (
     <Sheet
       title={header?.name ?? ""}
-      subtitle={header ? t("meta", { points: header.points, delta: deltaLabel }) : undefined}
+      subtitle={
+        header ? t("meta", { points: header.points, delta: deltaLabel }) : undefined
+      }
       onClose={onClose}
     >
       <div className="flex flex-col gap-3.5">
         <div className="flex">
+          <StatTile label={t("hits")} value={stats?.hits ?? "–"} className="flex-1" />
           <StatTile
-            label={t("totalCorrect")}
-            value={stats?.totalCorrect ?? "–"}
-            className="flex-1 -ml-0.5 first:ml-0"
-          />
-          <StatTile
-            label={t("exactResults")}
-            value={stats?.exactResults ?? "–"}
+            label={t("jokers")}
+            value={stats?.jokersLanded ?? "–"}
             accent="teal"
-            className="flex-1 -ml-0.5"
+            className="-ml-0.5 flex-1"
           />
           <StatTile
             label={t("streak")}
             value={stats?.currentStreak ?? "–"}
             accent={stats && stats.currentStreak > 2 ? "teal" : "default"}
-            className="flex-1 -ml-0.5"
+            className="-ml-0.5 flex-1"
           />
         </div>
 
@@ -128,31 +155,46 @@ export function RivalSheet({
           </div>
         )}
 
-        <div className="flex flex-col gap-2.5">
-          {preds.map((p) => (
-            <div
-              key={p.matchId}
-              className="flex items-center justify-between gap-2.5 border-2 border-border bg-surface p-2.5"
-            >
-              <div className="flex flex-col gap-1.5">
-                <span className="font-sans text-[12.5px] font-semibold">
-                  {p.home} – {p.away}
-                </span>
-                <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-muted">
-                  {p.meta}
-                </span>
-              </div>
+        {picks.length === 0 ? (
+          <p className="text-sm text-muted">{t("noPicks")}</p>
+        ) : (
+          <div className="flex flex-col gap-2.5">
+            {picks.map((pick) => (
               <div
-                className={
-                  "border-2 px-2 py-1.5 font-mono text-sm font-bold " +
-                  (p.open ? "border-border text-muted" : "border-border-strong text-foreground")
-                }
+                key={pick.slug}
+                className="flex items-center justify-between gap-2.5 border-2 border-border bg-surface p-2.5"
               >
-                {p.open ? t("masked") : `${p.homeScore}-${p.awayScore}`}
+                <div className="flex flex-col gap-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <span className="font-sans text-[12.5px] font-semibold">
+                      {tChallenge(`${pick.slug}.name`)}
+                    </span>
+                    {pick.isJoker && <Pill tone="teal">{tBoard("jokerBadge")}</Pill>}
+                  </span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-muted">
+                    {masked ? t("hidden") : (pick.label ?? "—")}
+                  </span>
+                </div>
+                <div
+                  className={
+                    "border-2 px-2 py-1.5 font-mono text-sm font-bold " +
+                    (masked
+                      ? "border-border text-muted"
+                      : "border-border-strong text-foreground")
+                  }
+                >
+                  {masked
+                    ? t("masked")
+                    : pick.pointsAwarded === null
+                      ? "·"
+                      : pick.pointsAwarded > 0
+                        ? `+${pick.pointsAwarded}`
+                        : String(pick.pointsAwarded)}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </Sheet>
   );

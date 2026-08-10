@@ -5,8 +5,8 @@ import { Link, usePathname } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/", key: "jornada", icon: JornadaIcon },
-  { href: "/predictions", key: "predictions", icon: PredictionsIcon },
+  { href: "/", key: "predictions", icon: PredictionsIcon },
+  { href: "/jornada", key: "jornada", icon: JornadaIcon },
   { href: "/group", key: "group", icon: GroupIcon },
   { href: "/perfil", key: "perfil", icon: PerfilIcon },
 ] as const;
@@ -19,7 +19,10 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t-2 border-border bg-header-bg">
       <div className="mx-auto flex max-w-lg">
         {navItems.map(({ href, key, icon: Icon }) => {
-          const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const isActive =
+            href === "/"
+              ? pathname === "/" || pathname.startsWith("/predictions")
+              : pathname.startsWith(href);
 
           return (
             <Link

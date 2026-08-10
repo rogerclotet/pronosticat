@@ -6,6 +6,8 @@ import {
   createDevMatch,
   deleteDevMatch,
   listDevMatches,
+  listRounds,
+  simulateDevRoundKickoff,
   updateDevMatch,
   type CreateDevMatchInput,
   type UpdateDevMatchInput,
@@ -70,6 +72,21 @@ export async function simulateKickoffAction(matchId: string) {
   await runScoreOnly();
   revalidateDevFixturesPage();
   return match;
+}
+
+export async function getDevRoundsAction() {
+  assertDevEnabled();
+  return listRounds();
+}
+
+export async function simulateRoundKickoffAction(
+  competition: Competition,
+  matchday: number,
+) {
+  assertDevEnabled();
+  await simulateDevRoundKickoff(competition, matchday);
+  await runScoreOnly();
+  revalidateDevFixturesPage();
 }
 
 export async function finishMatchAction(
