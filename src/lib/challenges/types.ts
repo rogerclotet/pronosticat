@@ -34,6 +34,12 @@ export type EntryTarget = {
 export type ChallengeDefinition = {
   slug: string;
   targetKind: ChallengeTargetKind;
+  /**
+   * For `team` challenges that only make sense on one side of the fixture
+   * (an away win, say). The picker hides the other side and a pick that
+   * names it is rejected, rather than silently scoring as a miss.
+   */
+  requiredSide?: TargetSide;
   /** Headline payout, shown on the slot card. */
   reward: number;
   /** Cost of a miss. Negative or zero. */

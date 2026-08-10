@@ -13,7 +13,7 @@ import {
   type BoardSlotView,
   type EntryView,
 } from "@/components/challenges/types";
-import type { MatchdayHistoryRow } from "@/lib/actions/stats";
+import type { MatchdayHistoryRow } from "@/lib/queries/stats";
 import type { Competition } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 

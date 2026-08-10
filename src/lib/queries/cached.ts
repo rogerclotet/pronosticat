@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { getSession } from "@/lib/session";
-import { getActiveGroup, getUserEntries } from "@/lib/actions/groups";
+import { getActiveGroup, getUserEntries } from "@/lib/queries/groups";
 import { getCurrentRoundBoard } from "@/lib/queries/round-board";
 import type { Competition } from "@/lib/constants";
 

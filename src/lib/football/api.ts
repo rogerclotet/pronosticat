@@ -29,7 +29,6 @@ export class FootballDataRateLimitError extends Error {
 }
 
 const BASE_URL = "https://api.football-data.org/v4";
-const ACTIVE_STATUSES = new Set(["SCHEDULED", "IN_PLAY", "PAUSED", "LIVE"]);
 
 function getHeaders(): HeadersInit {
   return {
@@ -72,16 +71,6 @@ async function fetchFootballData(url: string): Promise<Response> {
 
     return res;
   });
-}
-
-/** Current matchday from a matches payload (same logic as the API's scheduled/live filter). */
-export function deriveCurrentMatchday(apiMatches: FootballDataMatch[]): number {
-  const matchdays = apiMatches
-    .filter((m) => ACTIVE_STATUSES.has(m.status))
-    .map((m) => m.matchday)
-    .filter((d): d is number => d !== null);
-
-  return matchdays.length > 0 ? Math.min(...matchdays) : 1;
 }
 
 export async function fetchCompetitionMatches(

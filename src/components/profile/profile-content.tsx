@@ -1,5 +1,5 @@
 import { ProfileView } from "@/components/profile/profile-view";
-import { getProfileSummary, getMatchdayHistory } from "@/lib/actions/stats";
+import { getProfileSummary, getMatchdayHistory } from "@/lib/queries/stats";
 import { getCachedActiveGroup, getCachedSession } from "@/lib/queries/cached";
 
 export async function ProfileContent() {

@@ -25,6 +25,8 @@ export type BoardSlotView = {
   id: string;
   slug: string;
   targetKind: ChallengeTargetKind;
+  /** Set when the challenge only accepts one side of the fixture. */
+  requiredSide?: TargetSide;
   reward: number;
   penalty: number;
 };

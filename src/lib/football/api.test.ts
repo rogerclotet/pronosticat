@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  deriveCurrentMatchday,
   fetchCompetitionMatches,
   FootballDataRateLimitError,
   mapMatchStatus,
@@ -44,24 +43,6 @@ describe("mapMatchStatus", () => {
     expect(mapMatchStatus("POSTPONED")).toBe("postponed");
     expect(mapMatchStatus("CANCELLED")).toBe("cancelled");
     expect(mapMatchStatus("SUSPENDED")).toBe("cancelled");
-  });
-});
-
-describe("deriveCurrentMatchday", () => {
-  it("returns the lowest active matchday", () => {
-    const matchday = deriveCurrentMatchday([
-      makeMatch({ matchday: 3, status: "SCHEDULED" }),
-      makeMatch({ id: 2, matchday: 2, status: "IN_PLAY" }),
-      makeMatch({ id: 3, matchday: 1, status: "FINISHED" }),
-    ]);
-
-    expect(matchday).toBe(2);
-  });
-
-  it("defaults to 1 when no active matches exist", () => {
-    expect(
-      deriveCurrentMatchday([makeMatch({ status: "FINISHED", matchday: 5 })]),
-    ).toBe(1);
   });
 });
 

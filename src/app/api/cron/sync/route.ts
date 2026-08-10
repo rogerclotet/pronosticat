@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runSyncAndScore } from "@/lib/actions/scoring";
+import { runSyncAndScore } from "@/lib/rounds/scoring";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");

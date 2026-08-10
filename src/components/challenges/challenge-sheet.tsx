@@ -146,6 +146,7 @@ export function ChallengeSheet({
             <span className="label-mono">{t("pickTeam")}</span>
             <TeamPicker
               matches={matches}
+              requiredSide={slot.requiredSide}
               selectedMatchId={matchId}
               selectedSide={side}
               onSelect={(id, nextSide) => {

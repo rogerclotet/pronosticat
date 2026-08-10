@@ -18,12 +18,7 @@ export default async function MainLayout({
   }
 
   return (
-    <AppShell
-      groupName={activeGroup.name}
-      userId={session.user.id}
-      activeGroupId={activeGroup.id}
-      competition={activeGroup.competition}
-    >
+    <AppShell groupName={activeGroup.name} activeGroupId={activeGroup.id}>
       {children}
     </AppShell>
   );

@@ -6,7 +6,7 @@ import {
   isDevFixturesEnabled,
 } from "@/lib/dev/guard";
 import { deleteDevMatch, updateDevMatch } from "@/lib/dev/fixtures";
-import { runScoreOnly } from "@/lib/actions/scoring";
+import { runScoreOnly } from "@/lib/rounds/scoring";
 
 type RouteContext = { params: Promise<{ matchId: string }> };
 

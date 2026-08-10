@@ -237,7 +237,7 @@ Els tests unitaris cobreixen:
 ### Tests d'integració amb Postgres
 
 `src/lib/rounds/settlement.integration.test.ts` executa el cicle complet
-(crear tauler → bloquejar → liquidar) contra un Postgres real. Es salta per defecte;
+(crear tauler → bloquejar → liquidar → classificació) contra un Postgres real. Es salta per defecte;
 per activar-lo cal una base de dades d'usar i llençar, perquè **fa `truncate` de les taules**:
 
 ```bash

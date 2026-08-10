@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { runScoreOnly } from "@/lib/actions/scoring";
+import { runScoreOnly } from "@/lib/rounds/scoring";
 import {
   createDevMatch,
   deleteDevMatch,

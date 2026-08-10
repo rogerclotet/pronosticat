@@ -18,7 +18,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
   const schema = await import("@/lib/db/schema");
   const { ensureRounds } = await import("@/lib/rounds/ensure");
   const { lockOpenRounds, settleLockedRounds } = await import(
-    "@/lib/actions/scoring"
+    "@/lib/rounds/scoring"
   );
   const { generateId, ROUND_SETTLE_GRACE_HOURS } = await import("@/lib/constants");
 
@@ -213,5 +213,39 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
     await expect(
       addEntry("goal_fest", { targetMatchId: "m1", isJoker: true }),
     ).rejects.toThrow();
+  });
+
+  it("reports hits and misses per member in the standings", async () => {
+    const { getStandings } = await import("@/lib/queries/groups");
+    const kickoff = new Date(Date.now() - 3 * HOUR);
+    await seedMatches([
+      { id: "m1", matchday: 7, home: "Girona", away: "Elx", homeScore: 3, awayScore: 1, status: "finished", kickoff },
+      { id: "m2", matchday: 7, home: "Barça", away: "Getafe", homeScore: 4, awayScore: 0, status: "finished", kickoff },
+    ]);
+    await ensureRounds();
+
+    // A member with no settled entries at all must still show up, on zeroes.
+    await db.insert(schema.user).values({
+      id: "u-idle",
+      name: "Idle",
+      email: "idle@example.com",
+    });
+    await db.insert(schema.groupMembers).values({
+      id: generateId(),
+      groupId: GROUP_ID,
+      userId: "u-idle",
+      points: 1000,
+    });
+
+    await addEntry("banker", { targetMatchId: "m1", targetSide: "home" }); // hit
+    await addEntry("thrashing", { targetMatchId: "m1" }); // miss: m2 was the thrashing
+    await lockOpenRounds();
+    await settleLockedRounds();
+
+    const standings = await getStandings(GROUP_ID);
+    expect(standings).toEqual([
+      { userId: USER_ID, name: "Test", points: 1020, hits: 1, misses: 1 },
+      { userId: "u-idle", name: "Idle", points: 1000, hits: 0, misses: 0 },
+    ]);
   });
 });

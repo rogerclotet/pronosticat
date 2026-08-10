@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, and, desc, sql, count, ne } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   entries,
@@ -9,10 +9,10 @@ import {
   matches,
   roundChallenges,
   userActiveGroup,
-  user,
 } from "@/lib/db/schema";
 import { requireSession } from "@/lib/session";
 import {
+  COMPETITIONS,
   generateId,
   generateInviteCode,
   POINTS,
@@ -24,63 +24,21 @@ import {
   teamsClaimed,
   type EntryInput,
 } from "@/lib/challenges/validate";
-import { getCurrentRoundMatches as fetchCurrentRoundMatches } from "@/lib/queries/matches";
-import { getCurrentRoundBoard } from "@/lib/queries/round-board";
-import { syncMatches as syncCompetitionMatches } from "@/lib/sync/run";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { getUserGroupsWithMeta } from "@/lib/queries/groups";
+import { revalidatePath } from "next/cache";
 
-export async function getActiveGroup(userId: string) {
-  const active = await db.query.userActiveGroup.findFirst({
-    where: eq(userActiveGroup.userId, userId),
-  });
+/**
+ * Every export of this module is a public RPC endpoint, so nothing here may
+ * take a caller-supplied user id: the actor is always the session user.
+ */
 
-  if (active) {
-    const group = await db.query.groups.findFirst({
-      where: eq(groups.id, active.groupId),
-    });
-    if (group) return group;
-  }
-
-  const membership = await db.query.groupMembers.findFirst({
-    where: eq(groupMembers.userId, userId),
-    with: { group: true },
-  });
-
-  return membership?.group ?? null;
+export async function getMyGroups() {
+  const session = await requireSession();
+  return getUserGroupsWithMeta(session.user.id);
 }
 
-export async function getUserGroups(userId: string) {
-  const memberships = await db.query.groupMembers.findMany({
-    where: eq(groupMembers.userId, userId),
-    with: { group: true },
-  });
-  return memberships.map((m) => ({ ...m.group, isAdmin: m.isAdmin, points: m.points }));
-}
-
-export async function getUserGroupsWithMeta(userId: string) {
-  const base = await getUserGroups(userId);
-  return Promise.all(
-    base.map(async (g) => {
-      const members = await db
-        .select({ userId: groupMembers.userId, points: groupMembers.points })
-        .from(groupMembers)
-        .where(eq(groupMembers.groupId, g.id))
-        .orderBy(desc(groupMembers.points));
-      const rank = members.findIndex((m) => m.userId === userId) + 1;
-      return { ...g, memberCount: members.length, rank: rank || members.length };
-    }),
-  );
-}
-
-export async function getMemberPoints(userId: string, groupId: string) {
-  const member = await db.query.groupMembers.findFirst({
-    where: and(
-      eq(groupMembers.userId, userId),
-      eq(groupMembers.groupId, groupId),
-    ),
-  });
-  return member?.points ?? 0;
-}
+const MAX_GROUP_NAME_LENGTH = 60;
+const MAX_STARTING_POINTS = 1_000_000;
 
 export async function createGroup(data: {
   name: string;
@@ -88,13 +46,30 @@ export async function createGroup(data: {
   startingPoints?: number;
 }) {
   const session = await requireSession();
+
+  const name = data.name.trim();
+  if (!name || name.length > MAX_GROUP_NAME_LENGTH) {
+    throw new Error("Invalid group name");
+  }
+  if (!(data.competition in COMPETITIONS)) {
+    throw new Error("Unknown competition");
+  }
+
+  const startingPoints = data.startingPoints ?? POINTS.DEFAULT_STARTING;
+  if (
+    !Number.isInteger(startingPoints) ||
+    startingPoints < 0 ||
+    startingPoints > MAX_STARTING_POINTS
+  ) {
+    throw new Error("Invalid starting points");
+  }
+
   const id = generateId();
   const inviteCode = generateInviteCode();
-  const startingPoints = data.startingPoints ?? POINTS.DEFAULT_STARTING;
 
   await db.insert(groups).values({
     id,
-    name: data.name,
+    name,
     competition: data.competition,
     inviteCode,
     startingPoints,
@@ -112,32 +87,6 @@ export async function createGroup(data: {
   await setActiveGroup(id);
   revalidatePath("/");
   return { id, inviteCode };
-}
-
-export async function updateGroupSettings(data: {
-  groupId: string;
-  name: string;
-}) {
-  const session = await requireSession();
-
-  const member = await db.query.groupMembers.findFirst({
-    where: and(
-      eq(groupMembers.userId, session.user.id),
-      eq(groupMembers.groupId, data.groupId),
-      eq(groupMembers.isAdmin, true),
-    ),
-  });
-  if (!member) throw new Error("Not authorized");
-
-  const name = data.name.trim();
-  if (!name) throw new Error("Invalid group name");
-
-  await db
-    .update(groups)
-    .set({ name, updatedAt: new Date() })
-    .where(eq(groups.id, data.groupId));
-
-  revalidatePath("/");
 }
 
 export async function joinGroup(inviteCode: string) {
@@ -173,6 +122,15 @@ export async function joinGroup(inviteCode: string) {
 export async function setActiveGroup(groupId: string) {
   const session = await requireSession();
 
+  const member = await db.query.groupMembers.findFirst({
+    where: and(
+      eq(groupMembers.userId, session.user.id),
+      eq(groupMembers.groupId, groupId),
+    ),
+    columns: { id: true },
+  });
+  if (!member) throw new Error("Not a group member");
+
   await db
     .insert(userActiveGroup)
     .values({ userId: session.user.id, groupId })
@@ -182,34 +140,6 @@ export async function setActiveGroup(groupId: string) {
     });
 
   revalidatePath("/");
-}
-
-export async function syncMatches(competition: Competition) {
-  await syncCompetitionMatches(competition);
-}
-
-/** Server action wrappers for client components (e.g. rival sheet). */
-export async function getCurrentRoundMatches(competition: Competition) {
-  return fetchCurrentRoundMatches(competition);
-}
-
-export async function getRoundBoardForClient(competition: Competition) {
-  return getCurrentRoundBoard(competition);
-}
-
-export async function getUserEntries(
-  userId: string,
-  groupId: string,
-  roundId: string,
-) {
-  return db.query.entries.findMany({
-    where: and(
-      eq(entries.userId, userId),
-      eq(entries.groupId, groupId),
-      eq(entries.roundId, roundId),
-    ),
-    with: { roundChallenge: true, targetMatch: true },
-  });
 }
 
 export type SaveEntryInput = EntryInput & {
@@ -240,10 +170,16 @@ export async function saveEntry(data: SaveEntryInput) {
       eq(groupMembers.userId, session.user.id),
       eq(groupMembers.groupId, data.groupId),
     ),
+    with: { group: true },
   });
   if (!member) throw new Error("Not a group member");
 
-  const target = normalizeTarget(challenge.targetKind, data);
+  // A group only ever plays its own competition's board.
+  if (member.group.competition !== round.competition) {
+    throw new Error("Round is not part of this group's competition");
+  }
+
+  const target = normalizeTarget(challenge.targetKind, data, challenge.requiredSide);
   if (target.targetMatchId) {
     const match = await db.query.matches.findFirst({
       where: and(
@@ -367,37 +303,4 @@ export async function deleteEntry(entryId: string) {
 function revalidateEntries() {
   revalidatePath("/");
   revalidatePath("/jornada");
-  revalidateTag("predictions", "max");
-}
-
-export async function getStandings(groupId: string) {
-  return db
-    .select({
-      userId: groupMembers.userId,
-      name: user.name,
-      points: groupMembers.points,
-      picksSettled: count(entries.id),
-      hits: sql<number>`count(case when ${entries.pointsAwarded} > 0 then 1 end)`,
-      misses: sql<number>`count(case when ${entries.pointsAwarded} < 0 then 1 end)`,
-    })
-    .from(groupMembers)
-    .innerJoin(user, eq(groupMembers.userId, user.id))
-    .leftJoin(
-      entries,
-      and(
-        eq(entries.userId, groupMembers.userId),
-        eq(entries.groupId, groupId),
-        sql`${entries.pointsAwarded} is not null`,
-      ),
-    )
-    .where(eq(groupMembers.groupId, groupId))
-    .groupBy(groupMembers.userId, user.name, groupMembers.points)
-    .orderBy(desc(groupMembers.points));
-}
-
-export async function getGroupMembers(groupId: string) {
-  return db.query.groupMembers.findMany({
-    where: eq(groupMembers.groupId, groupId),
-    with: { user: true },
-  });
 }
