@@ -110,7 +110,6 @@
     "noMatches": "No hi ha partits en aquesta jornada",
     "fixturesTitle": "Partits de la jornada",
     "empty": "TRIA",
-    "payout": "+{reward} / {penalty}",
     "jokerBadge": "JÒQUER",
     "jokerFree": "Encara tens el jòquer",
     "jokerUsed": "Jòquer a «{challenge}»",

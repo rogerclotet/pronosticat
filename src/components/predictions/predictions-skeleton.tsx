@@ -3,12 +3,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 function SlotCardSkeleton() {
   return (
     <div className="border-2 border-border bg-surface">
-      <div className="flex items-center justify-between border-b-2 border-border bg-background px-2.5 py-1.5">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-3 w-16" />
+      <div className="flex items-center gap-1.5 border-b-2 border-border bg-background px-2 py-1.5">
+        <Skeleton className="size-[22px] shrink-0" />
+        <Skeleton className="h-4 flex-1" />
       </div>
-      <div className="px-2.5 py-2">
+      <div className="flex flex-col gap-2 px-2.5 pb-1.5 pt-2">
         <Skeleton className="h-3 w-3/4" />
+        <Skeleton className="h-2.5 w-10" />
       </div>
       <div className="border-t-2 border-border px-2.5 py-2.5">
         <Skeleton className="h-4 w-full" />
@@ -41,7 +42,7 @@ export function PredictionsSkeleton() {
         <Skeleton className="h-4 w-10" />
       </div>
 
-      <div className="flex flex-col gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5">
         {Array.from({ length: 6 }).map((_, i) => (
           <SlotCardSkeleton key={i} />
         ))}
