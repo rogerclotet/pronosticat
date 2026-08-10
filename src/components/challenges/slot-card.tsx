@@ -1,7 +1,12 @@
 "use client";
 
+import { ArrowRight, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Pill } from "@/components/ui/pill";
+import {
+  challengeIcons,
+  fallbackChallengeIcon,
+} from "@/components/challenges/challenge-icon";
 import {
   describePick,
   describePickTeams,
@@ -28,6 +33,8 @@ export function SlotCard({ slot, entry, matches, interactive, onOpen }: SlotCard
   const pick = describePick(slot, entry, matches);
   const pickTeams = describePickTeams(slot, entry, matches);
   const settled = entry?.pointsAwarded ?? null;
+  const Icon = challengeIcons[slot.slug] ?? fallbackChallengeIcon;
+  const awaitingPick = pick === null && interactive;
 
   const outcome =
     settled === null
@@ -38,23 +45,57 @@ export function SlotCard({ slot, entry, matches, interactive, onOpen }: SlotCard
           ? { label: t("resultMiss", { points: settled }), tone: "text-danger" }
           : { label: t("resultVoid"), tone: "text-muted" };
 
+  const trailing = outcome ? (
+    <span className={cn("shrink-0", outcome.tone)}>{outcome.label}</span>
+  ) : pick ? (
+    <Pencil className="size-3.5 shrink-0" strokeWidth={2.5} />
+  ) : (
+    <ArrowRight className="size-3.5 shrink-0" strokeWidth={3} />
+  );
+
   return (
-    <div className="flex h-full flex-col border-2 border-border bg-surface">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b-2 border-border bg-background px-2.5 py-1.5">
-        <span className="flex min-w-0 items-center gap-1.5">
-          <span className="font-sans text-[12.5px] font-extrabold uppercase">
-            {tChallenge(`${slot.slug}.name`)}
-          </span>
-          {entry?.isJoker && <Pill tone="teal">{t("jokerBadge")}</Pill>}
+    <div
+      className={cn(
+        "flex h-full flex-col border-2 bg-surface",
+        awaitingPick ? "border-border-strong" : "border-border",
+      )}
+    >
+      <div className="flex items-center gap-1.5 border-b-2 border-border bg-background px-2 py-1.5">
+        <span
+          className={cn(
+            "flex size-[22px] shrink-0 items-center justify-center border-2",
+            awaitingPick
+              ? "border-teal bg-highlight-bg text-teal"
+              : "border-border bg-surface text-muted",
+          )}
+        >
+          <Icon className="size-3" strokeWidth={2.5} />
         </span>
-        <span className="ml-auto font-mono text-[9px] tracking-[0.08em] text-muted">
-          {t("payout", { reward: slot.reward, penalty: slot.penalty })}
+        <span className="min-w-0 flex-1 font-sans text-[12px] font-extrabold uppercase leading-[1.2]">
+          {tChallenge(`${slot.slug}.name`)}
         </span>
+        {entry?.isJoker && (
+          <Pill tone="teal" className="shrink-0 px-1 py-0.5 text-[8px]">
+            {t("jokerBadge")}
+          </Pill>
+        )}
       </div>
 
-      <p className="flex-1 px-2.5 py-2 font-sans text-[11.5px] leading-snug text-text-secondary">
-        {tChallenge(`${slot.slug}.rule`)}
-      </p>
+      <div className="relative flex flex-1 flex-col justify-between gap-2 overflow-hidden px-2.5 pb-1.5 pt-2">
+        <Icon
+          aria-hidden
+          className="pointer-events-none absolute -bottom-2 -right-1 size-12 text-teal opacity-[0.07]"
+          strokeWidth={1.5}
+        />
+        <p className="relative font-sans text-[11.5px] leading-snug text-text-secondary">
+          {tChallenge(`${slot.slug}.rule`)}
+        </p>
+        <span className="relative flex items-center gap-1 font-mono text-[9px] font-bold tracking-[0.08em]">
+          <span className="text-teal">+{slot.reward}</span>
+          <span className="text-border-strong">/</span>
+          <span className="text-danger">{slot.penalty}</span>
+        </span>
+      </div>
 
       <button
         type="button"
@@ -70,13 +111,20 @@ export function SlotCard({ slot, entry, matches, interactive, onOpen }: SlotCard
               : "bg-highlight-bg text-muted",
         )}
       >
-        <span className="flex items-start justify-between gap-2">
-          <PickCrests teams={pickTeams} />
-          <span className={cn("shrink-0", outcome?.tone)}>
-            {outcome ? outcome.label : pick ? "✎" : "→"}
+        {pickTeams.length > 0 ? (
+          <>
+            <span className="flex items-start justify-between gap-2">
+              <PickCrests teams={pickTeams} />
+              {trailing}
+            </span>
+            <span>{pick}</span>
+          </>
+        ) : (
+          <span className="flex w-full items-center justify-between gap-2">
+            <span className="min-w-0">{pick ?? t("empty")}</span>
+            {trailing}
           </span>
-        </span>
-        <span>{pick ?? t("empty")}</span>
+        )}
       </button>
     </div>
   );
