@@ -17,6 +17,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Pronosticat",
   description: "Pronostica resultats de futbol amb els teus amics",
+  icons: {
+    icon: "/favicon.ico",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
