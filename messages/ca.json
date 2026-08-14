@@ -138,6 +138,9 @@
     "deleteCancel": "Cancel·la",
     "noMembers": "No hi ha membres al grup",
     "codeCopied": "Codi copiat!",
+    "linkCopied": "Enllaç copiat!",
+    "shareTitle": "Uneix-te a {name} a Pronosticat",
+    "shareText": "T'han convidat al grup {name}. Obre l'enllaç i accepta la invitació.",
     "competitions": {
       "laliga": "LaLiga",
       "premier_league": "Premier League",
@@ -187,10 +190,25 @@
     "joinCta": "UNEIX-TE AL GRUP",
     "createInsteadAlt": "CREA UN GRUP NOU",
     "inviteTitle": "Convida la penya",
-    "inviteBody": "Comparteix el codi. Sense gent no hi ha pica-pica.",
+    "inviteBody": "Comparteix l'enllaç o el codi. Sense gent no hi ha pica-pica.",
     "groupCodeLabel": "CODI DEL GRUP",
+    "shareCta": "COMPARTEIX L'ENLLAÇ",
     "finishCta": "A LA JORNADA",
     "error": "No s'ha pogut completar. Comprova les dades i torna-ho a provar."
+  },
+  "invite": {
+    "title": "T'han convidat",
+    "body": "{name} t'espera a Pronosticat. Accepta i entra a la penya.",
+    "groupLabel": "GRUP",
+    "competitionLabel": "COMPETICIÓ",
+    "membersLabel": "JUGADORS",
+    "codeLabel": "CODI D'ENTRADA",
+    "accept": "ACCEPTA LA INVITACIÓ",
+    "loginHint": "Després d'acceptar, inicia sessió i ja seràs al grup.",
+    "invalidTitle": "Invitació no vàlida",
+    "invalidBody": "Aquest enllaç no funciona. Demana'n un de nou a qui porta el grup.",
+    "invalidCta": "D'ACORD",
+    "error": "No s'ha pogut entrar al grup. Torna-ho a provar."
   },
   "jornada": {
     "statusOpen": "OBERT",

@@ -28,6 +28,7 @@ import {
 import { getUserGroupsWithMeta, liveGroup } from "@/lib/queries/groups";
 import { revalidatePath } from "next/cache";
 import { assertRateLimit } from "@/lib/security/rate-limit";
+import { normalizeInviteCode } from "@/lib/invite";
 
 /**
  * Every export of this module is a public RPC endpoint, so nothing here may
@@ -129,10 +130,8 @@ export async function joinGroup(inviteCode: string) {
   const session = await requireSession();
   assertRateLimit(`join-group:${session.user.id}`, 10, 60_000);
 
-  const normalized = inviteCode.trim().toUpperCase();
-  if (!/^[A-Z2-9]{6,12}$/.test(normalized)) {
-    throw new Error("Group not found");
-  }
+  const normalized = normalizeInviteCode(inviteCode);
+  if (!normalized) throw new Error("Group not found");
 
   const group = await db.query.groups.findFirst({
     where: and(eq(groups.inviteCode, normalized), liveGroup),
