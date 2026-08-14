@@ -131,11 +131,6 @@
     "admin": "Administrador",
     "member": "Membre",
     "switch": "CANVIA DE GRUP →",
-    "delete": "Elimina el grup",
-    "deleteConfirmTitle": "Eliminar el grup?",
-    "deleteConfirmBody": "{name} deixarà de ser accessible per a tothom. El conservem per si ha estat un error.",
-    "deleteConfirm": "Sí, elimina'l",
-    "deleteCancel": "Cancel·la",
     "noMembers": "No hi ha membres al grup",
     "codeCopied": "Codi copiat!",
     "linkCopied": "Enllaç copiat!",
@@ -153,7 +148,12 @@
     "roleAdmin": "ADMIN",
     "roleMember": "MEMBRE",
     "createNew": "+ CREA UN GRUP NOU",
-    "joinCode": "UNEIX-TE AMB UN CODI"
+    "joinCode": "UNEIX-TE AMB UN CODI",
+    "delete": "Elimina el grup",
+    "deleteConfirmTitle": "Eliminar el grup?",
+    "deleteConfirmBody": "{name} deixarà de ser accessible per a tothom. El conservem per si ha estat un error.",
+    "deleteConfirm": "Sí, elimina'l",
+    "deleteCancel": "Cancel·la"
   },
   "rival": {
     "meta": "{points} PUNTS · {delta} AQUESTA JORNADA",
@@ -169,11 +169,9 @@
     "balance": "PUNTS",
     "pending": "JUGADES OBERTES",
     "thisWeek": "AQUESTA SETMANA",
-    "swing": "EN JOC",
     "historyTitle": "Historial de jornades",
     "historyRound": "Jornada {round} · {competition}",
     "historyMeta": "{count, plural, one {# JUGADA} other {# JUGADES}} · {hits, plural, one {# ENCERT} other {# ENCERTS}}",
-    "viewOnboarding": "VEURE BENVINGUDA / CREAR GRUP",
     "signOut": "Sortir",
     "noHistory": "Encara no tens jornades tancades."
   },

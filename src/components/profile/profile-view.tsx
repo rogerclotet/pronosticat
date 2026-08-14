@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { SignOutButton } from "@/components/profile/sign-out-button";
 import { SegmentedBar } from "@/components/ui/progress-bar";
-import { Link } from "@/i18n/routing";
 import type { Competition } from "@/lib/constants";
 import type { MatchdayHistoryRow, PendingStake } from "@/lib/queries/stats";
 
@@ -37,12 +36,6 @@ export async function ProfileView({
               {summary.pending.picks}
             </div>
             <div className="label-mono mt-1.5">{t("pending")}</div>
-          </div>
-          <div className="-ml-0.5 flex-1 border-2 border-border p-2.5">
-            <div className="font-mono text-sm font-bold">
-              {summary.pending.worstCase}…+{summary.pending.bestCase}
-            </div>
-            <div className="label-mono mt-1.5">{t("swing")}</div>
           </div>
           <div className="-ml-0.5 flex-1 border-2 border-border p-2.5">
             <div
@@ -109,13 +102,7 @@ export async function ProfileView({
         </div>
       )}
 
-      <div className="mt-1.5 flex flex-col gap-2">
-        <Link
-          href="/onboarding"
-          className="border-2 border-border bg-surface px-4 py-2 text-center font-bold uppercase tracking-wide text-foreground"
-        >
-          {t("viewOnboarding")}
-        </Link>
+      <div className="mt-1.5">
         <SignOutButton />
       </div>
     </div>
