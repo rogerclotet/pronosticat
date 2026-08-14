@@ -6,6 +6,7 @@ import { useRouter } from "@/i18n/routing";
 import { createGroup, joinGroup } from "@/lib/actions/groups";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InviteShareButton } from "@/components/groups/invite-share-button";
 import type { Competition } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -145,6 +146,16 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
         },
       ]}
       cta={t("finishCta")}
+      preCta={
+        inviteCode ? (
+          <InviteShareButton
+            inviteCode={inviteCode}
+            groupName={name}
+            label={t("shareCta")}
+            size="lg"
+          />
+        ) : null
+      }
       step={{ index: 1, total: CREATE_STEPS.length }}
     />
   );
@@ -168,6 +179,7 @@ function OnboardingScreen({
   body,
   fields,
   cta,
+  preCta,
   onSubmit,
   loading,
   error,
@@ -179,6 +191,7 @@ function OnboardingScreen({
   body: string;
   fields: { label: string; input: React.ReactNode }[];
   cta: string;
+  preCta?: React.ReactNode;
   onSubmit: (e: React.FormEvent) => void;
   loading?: boolean;
   error?: string | null;
@@ -223,6 +236,7 @@ function OnboardingScreen({
       </div>
 
       <div className="flex flex-col gap-2 px-5 pb-8">
+        {preCta}
         <Button type="submit" size="lg" disabled={loading}>
           {cta}
         </Button>

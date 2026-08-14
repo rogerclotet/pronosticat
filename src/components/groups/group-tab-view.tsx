@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "@/i18n/routing";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { InviteShareButton } from "@/components/groups/invite-share-button";
 import { cn } from "@/lib/utils";
 import { deleteGroup } from "@/lib/actions/groups";
 import type { Competition } from "@/lib/constants";
@@ -42,18 +43,11 @@ export function GroupTabView({
   const tCommon = useTranslations("common");
   const router = useRouter();
   const pathname = usePathname();
-  const [copied, setCopied] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const maxPoints = standings[0]?.points ?? 1;
-
-  async function handleInvite() {
-    await navigator.clipboard.writeText(activeGroup.inviteCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
 
   function handleDelete() {
     setDeleteError(null);
@@ -122,9 +116,10 @@ export function GroupTabView({
         </div>
       )}
 
-      <Button type="button" variant="secondary" onClick={handleInvite}>
-        {copied ? t("codeCopied") : t("invite")}
-      </Button>
+      <InviteShareButton
+        inviteCode={activeGroup.inviteCode}
+        groupName={activeGroup.name}
+      />
 
       <div className="mt-1.5 border-b-2 border-border pb-2 font-sans text-[13.5px] font-extrabold uppercase">
         {t("manage")}
