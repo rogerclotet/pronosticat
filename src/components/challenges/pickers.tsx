@@ -48,8 +48,10 @@ export function MatchPicker({
                     : "border-border bg-surface",
               )}
             >
-              <span className="font-sans text-[12.5px] font-semibold">
+              <span className="flex items-center gap-1.5 font-sans text-[12.5px] font-semibold">
+                <TeamMark match={match} side="home" />
                 {match.homeTeam} – {match.awayTeam}
+                <TeamMark match={match} side="away" />
               </span>
               <span className="font-mono text-[9px] uppercase tracking-[0.09em] text-muted">
                 {formatKickoff(new Date(match.kickoff))}
