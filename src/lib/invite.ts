@@ -22,7 +22,9 @@ export function loginWithInvitePath(code: string): string {
  * Only invite continuation URLs may be used as a post-auth callback.
  * Reconstructs the path so a crafted `next` cannot open an external URL.
  */
-export function sanitizeAuthCallbackUrl(next: string | undefined): string | null {
+export function sanitizeAuthCallbackUrl(
+  next: string | undefined,
+): string | null {
   if (!next) return null;
   if (next.includes("%") || next.includes("\\") || next.includes("://")) {
     return null;
@@ -40,7 +42,9 @@ export function sanitizeAuthCallbackUrl(next: string | undefined): string | null
   const match = url.pathname.match(/^\/invite\/([A-Z2-9]{6,12})$/i);
   if (!match) return null;
 
-  const extraKeys = [...url.searchParams.keys()].filter((key) => key !== "join");
+  const extraKeys = [...url.searchParams.keys()].filter(
+    (key) => key !== "join",
+  );
   if (extraKeys.length > 0) return null;
   const join = url.searchParams.get("join");
   if (join != null && join !== "1") return null;

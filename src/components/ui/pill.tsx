@@ -14,7 +14,12 @@ type PillProps = React.HTMLAttributes<HTMLSpanElement> & {
   tone?: PillTone;
 };
 
-export function Pill({ tone = "muted", className, children, ...props }: PillProps) {
+export function Pill({
+  tone = "muted",
+  className,
+  children,
+  ...props
+}: PillProps) {
   return (
     <span
       className={cn(

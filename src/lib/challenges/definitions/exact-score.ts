@@ -1,8 +1,8 @@
-import { getOutcome } from "@/lib/constants";
 import {
-  findTargetMatch,
   type ChallengeDefinition,
+  findTargetMatch,
 } from "@/lib/challenges/types";
+import { getOutcome } from "@/lib/constants";
 
 const EXACT_REWARD = 100;
 const OUTCOME_REWARD = 25;

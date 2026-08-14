@@ -1,3 +1,4 @@
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -9,7 +10,6 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
 
 export const competitionEnum = pgEnum("competition", [
   "laliga",
@@ -196,7 +196,10 @@ export const roundChallenges = pgTable(
     position: integer("position").notNull(),
   },
   (table) => [
-    uniqueIndex("round_challenges_round_slug_idx").on(table.roundId, table.slug),
+    uniqueIndex("round_challenges_round_slug_idx").on(
+      table.roundId,
+      table.slug,
+    ),
   ],
 );
 

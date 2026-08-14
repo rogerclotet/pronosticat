@@ -116,7 +116,9 @@ export function DevFixturesAdmin({
         if (successMessage) notify(successMessage);
         router.refresh();
       } catch (err) {
-        notifyError(err instanceof Error ? err.message : "Something went wrong");
+        notifyError(
+          err instanceof Error ? err.message : "Something went wrong",
+        );
       }
     });
   }
@@ -251,7 +253,10 @@ export function DevFixturesAdmin({
             />
           </Field>
 
-          <Field label="Kickoff (optional, defaults to +1h)" className="sm:col-span-2">
+          <Field
+            label="Kickoff (optional, defaults to +1h)"
+            className="sm:col-span-2"
+          >
             <Input
               type="datetime-local"
               value={createForm.kickoff}
@@ -377,7 +382,9 @@ function FixtureCard({
           <p className="font-mono text-xs text-muted">
             J{match.matchday} · {formatKickoff(match.kickoff)}
           </p>
-          <p className="break-all font-mono text-[10px] text-muted">{match.id}</p>
+          <p className="break-all font-mono text-[10px] text-muted">
+            {match.id}
+          </p>
         </div>
         <Pill tone={statusTone(match.status)}>{match.status}</Pill>
       </div>
@@ -402,16 +409,13 @@ function FixtureCard({
           variant="secondary"
           disabled={disabled}
           onClick={() =>
-            onAction(
-              async () => {
-                await updateDevFixtureAction(
-                  match.id,
-                  { kickoff: new Date(kickoff).toISOString() },
-                  false,
-                );
-              },
-              `Updated kickoff for ${match.homeTeam} vs ${match.awayTeam}`,
-            )
+            onAction(async () => {
+              await updateDevFixtureAction(
+                match.id,
+                { kickoff: new Date(kickoff).toISOString() },
+                false,
+              );
+            }, `Updated kickoff for ${match.homeTeam} vs ${match.awayTeam}`)
           }
         >
           Save kickoff
@@ -421,12 +425,9 @@ function FixtureCard({
           size="sm"
           disabled={disabled || match.status !== "scheduled"}
           onClick={() =>
-            onAction(
-              async () => {
-                await simulateKickoffAction(match.id);
-              },
-              `Kickoff simulated for ${match.homeTeam} vs ${match.awayTeam}`,
-            )
+            onAction(async () => {
+              await simulateKickoffAction(match.id);
+            }, `Kickoff simulated for ${match.homeTeam} vs ${match.awayTeam}`)
           }
         >
           Simulate kickoff
@@ -437,12 +438,9 @@ function FixtureCard({
           variant="secondary"
           disabled={disabled}
           onClick={() =>
-            onAction(
-              async () => {
-                await updateDevFixtureAction(match.id, { status: "live" }, true);
-              },
-              `Marked live for ${match.homeTeam} vs ${match.awayTeam}`,
-            )
+            onAction(async () => {
+              await updateDevFixtureAction(match.id, { status: "live" }, true);
+            }, `Marked live for ${match.homeTeam} vs ${match.awayTeam}`)
           }
         >
           Set live
@@ -475,12 +473,9 @@ function FixtureCard({
               onError("Scores must be valid numbers");
               return;
             }
-            onAction(
-              async () => {
-                await finishMatchAction(match.id, home, away);
-              },
-              `Finished ${match.homeTeam} ${home}-${away} ${match.awayTeam}`,
-            );
+            onAction(async () => {
+              await finishMatchAction(match.id, home, away);
+            }, `Finished ${match.homeTeam} ${home}-${away} ${match.awayTeam}`);
           }}
         >
           Finish & score
@@ -493,15 +488,14 @@ function FixtureCard({
           size="sm"
           disabled={disabled}
           onClick={() => {
-            if (!window.confirm(`Delete ${match.homeTeam} vs ${match.awayTeam}?`)) {
+            if (
+              !window.confirm(`Delete ${match.homeTeam} vs ${match.awayTeam}?`)
+            ) {
               return;
             }
-            onAction(
-              async () => {
-                await deleteDevFixtureAction(match.id);
-              },
-              `Deleted ${match.homeTeam} vs ${match.awayTeam}`,
-            );
+            onAction(async () => {
+              await deleteDevFixtureAction(match.id);
+            }, `Deleted ${match.homeTeam} vs ${match.awayTeam}`);
           }}
         >
           Delete

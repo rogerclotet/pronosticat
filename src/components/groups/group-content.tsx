@@ -1,6 +1,6 @@
 import { GroupTabView } from "@/components/groups/group-tab-view";
-import { getStandings, getGroupMembers } from "@/lib/queries/groups";
 import { getCachedActiveGroup, getCachedSession } from "@/lib/queries/cached";
+import { getGroupMembers, getStandings } from "@/lib/queries/groups";
 
 export async function GroupContent() {
   const session = await getCachedSession();

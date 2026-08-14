@@ -5,6 +5,7 @@ PWA per pronosticar futbol amb amics. Cada jornada porta un tauler de reptes —
 ## Stack
 
 - **Next.js 16** (App Router)
+- **Biome** — lint i format
 - **Tailwind CSS 4** — disseny brutalista mobile-first
 - **Drizzle ORM** + PostgreSQL
 - **Better Auth** — Google OAuth + magic link

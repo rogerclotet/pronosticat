@@ -20,7 +20,11 @@ function SlotCardSkeleton() {
 
 export function PredictionsSkeleton() {
   return (
-    <div className="flex flex-col gap-3.5 p-4 pb-6" aria-busy aria-label="Loading">
+    <div
+      className="flex flex-col gap-3.5 p-4 pb-6"
+      aria-busy
+      aria-label="Loading"
+    >
       <div className="border-b-2 border-border pb-2">
         <Skeleton className="h-5 w-32" />
       </div>

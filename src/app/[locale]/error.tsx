@@ -19,9 +19,12 @@ export default function LocaleError({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-      <h1 className="font-sans text-xl font-extrabold uppercase">S&apos;ha produït un error</h1>
+      <h1 className="font-sans text-xl font-extrabold uppercase">
+        S&apos;ha produït un error
+      </h1>
       <p className="max-w-sm text-sm text-text-secondary">
-        No s&apos;ha pogut carregar la pàgina. Torna-ho a provar d&apos;aquí a uns segons.
+        No s&apos;ha pogut carregar la pàgina. Torna-ho a provar d&apos;aquí a
+        uns segons.
       </p>
       {error.digest && (
         <p className="font-mono text-[10px] text-muted">Ref: {error.digest}</p>

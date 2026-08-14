@@ -1,14 +1,14 @@
-import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { InviteAcceptView } from "@/components/invite/invite-accept-view";
 import { InviteInvalid } from "@/components/invite/invite-invalid";
 import { joinGroup } from "@/lib/actions/groups";
 import { normalizeInviteCode } from "@/lib/invite";
 import { getGroupInvitePreview } from "@/lib/queries/groups";
-import { getSession } from "@/lib/session";
 import { assertRateLimit } from "@/lib/security/rate-limit";
+import { getSession } from "@/lib/session";
 
 export const metadata = {
   title: "Invitació · Pronosticat",
@@ -34,7 +34,13 @@ async function InviteContent({ params, searchParams }: InvitePageProps) {
   const code = normalizeInviteCode(rawCode);
 
   if (!code) {
-    return <InviteInvalid title={t("invalidTitle")} body={t("invalidBody")} cta={t("invalidCta")} />;
+    return (
+      <InviteInvalid
+        title={t("invalidTitle")}
+        body={t("invalidBody")}
+        cta={t("invalidCta")}
+      />
+    );
   }
 
   const session = await getSession();
@@ -56,7 +62,13 @@ async function InviteContent({ params, searchParams }: InvitePageProps) {
 
   const preview = await getGroupInvitePreview(code);
   if (!preview) {
-    return <InviteInvalid title={t("invalidTitle")} body={t("invalidBody")} cta={t("invalidCta")} />;
+    return (
+      <InviteInvalid
+        title={t("invalidTitle")}
+        body={t("invalidBody")}
+        cta={t("invalidCta")}
+      />
+    );
   }
 
   return (

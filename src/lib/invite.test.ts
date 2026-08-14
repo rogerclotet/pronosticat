@@ -37,11 +37,15 @@ describe("sanitizeAuthCallbackUrl", () => {
   });
 
   it("allows the invite page without join", () => {
-    expect(sanitizeAuthCallbackUrl("/invite/AB2DEFGH")).toBe("/invite/AB2DEFGH");
+    expect(sanitizeAuthCallbackUrl("/invite/AB2DEFGH")).toBe(
+      "/invite/AB2DEFGH",
+    );
   });
 
   it("rejects open redirects and unrelated paths", () => {
-    expect(sanitizeAuthCallbackUrl("https://evil.example/invite/AB2DEFGH")).toBeNull();
+    expect(
+      sanitizeAuthCallbackUrl("https://evil.example/invite/AB2DEFGH"),
+    ).toBeNull();
     expect(sanitizeAuthCallbackUrl("//evil.example")).toBeNull();
     expect(sanitizeAuthCallbackUrl("/login")).toBeNull();
     expect(sanitizeAuthCallbackUrl("/invite/AB2DEFGH?join=1&x=1")).toBeNull();

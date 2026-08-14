@@ -20,7 +20,9 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
   const { lockOpenRounds, settleLockedRounds } = await import(
     "@/lib/rounds/scoring"
   );
-  const { generateId, ROUND_SETTLE_GRACE_HOURS } = await import("@/lib/constants");
+  const { generateId, ROUND_SETTLE_GRACE_HOURS } = await import(
+    "@/lib/constants"
+  );
 
   const USER_ID = "u-test";
   const GROUP_ID = "g-test";
@@ -103,15 +105,44 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
     const kickoff = new Date(Date.now() - 3 * HOUR);
     await seedMatches([
       // 4 goals, diff 2 — ties goal_fest with m2
-      { id: "m1", matchday: 7, home: "Girona", away: "Elx", homeScore: 3, awayScore: 1, status: "finished", kickoff },
+      {
+        id: "m1",
+        matchday: 7,
+        home: "Girona",
+        away: "Elx",
+        homeScore: 3,
+        awayScore: 1,
+        status: "finished",
+        kickoff,
+      },
       // 4 goals, diff 4 — thrashing winner, Barça is top scorer
-      { id: "m2", matchday: 7, home: "Barça", away: "Getafe", homeScore: 4, awayScore: 0, status: "finished", kickoff },
-      { id: "m3", matchday: 7, home: "Betis", away: "Sevilla", homeScore: 0, awayScore: 1, status: "finished", kickoff },
+      {
+        id: "m2",
+        matchday: 7,
+        home: "Barça",
+        away: "Getafe",
+        homeScore: 4,
+        awayScore: 0,
+        status: "finished",
+        kickoff,
+      },
+      {
+        id: "m3",
+        matchday: 7,
+        home: "Betis",
+        away: "Sevilla",
+        homeScore: 0,
+        awayScore: 1,
+        status: "finished",
+        kickoff,
+      },
     ]);
 
     await ensureRounds();
 
-    const board = await db.query.rounds.findFirst({ with: { challenges: true } });
+    const board = await db.query.rounds.findFirst({
+      with: { challenges: true },
+    });
     expect(board?.id).toBe("laliga-7");
     expect(board?.status).toBe("open");
     expect(board?.challenges).toHaveLength(6);
@@ -164,7 +195,16 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
   it("is idempotent: a second scoring run does not pay twice", async () => {
     const kickoff = new Date(Date.now() - 3 * HOUR);
     await seedMatches([
-      { id: "m1", matchday: 7, home: "Girona", away: "Elx", homeScore: 3, awayScore: 1, status: "finished", kickoff },
+      {
+        id: "m1",
+        matchday: 7,
+        home: "Girona",
+        away: "Elx",
+        homeScore: 3,
+        awayScore: 1,
+        status: "finished",
+        kickoff,
+      },
     ]);
     await ensureRounds();
     await addEntry("banker", { targetMatchId: "m1", targetSide: "home" });
@@ -182,8 +222,26 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
   it("waits on a postponed match, then settles once the grace period passes", async () => {
     const kickoff = new Date(Date.now() - 3 * HOUR);
     await seedMatches([
-      { id: "m1", matchday: 7, home: "Girona", away: "Elx", homeScore: 3, awayScore: 1, status: "finished", kickoff },
-      { id: "m2", matchday: 7, home: "Cadis", away: "Osasuna", homeScore: null, awayScore: null, status: "postponed", kickoff },
+      {
+        id: "m1",
+        matchday: 7,
+        home: "Girona",
+        away: "Elx",
+        homeScore: 3,
+        awayScore: 1,
+        status: "finished",
+        kickoff,
+      },
+      {
+        id: "m2",
+        matchday: 7,
+        home: "Cadis",
+        away: "Osasuna",
+        homeScore: null,
+        awayScore: null,
+        status: "postponed",
+        kickoff,
+      },
     ]);
     await ensureRounds();
     await addEntry("banker", { targetMatchId: "m1", targetSide: "home" });
@@ -205,11 +263,24 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
   it("refuses a second joker in the same round", async () => {
     const kickoff = new Date(Date.now() + 3 * HOUR);
     await seedMatches([
-      { id: "m1", matchday: 7, home: "Girona", away: "Elx", homeScore: null, awayScore: null, status: "scheduled", kickoff },
+      {
+        id: "m1",
+        matchday: 7,
+        home: "Girona",
+        away: "Elx",
+        homeScore: null,
+        awayScore: null,
+        status: "scheduled",
+        kickoff,
+      },
     ]);
     await ensureRounds();
 
-    await addEntry("banker", { targetMatchId: "m1", targetSide: "home", isJoker: true });
+    await addEntry("banker", {
+      targetMatchId: "m1",
+      targetSide: "home",
+      isJoker: true,
+    });
     await expect(
       addEntry("goal_fest", { targetMatchId: "m1", isJoker: true }),
     ).rejects.toThrow();
@@ -219,8 +290,26 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
     const { getStandings } = await import("@/lib/queries/groups");
     const kickoff = new Date(Date.now() - 3 * HOUR);
     await seedMatches([
-      { id: "m1", matchday: 7, home: "Girona", away: "Elx", homeScore: 3, awayScore: 1, status: "finished", kickoff },
-      { id: "m2", matchday: 7, home: "Barça", away: "Getafe", homeScore: 4, awayScore: 0, status: "finished", kickoff },
+      {
+        id: "m1",
+        matchday: 7,
+        home: "Girona",
+        away: "Elx",
+        homeScore: 3,
+        awayScore: 1,
+        status: "finished",
+        kickoff,
+      },
+      {
+        id: "m2",
+        matchday: 7,
+        home: "Barça",
+        away: "Getafe",
+        homeScore: 4,
+        awayScore: 0,
+        status: "finished",
+        kickoff,
+      },
     ]);
     await ensureRounds();
 

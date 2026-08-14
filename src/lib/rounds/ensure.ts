@@ -1,10 +1,10 @@
 import { and, eq, min } from "drizzle-orm";
 import { boardChallengeSlugs } from "@/lib/challenges/rotating";
+import type { Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches, roundChallenges, rounds } from "@/lib/db/schema";
-import { roundId } from "@/lib/rounds/lifecycle";
-import type { Competition } from "@/lib/constants";
 import { getActiveCompetitions } from "@/lib/queries/active-competitions";
+import { roundId } from "@/lib/rounds/lifecycle";
 
 /**
  * Create the round and its board of challenges for every matchday we have
@@ -48,14 +48,17 @@ export async function ensureCompetitionRounds(competition: Competition) {
       .filter(({ slug }) => !existingSlugs.has(slug));
 
     if (toInsert.length > 0) {
-      await db.insert(roundChallenges).values(
-        toInsert.map(({ slug, position }) => ({
-          id: `${id}-${slug}`,
-          roundId: id,
-          slug,
-          position,
-        })),
-      ).onConflictDoNothing({ target: roundChallenges.id });
+      await db
+        .insert(roundChallenges)
+        .values(
+          toInsert.map(({ slug, position }) => ({
+            id: `${id}-${slug}`,
+            roundId: id,
+            slug,
+            position,
+          })),
+        )
+        .onConflictDoNothing({ target: roundChallenges.id });
     }
   }
 }

@@ -1,6 +1,11 @@
 "use server";
 
 import { and, eq } from "drizzle-orm";
+import {
+  describePick,
+  toBoardMatch,
+  toEntryView,
+} from "@/components/challenges/types";
 import { db } from "@/lib/db";
 import { groups } from "@/lib/db/schema";
 import {
@@ -9,14 +14,13 @@ import {
   isGroupMember,
   liveGroup,
 } from "@/lib/queries/groups";
-import { requireSession } from "@/lib/session";
-import { getRivalStats, getWeeklyDelta, type RivalStats } from "@/lib/queries/stats";
 import { getCurrentRoundBoard } from "@/lib/queries/round-board";
 import {
-  describePick,
-  toBoardMatch,
-  toEntryView,
-} from "@/components/challenges/types";
+  getRivalStats,
+  getWeeklyDelta,
+  type RivalStats,
+} from "@/lib/queries/stats";
+import { requireSession } from "@/lib/session";
 
 export type RivalPick = {
   slug: string;

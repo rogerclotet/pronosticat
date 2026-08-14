@@ -1,16 +1,18 @@
 import { and, asc, desc, eq, lt } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
+import { COMPETITIONS, type Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches, rounds } from "@/lib/db/schema";
 import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
-import {
-  COMPETITIONS,
-  type Competition,
-} from "@/lib/constants";
 
 const DEV_EXTERNAL_ID_FLOOR = -900_000_000;
 
-type DevMatchStatus = "scheduled" | "live" | "finished" | "postponed" | "cancelled";
+type DevMatchStatus =
+  | "scheduled"
+  | "live"
+  | "finished"
+  | "postponed"
+  | "cancelled";
 
 export type CreateDevMatchInput = {
   competition: Competition;
@@ -47,7 +49,9 @@ function revalidateMatchCache() {
 export async function createDevMatch(input: CreateDevMatchInput) {
   const competition = assertCompetition(input.competition);
   const externalId = generateDevExternalId();
-  const kickoff = input.kickoff ? new Date(input.kickoff) : new Date(Date.now() + 60 * 60 * 1000);
+  const kickoff = input.kickoff
+    ? new Date(input.kickoff)
+    : new Date(Date.now() + 60 * 60 * 1000);
   const id = `${competition}-${externalId}`;
 
   await db.insert(matches).values({
@@ -71,11 +75,18 @@ export async function createDevMatch(input: CreateDevMatchInput) {
   return db.query.matches.findFirst({ where: eq(matches.id, id) });
 }
 
-export async function updateDevMatch(matchId: string, input: UpdateDevMatchInput) {
-  const existing = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
+export async function updateDevMatch(
+  matchId: string,
+  input: UpdateDevMatchInput,
+) {
+  const existing = await db.query.matches.findFirst({
+    where: eq(matches.id, matchId),
+  });
   if (!existing) throw new Error("Match not found");
   if (existing.externalId >= 0) {
-    throw new Error("Only dev fixture matches can be updated through this endpoint");
+    throw new Error(
+      "Only dev fixture matches can be updated through this endpoint",
+    );
   }
 
   const updates: Partial<typeof matches.$inferInsert> = {
@@ -94,10 +105,14 @@ export async function updateDevMatch(matchId: string, input: UpdateDevMatchInput
 }
 
 export async function deleteDevMatch(matchId: string) {
-  const existing = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
+  const existing = await db.query.matches.findFirst({
+    where: eq(matches.id, matchId),
+  });
   if (!existing) throw new Error("Match not found");
   if (existing.externalId >= 0) {
-    throw new Error("Only dev fixture matches can be deleted through this endpoint");
+    throw new Error(
+      "Only dev fixture matches can be deleted through this endpoint",
+    );
   }
 
   await db.delete(matches).where(eq(matches.id, matchId));

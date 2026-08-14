@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+import { getSession } from "@/lib/session";
 
 export default async function OnboardingPage({
   searchParams,

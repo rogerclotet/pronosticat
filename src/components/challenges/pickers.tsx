@@ -1,10 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import {
+  type BoardMatch,
+  teamCrest,
+  teamName,
+} from "@/components/challenges/types";
 import type { TargetSide } from "@/lib/challenges/types";
 import { MAX_PREDICTED_SCORE } from "@/lib/constants";
 import { cn, formatKickoff, teamCode } from "@/lib/utils";
-import { teamCrest, teamName, type BoardMatch } from "@/components/challenges/types";
 
 export function MatchPicker({
   matches,
@@ -85,7 +89,9 @@ export function TeamPicker({
   teamsInUse?: Map<string, string>;
 }) {
   const t = useTranslations("sheet");
-  const sides = requiredSide ? ([requiredSide] as const) : (["home", "away"] as const);
+  const sides = requiredSide
+    ? ([requiredSide] as const)
+    : (["home", "away"] as const);
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -152,7 +158,11 @@ function TeamMark({ match, side }: { match: BoardMatch; side: TargetSide }) {
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={crest} alt="" className="h-[26px] w-[26px] shrink-0 object-contain" />
+    <img
+      src={crest}
+      alt=""
+      className="h-[26px] w-[26px] shrink-0 object-contain"
+    />
   );
 }
 
@@ -213,7 +223,9 @@ function ScoreStepper({
       </span>
       <span className="font-mono text-3xl font-bold text-teal">{value}</span>
       <div className="flex">
-        <StepButton onClick={() => onChange(Math.max(0, value - 1))}>−</StepButton>
+        <StepButton onClick={() => onChange(Math.max(0, value - 1))}>
+          −
+        </StepButton>
         <StepButton
           onClick={() => onChange(Math.min(MAX_PREDICTED_SCORE, value + 1))}
           className="-ml-0.5"
@@ -234,7 +246,9 @@ export function NumberPicker({
 }) {
   return (
     <div className="flex items-center justify-center gap-3 border-2 border-border bg-surface p-3.5">
-      <StepButton onClick={() => onChange(Math.max(0, value - 1))}>−</StepButton>
+      <StepButton onClick={() => onChange(Math.max(0, value - 1))}>
+        −
+      </StepButton>
       <span className="min-w-[64px] text-center font-mono text-3xl font-bold text-teal">
         {value}
       </span>
