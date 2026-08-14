@@ -1,6 +1,6 @@
 import { ProfileView } from "@/components/profile/profile-view";
-import { getProfileSummary, getMatchdayHistory } from "@/lib/queries/stats";
 import { getCachedActiveGroup, getCachedSession } from "@/lib/queries/cached";
+import { getMatchdayHistory, getProfileSummary } from "@/lib/queries/stats";
 
 export async function ProfileContent() {
   const session = await getCachedSession();
@@ -16,6 +16,7 @@ export async function ProfileContent() {
 
   return (
     <ProfileView
+      userName={session.user.name}
       summary={summary}
       history={history}
       competition={activeGroup.competition}

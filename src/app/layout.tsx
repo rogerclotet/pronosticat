@@ -1,17 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const archivo = Archivo({
+const archivo = localFont({
+  src: "./fonts/Archivo-latin-wght-normal.woff2",
   variable: "--font-archivo",
-  subsets: ["latin"],
-  weight: ["400", "600", "800"],
+  weight: "400 800",
+  display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const jetbrainsMono = localFont({
+  src: "./fonts/JetBrainsMono-latin-wght-normal.woff2",
   variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: "400 700",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -42,7 +44,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ca" className={`${archivo.variable} ${jetbrainsMono.variable} h-full`}>
+    <html
+      lang="ca"
+      className={`${archivo.variable} ${jetbrainsMono.variable} h-full`}
+    >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

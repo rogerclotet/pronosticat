@@ -12,7 +12,9 @@ describe("pickRotatingChallenge", () => {
   });
 
   it("is stable for the same round", () => {
-    expect(pickRotatingChallenge("laliga-7")).toBe(pickRotatingChallenge("laliga-7"));
+    expect(pickRotatingChallenge("laliga-7")).toBe(
+      pickRotatingChallenge("laliga-7"),
+    );
   });
 
   it("can differ across rounds", () => {

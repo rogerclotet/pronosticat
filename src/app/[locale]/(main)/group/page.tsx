@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { GroupSkeleton } from "@/components/groups/group-skeleton";
 import { GroupContent } from "@/components/groups/group-content";
+import { GroupSkeleton } from "@/components/groups/group-skeleton";
 
 export default function GroupPage() {
   return (

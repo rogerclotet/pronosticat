@@ -103,8 +103,20 @@ fi
 
 echo "Deploying $(git rev-parse HEAD) to $PROJECT_DIR"
 
+# Clean up before building too: if disk is already near full, the cleanup at
+# the end of a previous deploy never gets a chance to run because the build
+# itself fails first. These are safe pre-build (they never touch images or
+# cache still in use).
+docker container prune -f || true
+docker image prune -f || true
+docker builder prune -f --filter "until=24h" || true
+
 export APP_PORT
 docker compose -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans --wait --wait-timeout 180 app backup cron
-docker image prune -f
+
+# Old app/migrate/cron images are no longer referenced by any container at
+# this point, so -a (not just dangling) is safe here.
+docker image prune -af
 docker builder prune -f --filter "until=24h" || true
+docker volume prune -f || true
 REMOTE

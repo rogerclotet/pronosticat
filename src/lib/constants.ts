@@ -21,7 +21,7 @@ export const COMPETITIONS: Record<
 export const DATA_CACHE_TTL = 60;
 
 export const POINTS = {
-  DEFAULT_STARTING: 1000,
+  DEFAULT_STARTING: 0,
 } as const;
 
 /** The joker doubles both the reward and the penalty of the pick it is attached to. */

@@ -8,6 +8,7 @@ import {
   Flame,
   House,
   Lock,
+  type LucideIcon,
   Moon,
   Shield,
   Sparkles,
@@ -15,7 +16,6 @@ import {
   Target,
   TrendingDown,
   TrendingUp,
-  type LucideIcon,
 } from "lucide-react";
 
 /** A glyph per challenge, so an empty slot still reads at a glance. */

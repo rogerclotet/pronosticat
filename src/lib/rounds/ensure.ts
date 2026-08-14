@@ -1,10 +1,12 @@
 import { and, eq, min } from "drizzle-orm";
 import { boardChallengeSlugs } from "@/lib/challenges/rotating";
+import type { Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches, roundChallenges, rounds } from "@/lib/db/schema";
-import { roundId } from "@/lib/rounds/lifecycle";
-import type { Competition } from "@/lib/constants";
+import { notifyDeadlineMoved } from "@/lib/push/dispatch";
+import { isMeaningfulDeadlineAdvance } from "@/lib/push/windows";
 import { getActiveCompetitions } from "@/lib/queries/active-competitions";
+import { roundId } from "@/lib/rounds/lifecycle";
 
 /**
  * Create the round and its board of challenges for every matchday we have
@@ -30,11 +32,27 @@ export async function ensureCompetitionRounds(competition: Competition) {
       .values({ id, competition, matchday, lockAt })
       .onConflictDoNothing({ target: rounds.id });
 
+    const openRound = await db.query.rounds.findFirst({
+      where: eq(rounds.id, id),
+      columns: { lockAt: true, status: true },
+    });
+    const deadlineMoved =
+      openRound?.status === "open" &&
+      isMeaningfulDeadlineAdvance(openRound.lockAt, lockAt);
+
     // Fixtures move; the deadline follows them until the round locks.
     await db
       .update(rounds)
       .set({ lockAt, updatedAt: now })
       .where(and(eq(rounds.id, id), eq(rounds.status, "open")));
+
+    if (deadlineMoved) {
+      try {
+        await notifyDeadlineMoved({ roundId: id, competition, lockAt });
+      } catch (error) {
+        console.error("[push] deadline move notify failed:", error);
+      }
+    }
 
     const existing = await db.query.roundChallenges.findMany({
       where: eq(roundChallenges.roundId, id),
@@ -48,14 +66,17 @@ export async function ensureCompetitionRounds(competition: Competition) {
       .filter(({ slug }) => !existingSlugs.has(slug));
 
     if (toInsert.length > 0) {
-      await db.insert(roundChallenges).values(
-        toInsert.map(({ slug, position }) => ({
-          id: `${id}-${slug}`,
-          roundId: id,
-          slug,
-          position,
-        })),
-      ).onConflictDoNothing({ target: roundChallenges.id });
+      await db
+        .insert(roundChallenges)
+        .values(
+          toInsert.map(({ slug, position }) => ({
+            id: `${id}-${slug}`,
+            roundId: id,
+            slug,
+            position,
+          })),
+        )
+        .onConflictDoNothing({ target: roundChallenges.id });
     }
   }
 }

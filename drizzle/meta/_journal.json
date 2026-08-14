@@ -15,6 +15,34 @@
       "when": 1786670000000,
       "tag": "0001_hot_path_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786692252884,
+      "tag": "0002_starting_points_zero",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786692727473,
+      "tag": "0003_group_soft_delete",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786730238936,
+      "tag": "0004_push_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786731554158,
+      "tag": "0005_push_kind_text",
+      "breakpoints": true
     }
   ]
 }

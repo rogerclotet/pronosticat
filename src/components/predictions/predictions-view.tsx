@@ -1,20 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { StatTile } from "@/components/ui/stat-tile";
-import { SegmentedBar } from "@/components/ui/progress-bar";
-import { SlotCard } from "@/components/challenges/slot-card";
 import { ChallengeSheet } from "@/components/challenges/challenge-sheet";
+import { SlotCard } from "@/components/challenges/slot-card";
 import {
-  describePickTeams,
   type BoardMatch,
   type BoardRound,
   type BoardSlotView,
+  describePickTeams,
   type EntryView,
 } from "@/components/challenges/types";
-import type { MatchdayHistoryRow } from "@/lib/queries/stats";
+import { SegmentedBar } from "@/components/ui/progress-bar";
+import { StatTile } from "@/components/ui/stat-tile";
+import { usePathname, useRouter } from "@/i18n/routing";
 import type { Competition } from "@/lib/constants";
+import type { MatchdayHistoryRow } from "@/lib/queries/stats";
 import { cn } from "@/lib/utils";
 
 type PredictionsViewProps = {
@@ -42,7 +43,10 @@ export function PredictionsView({
   const tGroup = useTranslations("group");
   const tPerfil = useTranslations("perfil");
 
-  const [openSlotId, setOpenSlotId] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const openSlotId = searchParams.get("slot");
 
   const entryBySlot = new Map(entries.map((e) => [e.roundChallengeId, e]));
   const played = slots.filter((slot) => entryBySlot.has(slot.id));
@@ -127,7 +131,7 @@ export function PredictionsView({
               entry={entryBySlot.get(slot.id)}
               matches={matches}
               interactive={isOpen}
-              onOpen={() => setOpenSlotId(slot.id)}
+              onOpen={() => router.push(`${pathname}?slot=${slot.id}`)}
             />
           ))}
         </div>
@@ -159,7 +163,7 @@ export function PredictionsView({
 
       {openSlot && (
         <ChallengeSheet
-          onClose={() => setOpenSlotId(null)}
+          onClose={() => router.replace(pathname)}
           groupId={groupId}
           slot={openSlot}
           matches={matches}
@@ -192,7 +196,9 @@ function RoundHistoryCard({
     <div className="flex flex-col border-2 border-border bg-surface">
       <div className="flex items-start justify-between gap-1 p-2">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate font-sans text-[10.5px] font-semibold">{label}</span>
+          <span className="truncate font-sans text-[10.5px] font-semibold">
+            {label}
+          </span>
           <span className="font-mono text-[8px] uppercase tracking-[0.08em] text-muted">
             {meta}
           </span>

@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import {
   CORE_CHALLENGE_SLUGS,
   EXTRA_CHALLENGE_SLUGS,
@@ -16,7 +16,9 @@ export function boardChallengeSlugs(
   roundId: string,
   existingSlugs: ReadonlySet<string>,
 ): readonly string[] {
-  const rotating = EXTRA_CHALLENGE_SLUGS.find((slug) => existingSlugs.has(slug));
+  const rotating = EXTRA_CHALLENGE_SLUGS.find((slug) =>
+    existingSlugs.has(slug),
+  );
   if (rotating) return [...CORE_CHALLENGE_SLUGS, rotating];
   return [...CORE_CHALLENGE_SLUGS, pickRotatingChallenge(roundId)];
 }

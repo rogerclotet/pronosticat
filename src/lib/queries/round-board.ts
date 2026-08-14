@@ -1,12 +1,12 @@
 import { asc, eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { matches, roundChallenges, rounds } from "@/lib/db/schema";
 import { CORE_CHALLENGE_SLUGS, getChallenge } from "@/lib/challenges/registry";
 import type { ChallengeTargetKind, TargetSide } from "@/lib/challenges/types";
-import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
+import type { Competition } from "@/lib/constants";
+import { db } from "@/lib/db";
+import { matches, roundChallenges, type rounds } from "@/lib/db/schema";
 import { getCurrentRound } from "@/lib/queries/matchday";
 import { getRoundMatches } from "@/lib/queries/matches";
-import type { Competition } from "@/lib/constants";
+import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
 
 async function hasCompetitionMatches(competition: Competition) {
   const row = await db.query.matches.findFirst({

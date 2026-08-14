@@ -1,5 +1,5 @@
-import { ROUND_SETTLE_GRACE_HOURS } from "@/lib/constants";
 import type { ResolvedMatch } from "@/lib/challenges/types";
+import { ROUND_SETTLE_GRACE_HOURS } from "@/lib/constants";
 import type { matches } from "@/lib/db/schema";
 
 type MatchRow = typeof matches.$inferSelect;

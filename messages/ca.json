@@ -16,7 +16,7 @@
   "challenges": {
     "exact_score": {
       "name": "La porra",
-      "rule": "Tria un partit i clava'n el resultat."
+      "rule": "Tria un partit i clava el resultat."
     },
     "goal_fest": {
       "name": "La golejada",
@@ -71,7 +71,7 @@
       "rule": "Quants gols hi haurà en tota la jornada."
     },
     "home_wins": {
-      "name": "Mando de casa",
+      "name": "L'efecte camp",
       "rule": "Quants equips de casa guanyaran la jornada."
     }
   },
@@ -98,7 +98,7 @@
     "pickTeam": "TRIA L'EQUIP",
     "pickScore": "EL TEU RESULTAT",
     "pickNumber": "EL TEU NÚMERO",
-    "pickMatchFirst": "Tria un partit per posar-hi resultat.",
+    "pickMatchFirst": "Tria un partit per posar-hi el resultat.",
     "jokerLabel": "FES SERVIR EL JÒQUER",
     "jokerNote": "Dobla el premi i dobla el càstig. Un per jornada.",
     "jokerTakenNote": "Ja el tens posat a «{challenge}».",
@@ -121,7 +121,7 @@
   },
   "group": {
     "title": "Classificació",
-    "note": "{count} JUGADORS",
+    "note": "{count, plural, one {# JUGADOR} other {# JUGADORS}}",
     "invite": "+ FICA-HI MÉS GENT",
     "manage": "Gestiona el grup",
     "inviteCode": "CODI D'ENTRADA",
@@ -133,6 +133,9 @@
     "switch": "CANVIA DE GRUP →",
     "noMembers": "No hi ha membres al grup",
     "codeCopied": "Codi copiat!",
+    "linkCopied": "Enllaç copiat!",
+    "shareTitle": "Uneix-te a {name} a Pronosticat",
+    "shareText": "T'han convidat al grup {name}. Obre l'enllaç i accepta la invitació.",
     "competitions": {
       "laliga": "LaLiga",
       "premier_league": "Premier League",
@@ -141,11 +144,16 @@
   },
   "groupsSheet": {
     "title": "Els meus grups",
-    "meta": "{members} JUGADORS · {rank}è DE {total}",
+    "meta": "{members, plural, one {# JUGADOR} other {# JUGADORS}} · {rank} DE {total}",
     "roleAdmin": "ADMIN",
     "roleMember": "MEMBRE",
     "createNew": "+ CREA UN GRUP NOU",
-    "joinCode": "UNEIX-TE AMB UN CODI"
+    "joinCode": "UNEIX-TE AMB UN CODI",
+    "delete": "Elimina el grup",
+    "deleteConfirmTitle": "Eliminar el grup?",
+    "deleteConfirmBody": "{name} deixarà de ser accessible per a tothom. El conservem per si ha estat un error.",
+    "deleteConfirm": "Sí, elimina'l",
+    "deleteCancel": "Cancel·la"
   },
   "rival": {
     "meta": "{points} PUNTS · {delta} AQUESTA JORNADA",
@@ -161,17 +169,17 @@
     "balance": "PUNTS",
     "pending": "JUGADES OBERTES",
     "thisWeek": "AQUESTA SETMANA",
-    "swing": "EN JOC",
     "historyTitle": "Historial de jornades",
     "historyRound": "Jornada {round} · {competition}",
-    "historyMeta": "{count} JUGADES · {hits} ENCERTS",
-    "viewOnboarding": "VEURE ONBOARDING / CREAR GRUP",
+    "historyMeta": "{count, plural, one {# JUGADA} other {# JUGADES}} · {hits, plural, one {# ENCERT} other {# ENCERTS}}",
     "signOut": "Sortir",
-    "noHistory": "Encara no tens jornades tancades."
+    "noHistory": "Encara no tens jornades tancades.",
+    "editNameTitle": "Canvia el nom",
+    "nameInvalid": "El nom ha de tenir entre 1 i {max} caràcters."
   },
   "onboarding": {
     "createTitle": "Fes la teva penya",
-    "createBody": "Crea un grup, reparteix 1.000 punts a cadascú i que guanyi qui més en sàpiga. Sense diners, només orgull.",
+    "createBody": "Crea un grup, tothom comença de zero i que guanyi qui més punts sàpiga sumar. Sense diners, només orgull.",
     "nameLabel": "NOM DEL GRUP",
     "competitionLabel": "COMPETICIÓ",
     "createCta": "CREA EL GRUP",
@@ -182,10 +190,25 @@
     "joinCta": "UNEIX-TE AL GRUP",
     "createInsteadAlt": "CREA UN GRUP NOU",
     "inviteTitle": "Convida la penya",
-    "inviteBody": "Comparteix el codi. Sense gent no hi ha pica-pica.",
+    "inviteBody": "Comparteix l'enllaç o el codi. Sense gent no hi ha pica-pica.",
     "groupCodeLabel": "CODI DEL GRUP",
+    "shareCta": "COMPARTEIX L'ENLLAÇ",
     "finishCta": "A LA JORNADA",
     "error": "No s'ha pogut completar. Comprova les dades i torna-ho a provar."
+  },
+  "invite": {
+    "title": "T'han convidat",
+    "body": "{name} t'espera a Pronosticat. Accepta i entra a la penya.",
+    "groupLabel": "GRUP",
+    "competitionLabel": "COMPETICIÓ",
+    "membersLabel": "JUGADORS",
+    "codeLabel": "CODI D'ENTRADA",
+    "accept": "ACCEPTA LA INVITACIÓ",
+    "loginHint": "Després d'acceptar, inicia sessió i ja seràs al grup.",
+    "invalidTitle": "Invitació no vàlida",
+    "invalidBody": "Aquest enllaç no funciona. Demana'n un de nou a qui porta el grup.",
+    "invalidCta": "D'ACORD",
+    "error": "No s'ha pogut entrar al grup. Torna-ho a provar."
   },
   "jornada": {
     "statusOpen": "OBERT",
@@ -193,6 +216,26 @@
     "statusFinished": "FINALITZAT"
   },
   "common": {
-    "error": "S'ha produït un error"
+    "error": "S'ha produït un error",
+    "save": "Desa",
+    "cancel": "Cancel·la"
+  },
+  "push": {
+    "askTitle": "Que no se t'escapi la jornada",
+    "askBody": "Et volem avisar només quan calgui moure fitxa: resultats de les teves jugades i el tancament del tauler. Sense ofertes ni soroll.",
+    "askReasonResults": "Quan un partit que has pronosticat s'acaba, o quan es liquiden els punts.",
+    "askReasonDeadline": "Si et queden caselles i s'acosta el primer xiulet.",
+    "askCta": "ACTIVA ELS AVISOS",
+    "askLater": "ARA NO",
+    "enableError": "No s'han pogut activar. Torna-ho a provar.",
+    "installTitle": "Afegeix-la a l'inici",
+    "installBody": "A l'iPhone, els avisos només arriben si tens Pronosticat instal·lada. Al Safari, obre Comparteix i tria «Afegeix a la pantalla d'inici».",
+    "installCta": "D'ACORD",
+    "settingsLabel": "AVISOS",
+    "enabled": "Actius en aquest dispositiu. T'avisem dels resultats i del tancament de jornada.",
+    "disabled": "Desactivats en aquest dispositiu. Pots activar-los per no perdre't el tancament ni els resultats.",
+    "disableCta": "DESACTIVA",
+    "denied": "Has bloquejat les notificacions. Torna-les a permetre des de la configuració del navegador o del telèfon.",
+    "unsupported": "Aquest navegador no admet avisos emergents."
   }
 }

@@ -1,33 +1,35 @@
 "use server";
 
-import { eq, and, ne } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { getChallenge } from "@/lib/challenges/registry";
+import {
+  type EntryInput,
+  normalizeTarget,
+  teamsClaimed,
+} from "@/lib/challenges/validate";
+import {
+  COMPETITIONS,
+  type Competition,
+  generateId,
+  generateInviteCode,
+  POINTS,
+} from "@/lib/constants";
 import { db } from "@/lib/db";
 import {
   entries,
-  groups,
   groupMembers,
+  groups,
   matches,
   roundChallenges,
   rounds,
   userActiveGroup,
 } from "@/lib/db/schema";
-import { requireSession } from "@/lib/session";
-import {
-  COMPETITIONS,
-  generateId,
-  generateInviteCode,
-  POINTS,
-  type Competition,
-} from "@/lib/constants";
-import { getChallenge } from "@/lib/challenges/registry";
-import {
-  normalizeTarget,
-  teamsClaimed,
-  type EntryInput,
-} from "@/lib/challenges/validate";
-import { getUserGroupsWithMeta } from "@/lib/queries/groups";
-import { revalidatePath } from "next/cache";
+import { normalizeInviteCode } from "@/lib/invite";
+import { notifyMemberJoined } from "@/lib/push/dispatch";
+import { getUserGroupsWithMeta, liveGroup } from "@/lib/queries/groups";
 import { assertRateLimit } from "@/lib/security/rate-limit";
+import { requireSession } from "@/lib/session";
 
 /**
  * Every export of this module is a public RPC endpoint, so nothing here may
@@ -94,17 +96,48 @@ export async function createGroup(data: {
   return { id, inviteCode };
 }
 
+export async function deleteGroup(groupId: string) {
+  const session = await requireSession();
+  assertRateLimit(`delete-group:${session.user.id}`, 5, 60_000);
+
+  const member = await db.query.groupMembers.findFirst({
+    where: and(
+      eq(groupMembers.userId, session.user.id),
+      eq(groupMembers.groupId, groupId),
+      eq(groupMembers.isAdmin, true),
+    ),
+    with: { group: { columns: { deletedAt: true } } },
+  });
+  if (!member || member.group.deletedAt) {
+    throw new Error("Not allowed");
+  }
+
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(groups)
+      .set({ deletedAt: now, updatedAt: now })
+      .where(and(eq(groups.id, groupId), liveGroup))
+      .returning({ id: groups.id });
+    if (!updated) throw new Error("Not allowed");
+
+    await tx
+      .delete(userActiveGroup)
+      .where(eq(userActiveGroup.groupId, groupId));
+  });
+
+  revalidatePath("/");
+}
+
 export async function joinGroup(inviteCode: string) {
   const session = await requireSession();
   assertRateLimit(`join-group:${session.user.id}`, 10, 60_000);
 
-  const normalized = inviteCode.trim().toUpperCase();
-  if (!/^[A-Z2-9]{6,12}$/.test(normalized)) {
-    throw new Error("Group not found");
-  }
+  const normalized = normalizeInviteCode(inviteCode);
+  if (!normalized) throw new Error("Group not found");
 
   const group = await db.query.groups.findFirst({
-    where: eq(groups.inviteCode, normalized),
+    where: and(eq(groups.inviteCode, normalized), liveGroup),
   });
 
   if (!group) throw new Error("Group not found");
@@ -124,6 +157,16 @@ export async function joinGroup(inviteCode: string) {
       points: group.startingPoints,
       isAdmin: false,
     });
+    try {
+      await notifyMemberJoined({
+        groupId: group.id,
+        groupName: group.name,
+        joinerId: session.user.id,
+        joinerName: session.user.name,
+      });
+    } catch (error) {
+      console.error("[push] member joined notify failed:", error);
+    }
   }
 
   await setActiveGroup(group.id);
@@ -140,8 +183,9 @@ export async function setActiveGroup(groupId: string) {
       eq(groupMembers.groupId, groupId),
     ),
     columns: { id: true },
+    with: { group: { columns: { deletedAt: true } } },
   });
-  if (!member) throw new Error("Not a group member");
+  if (!member || member.group.deletedAt) throw new Error("Not a group member");
 
   await db
     .insert(userActiveGroup)
@@ -180,14 +224,18 @@ export async function saveEntry(data: SaveEntryInput) {
     ),
     with: { group: true },
   });
-  if (!member) throw new Error("Not a group member");
+  if (!member || member.group.deletedAt) throw new Error("Not a group member");
 
   // A group only ever plays its own competition's board.
   if (member.group.competition !== round.competition) {
     throw new Error("Round is not part of this group's competition");
   }
 
-  const target = normalizeTarget(challenge.targetKind, data, challenge.requiredSide);
+  const target = normalizeTarget(
+    challenge.targetKind,
+    data,
+    challenge.requiredSide,
+  );
 
   await db.transaction(async (tx) => {
     const [locked] = await tx
@@ -224,7 +272,13 @@ export async function saveEntry(data: SaveEntryInput) {
 
     const isJoker = data.isJoker ?? false;
     if (isJoker) {
-      await assertJokerFree(tx, session.user.id, data.groupId, round.id, slot.id);
+      await assertJokerFree(
+        tx,
+        session.user.id,
+        data.groupId,
+        round.id,
+        slot.id,
+      );
     }
 
     const existing = await tx.query.entries.findFirst({
@@ -312,7 +366,9 @@ async function assertTeamsFree(
     );
     const clash = teams.find((team) => otherTeams.includes(team));
     if (clash) {
-      throw new Error(`${clash} is already picked in another challenge this round`);
+      throw new Error(
+        `${clash} is already picked in another challenge this round`,
+      );
     }
   }
 }

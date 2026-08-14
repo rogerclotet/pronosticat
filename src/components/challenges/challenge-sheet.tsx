@@ -1,10 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Sheet } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { StatTile } from "@/components/ui/stat-tile";
+import { useState } from "react";
 import {
   MatchPicker,
   NumberPicker,
@@ -16,7 +13,10 @@ import type {
   BoardSlotView,
   EntryView,
 } from "@/components/challenges/types";
-import { saveEntry, deleteEntry } from "@/lib/actions/groups";
+import { Button } from "@/components/ui/button";
+import { Sheet } from "@/components/ui/sheet";
+import { StatTile } from "@/components/ui/stat-tile";
+import { deleteEntry, saveEntry } from "@/lib/actions/groups";
 import type { TargetSide } from "@/lib/challenges/types";
 import { cn } from "@/lib/utils";
 
@@ -103,7 +103,12 @@ export function ChallengeSheet({
       onClose={onClose}
       footer={
         <>
-          <Button type="button" onClick={handleConfirm} disabled={loading} size="lg">
+          <Button
+            type="button"
+            onClick={handleConfirm}
+            disabled={loading}
+            size="lg"
+          >
             {existing ? t("ctaEdit") : t("ctaNew")}
           </Button>
           {existing && (
@@ -237,7 +242,9 @@ function JokerToggle({
       <span
         className={cn(
           "flex h-5 w-5 shrink-0 items-center justify-center border-2 font-mono text-xs font-bold",
-          checked ? "border-teal text-teal" : "border-border-strong text-transparent",
+          checked
+            ? "border-teal text-teal"
+            : "border-border-strong text-transparent",
         )}
       >
         ×2

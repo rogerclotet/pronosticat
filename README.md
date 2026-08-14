@@ -5,6 +5,7 @@ PWA per pronosticar futbol amb amics. Cada jornada porta un tauler de reptes —
 ## Stack
 
 - **Next.js 16** (App Router)
+- **Biome** — lint i format
 - **Tailwind CSS 4** — disseny brutalista mobile-first
 - **Drizzle ORM** + PostgreSQL
 - **Better Auth** — Google OAuth + magic link
@@ -19,19 +20,19 @@ Tot l'stack en Docker (PostgreSQL + migració + app amb hot reload):
 
 ```bash
 cp .env.example .env
-npm run docker:dev:full
+pnpm docker:dev:full
 ```
 
 L'app queda disponible a `http://localhost:3000` (o el port definit a `APP_PORT`).
 
-Alternativa només PostgreSQL (app amb `npm run dev` a l'host):
+Alternativa només PostgreSQL (app amb `pnpm dev` a l'host):
 
 ```bash
 cp .env.example .env
 # DATABASE_URL=postgresql://pronosticat:pronosticat@localhost:5432/pronosticat
-npm run docker:dev:db
-npm run db:migrate
-npm run dev
+pnpm docker:dev:db
+pnpm db:migrate
+pnpm dev
 ```
 
 ### Producció
@@ -39,14 +40,14 @@ npm run dev
 Configura `.env` amb secrets reals. `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `POSTGRES_PASSWORD` i `CRON_SECRET` són obligatoris (el compose de producció no arrenca sense ells). `BETTER_AUTH_URL` ha de ser l'URL pública HTTPS. Arrenca:
 
 ```bash
-npm run docker:prod
+pnpm docker:prod
 ```
 
 Això construeix la imatge Next.js, aplica les migracions pendents, engega l'app a `http://localhost:3000` (o `APP_PORT`) i un servei `cron` que sincronitza partits cada 10 minuts. El contenidor exposa `/api/health` per al healthcheck. El compose publica HTTP: el TLS el porta el reverse proxy.
 
 ```bash
-npm run docker:prod:logs   # veure logs
-npm run docker:prod:down   # aturar
+pnpm docker:prod:logs   # veure logs
+pnpm docker:prod:down   # aturar
 ```
 
 ### Desplegament continu
@@ -85,8 +86,8 @@ Treu `SSH_PASSWORD` dels secrets un cop la clau funcioni.
 En producció un sidecar (`postgres:16-alpine`) fa un `pg_dump --format=custom` en arrencar i després cada 24 h. Els fitxers queden a `./backups` (o `POSTGRES_BACKUP_DIR`) **al disc del servidor**, amb retenció de 14 dies (sempre se'n queden 3 com a mínim).
 
 ```bash
-npm run docker:prod:backup                          # dump manual
-DB_RESTORE_CONFIRM=yes npm run docker:prod:restore -- backups/pronosticat-YYYYMMDDTHHMMSSZ.dump
+pnpm docker:prod:backup                          # dump manual
+DB_RESTORE_CONFIRM=yes pnpm docker:prod:restore backups/pronosticat-YYYYMMDDTHHMMSSZ.dump
 ```
 
 El restore atura l'app, aplica el dump amb `pg_restore --clean`, i la torna a engegar. El fitxer ha de ser dins del directori de backups (el contenidor de Postgres el munta a `/backups`).
@@ -115,23 +116,26 @@ cp .env.example .env.local
 | `FOOTBALL_DATA_API_KEY` | API key de football-data.org |
 | `CRON_SECRET` | Secret per l'endpoint de sincronització |
 | `CRON_SCHEDULE` | Expressió cron del servei Compose (per defecte `*/10 * * * *`) |
+| `VAPID_PUBLIC_KEY` | Clau pública Web Push (opcional; sense ella no s'envien avisos) |
+| `VAPID_PRIVATE_KEY` | Clau privada Web Push |
+| `VAPID_SUBJECT` | `mailto:` o URL `https:` de contacte VAPID (si no, `BETTER_AUTH_URL` si és https) |
 
 3. Aplica les migracions de base de dades:
 
 ```bash
-npm run db:migrate
+pnpm db:migrate
 ```
 
-Per canvis d'esquema nous: edita `src/lib/db/schema.ts`, genera una migració amb `npm run db:generate`, i després `npm run db:migrate`. Per esborrar tot i tornar a començar (només dev / reset intencionat):
+Per canvis d'esquema nous: edita `src/lib/db/schema.ts`, genera una migració amb `pnpm db:generate`, i després `pnpm db:migrate`. Per esborrar tot i tornar a començar (només dev / reset intencionat):
 
 ```bash
-DB_RESET_CONFIRM=yes npm run db:reset
+DB_RESET_CONFIRM=yes pnpm db:reset
 ```
 
 4. Inicia el servidor de desenvolupament:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ## Estructura de navegació
@@ -156,7 +160,7 @@ pots gastar un cop: hi apuntes **un partit** o **un equip** de la jornada.
 
 A més, cada jornada inclou **un repte extra** triat a l'atzar d'un pool rotatiu (El rotllo, La sorpresa, El comptador, etc.) — 6 caselles en total. Només **La porra** i **El segur** resten punts si falles; la resta de caselles només sumen.
 
-- Cada jugador comença amb punts inicials (per defecte 1000).
+- Cada jugador comença amb punts inicials (per defecte 0).
 - Un **jòquer** per jornada dobla el premi i el càstig de la jugada on el poses.
 - Si empaten dos partits (o dos equips) al capdamunt, **totes les jugades empatades encerten**.
 - Tot el tauler **es tanca al primer xiulet de la jornada**: un sol termini per a tothom.
@@ -249,7 +253,7 @@ La pàgina `/dev/fixtures` i les server actions només funcionen en `NODE_ENV=de
 ## Tests automatitzats
 
 ```bash
-npm run test
+pnpm test
 ```
 
 Els tests unitaris cobreixen:
@@ -270,10 +274,32 @@ per activar-lo cal una base de dades d'usar i llençar, perquè **fa `truncate` 
 ```bash
 docker run -d --name pg -e POSTGRES_USER=p -e POSTGRES_PASSWORD=p \
   -e POSTGRES_DB=p -p 55099:5432 postgres:16-alpine
-DATABASE_URL=postgresql://p:p@localhost:55099/p npx drizzle-kit migrate
-RUN_DB_TESTS=1 DATABASE_URL=postgresql://p:p@localhost:55099/p npm run test
+DATABASE_URL=postgresql://p:p@localhost:55099/p pnpm exec drizzle-kit migrate
+RUN_DB_TESTS=1 DATABASE_URL=postgresql://p:p@localhost:55099/p pnpm test
 ```
+
+A CI aquesta suite s'executa sempre: el workflow aixeca un servei `postgres:16-alpine`,
+hi aplica les migracions i posa `RUN_DB_TESTS=1`.
 
 ## PWA
 
-L'app es pot instal·lar com a PWA en dispositius mòbils. El manifest i service worker es generen automàticament en producció.
+L'app es pot instal·lar com a PWA en dispositius mòbils gràcies a `public/manifest.json` i les icones de `public/icons`. El service worker (`public/sw.js`) només gestiona avisos push: no hi ha cache offline, l'app continua necessitant xarxa.
+
+Els avisos s'activen amb un diàleg a l'app (i es poden canviar al perfil). Cal HTTPS (o localhost) i les claus VAPID:
+
+```bash
+pnpm exec web-push generate-vapid-keys
+```
+
+Copia la clau pública i la privada a `.env` (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`). A l'iPhone, Safari només lliura push si l'app està a la pantalla d'inici.
+
+El cron, després de sincronitzar i liquidar jornades, envia avisos de joc:
+
+- Tauler nou obert (si encara no has mogut fitxa)
+- Recordatori a 6 h / 1 h si et queden caselles, si ets l'únic del grup, o si el jòquer és al banc
+- Avis a l'admin si algú no ha posat cap jugada
+- El primer partit s'ha avançat (el termini s'acosta)
+- Un partit que has pronosticat comença, descansa, s'ajorna o acaba
+- La porra clavada / el segur fallat; la màquina o la pallissa que aguanta o penca en directe
+- Liquidació de jornada, canvi de posició, primer/últim, ratxa i pica-pica a dues jornades del final
+- Algú s'apunta al grup

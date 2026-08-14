@@ -7,11 +7,20 @@ type ProgressBarProps = {
   className?: string;
 };
 
-export function ProgressBar({ pct, color = "muted", className }: ProgressBarProps) {
+export function ProgressBar({
+  pct,
+  color = "muted",
+  className,
+}: ProgressBarProps) {
   return (
-    <div className={cn("h-1.5 border border-border bg-highlight-bg", className)}>
+    <div
+      className={cn("h-1.5 border border-border bg-highlight-bg", className)}
+    >
       <div
-        className={cn("h-full", color === "teal" ? "bg-teal" : "bg-border-strong")}
+        className={cn(
+          "h-full",
+          color === "teal" ? "bg-teal" : "bg-border-strong",
+        )}
         style={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
       />
     </div>

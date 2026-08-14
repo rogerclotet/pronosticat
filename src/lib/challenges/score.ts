@@ -1,6 +1,6 @@
-import { JOKER_MULTIPLIER } from "@/lib/constants";
 import { getChallenge } from "@/lib/challenges/registry";
 import type { EntryTarget, ResolvedMatch } from "@/lib/challenges/types";
+import { JOKER_MULTIPLIER } from "@/lib/constants";
 
 export type ScorableEntry = EntryTarget & { isJoker: boolean };
 

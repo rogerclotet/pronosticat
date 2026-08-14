@@ -1,6 +1,6 @@
 import {
-  findTargetMatch,
   type ChallengeDefinition,
+  findTargetMatch,
   type ResolvedMatch,
 } from "@/lib/challenges/types";
 

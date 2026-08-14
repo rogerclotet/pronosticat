@@ -1,8 +1,9 @@
-import { unstable_cache } from "next/cache";
+import "server-only";
 import { and, eq } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
+import { type Competition, DATA_CACHE_TTL } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches } from "@/lib/db/schema";
-import { DATA_CACHE_TTL, type Competition } from "@/lib/constants";
 import { getCurrentMatchdayFromDb } from "@/lib/queries/matchday";
 
 type MatchRow = typeof matches.$inferSelect;
@@ -16,6 +17,7 @@ function hydrateMatchDates(rows: MatchRow[]): MatchRow[] {
   }));
 }
 
+/** Cron busts the "matches" tag after every sync, so the window is a backstop. */
 const getCachedRoundMatches = unstable_cache(
   async (competition: Competition, matchday: number) =>
     db.query.matches.findMany({

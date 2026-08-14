@@ -1,30 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
-import { createGroup, joinGroup } from "@/lib/actions/groups";
+import { useState } from "react";
+import { InviteShareButton } from "@/components/groups/invite-share-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { usePathname, useRouter } from "@/i18n/routing";
+import { createGroup, joinGroup } from "@/lib/actions/groups";
 import type { Competition } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-type View = "create-1" | "create-2" | "join";
+const CREATE_STEPS_TOTAL = 2;
 
-const CREATE_STEPS: View[] = ["create-1", "create-2"];
-
-export function OnboardingWizard({ initialMode }: { initialMode: "create" | "join" }) {
+export function OnboardingWizard() {
   const t = useTranslations("onboarding");
   const tGroup = useTranslations("group");
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const [view, setView] = useState<View>(initialMode === "join" ? "join" : "create-1");
   const [name, setName] = useState("");
   const [competition, setCompetition] = useState<Competition>("laliga");
   const [code, setCode] = useState("");
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const mode = searchParams.get("mode") === "join" ? "join" : "create";
+  // Only trust the invite step if we actually have a code to show — a
+  // fresh visit/refresh at ?step=invite has no code in memory to display.
+  const view =
+    mode === "join"
+      ? "join"
+      : searchParams.get("step") === "invite" && inviteCode
+        ? "create-2"
+        : "create-1";
 
   async function handleCreateStep1(e: React.FormEvent) {
     e.preventDefault();
@@ -33,7 +44,7 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
     try {
       const group = await createGroup({ name, competition });
       setInviteCode(group.inviteCode);
-      setView("create-2");
+      router.push(`${pathname}?mode=create&step=invite`);
     } catch {
       setError(t("error"));
     } finally {
@@ -78,7 +89,7 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
         cta={t("joinCta")}
         loading={loading}
         alt={t("createInsteadAlt")}
-        onAlt={() => setView("create-1")}
+        onAlt={() => router.push(`${pathname}?mode=create`)}
         step={null}
       />
     );
@@ -124,8 +135,8 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
         cta={t("createCta")}
         loading={loading}
         alt={t("haveCodeAlt")}
-        onAlt={() => setView("join")}
-        step={{ index: 0, total: CREATE_STEPS.length }}
+        onAlt={() => router.push(`${pathname}?mode=join`)}
+        step={{ index: 0, total: CREATE_STEPS_TOTAL }}
       />
     );
   }
@@ -145,12 +156,28 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
         },
       ]}
       cta={t("finishCta")}
-      step={{ index: 1, total: CREATE_STEPS.length }}
+      preCta={
+        inviteCode ? (
+          <InviteShareButton
+            inviteCode={inviteCode}
+            groupName={name}
+            label={t("shareCta")}
+            size="lg"
+          />
+        ) : null
+      }
+      step={{ index: 1, total: CREATE_STEPS_TOTAL }}
     />
   );
 }
 
-function StaticValue({ value, accent }: { value: string | number; accent?: boolean }) {
+function StaticValue({
+  value,
+  accent,
+}: {
+  value: string | number;
+  accent?: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -168,6 +195,7 @@ function OnboardingScreen({
   body,
   fields,
   cta,
+  preCta,
   onSubmit,
   loading,
   error,
@@ -179,6 +207,7 @@ function OnboardingScreen({
   body: string;
   fields: { label: string; input: React.ReactNode }[];
   cta: string;
+  preCta?: React.ReactNode;
   onSubmit: (e: React.FormEvent) => void;
   loading?: boolean;
   error?: string | null;
@@ -187,7 +216,10 @@ function OnboardingScreen({
   step: { index: number; total: number } | null;
 }) {
   return (
-    <form onSubmit={onSubmit} className="mx-auto flex min-h-full w-full max-w-lg flex-col bg-header-bg">
+    <form
+      onSubmit={onSubmit}
+      className="mx-auto flex min-h-full w-full max-w-lg flex-col bg-header-bg"
+    >
       <div className="flex flex-1 flex-col gap-4 overflow-auto px-5 pb-5 pt-16">
         <h1 className="font-sans text-[34px] font-extrabold uppercase leading-[0.95] tracking-tight">
           {title}
@@ -223,11 +255,17 @@ function OnboardingScreen({
       </div>
 
       <div className="flex flex-col gap-2 px-5 pb-8">
+        {preCta}
         <Button type="submit" size="lg" disabled={loading}>
           {cta}
         </Button>
         {alt && (
-          <Button type="button" variant="ghost" onClick={onAlt} disabled={loading}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onAlt}
+            disabled={loading}
+          >
             {alt}
           </Button>
         )}

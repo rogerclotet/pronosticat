@@ -1,15 +1,12 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
-import withPWAInit from "@ducanh2912/next-pwa";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
-const withPWA = withPWAInit({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
-  register: true,
-});
-
+/**
+ * Sent on every response. The CSP is not here: it carries a per-request nonce,
+ * so it is built in `src/proxy.ts` instead.
+ */
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -19,16 +16,25 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=(), payment=()",
   },
   { key: "X-DNS-Prefetch-Control", value: "off" },
+  // Ignored over plain HTTP, so it is safe to send unconditionally.
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains",
+  },
 ];
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  poweredByHeader: false,
+  // Not cacheComponents: PPR's static shell cannot carry the per-request CSP
+  // nonce from src/proxy.ts, so the browser blocks /_next/static/chunks/*.
   experimental: {
     staleTimes: {
       dynamic: 30,
       static: 180,
     },
   },
+  serverExternalPackages: ["web-push"],
   images: {
     remotePatterns: [
       {
@@ -40,6 +46,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: "/sw.js",
+        headers: [
+          ...securityHeaders,
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+      {
         source: "/:path*",
         headers: securityHeaders,
       },
@@ -47,4 +64,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(withNextIntl(nextConfig));
+export default withNextIntl(nextConfig);
