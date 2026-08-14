@@ -1,4 +1,4 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   entries,
@@ -42,17 +42,35 @@ export async function getUserGroups(userId: string) {
 
 export async function getUserGroupsWithMeta(userId: string) {
   const base = await getUserGroups(userId);
-  return Promise.all(
-    base.map(async (g) => {
-      const members = await db
-        .select({ userId: groupMembers.userId, points: groupMembers.points })
-        .from(groupMembers)
-        .where(eq(groupMembers.groupId, g.id))
-        .orderBy(desc(groupMembers.points));
-      const rank = members.findIndex((m) => m.userId === userId) + 1;
-      return { ...g, memberCount: members.length, rank: rank || members.length };
-    }),
-  );
+  if (base.length === 0) return [];
+
+  const members = await db
+    .select({
+      groupId: groupMembers.groupId,
+      userId: groupMembers.userId,
+      points: groupMembers.points,
+    })
+    .from(groupMembers)
+    .where(
+      inArray(
+        groupMembers.groupId,
+        base.map((g) => g.id),
+      ),
+    )
+    .orderBy(desc(groupMembers.points));
+
+  const byGroup = new Map<string, typeof members>();
+  for (const member of members) {
+    const list = byGroup.get(member.groupId);
+    if (list) list.push(member);
+    else byGroup.set(member.groupId, [member]);
+  }
+
+  return base.map((g) => {
+    const list = byGroup.get(g.id) ?? [];
+    const rank = list.findIndex((m) => m.userId === userId) + 1;
+    return { ...g, memberCount: list.length, rank: rank || list.length };
+  });
 }
 
 export async function getMemberPoints(userId: string, groupId: string) {

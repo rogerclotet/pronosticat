@@ -1,4 +1,3 @@
-import { DATA_CACHE_TTL } from "@/lib/constants";
 import { withFootballApiRateLimit } from "@/lib/football/rate-limit";
 
 export type FootballDataMatch = {
@@ -46,11 +45,14 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const FETCH_TIMEOUT_MS = 15_000;
+
 async function fetchFootballData(url: string): Promise<Response> {
   return withFootballApiRateLimit(async () => {
     const res = await fetch(url, {
       headers: getHeaders(),
-      next: { revalidate: DATA_CACHE_TTL },
+      cache: "no-store",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
 
     if (res.status === 429) {
@@ -61,7 +63,8 @@ async function fetchFootballData(url: string): Promise<Response> {
       await sleep(retryAfterSeconds * 1000);
       const retry = await fetch(url, {
         headers: getHeaders(),
-        next: { revalidate: DATA_CACHE_TTL },
+        cache: "no-store",
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       if (retry.status === 429) {
         throw new FootballDataRateLimitError(retryAfterSeconds);

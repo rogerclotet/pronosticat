@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { normalizeTarget, teamsClaimed } from "./validate";
-import { MAX_PREDICTED_SCORE } from "@/lib/constants";
+import { MAX_NUMERIC_VALUE, MAX_PREDICTED_SCORE } from "@/lib/constants";
 
 describe("normalizeTarget", () => {
   it("keeps only the match for a match challenge", () => {
@@ -92,6 +92,12 @@ describe("normalizeTarget", () => {
 
   it("rejects a missing number", () => {
     expect(() => normalizeTarget("number", {})).toThrow("Pick a number");
+  });
+
+  it("rejects a number above the allowed range", () => {
+    expect(() =>
+      normalizeTarget("number", { numericValue: MAX_NUMERIC_VALUE + 1 }),
+    ).toThrow("out of range");
   });
 });
 

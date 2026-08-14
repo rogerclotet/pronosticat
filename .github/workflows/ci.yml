@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -23,21 +24,23 @@ jobs:
 
   deploy:
     needs: lint
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
-    container:
-      image: alpine
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install SSH client
-        run: apk add --no-cache openssh-client sshpass
-
-      - run: chmod +x scripts/deploy.sh
-      - run: scripts/deploy.sh
+      - name: Deploy
+        run: bash scripts/deploy.sh
         env:
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_IP: ${{ secrets.SSH_IP }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_PROJECT_DIRECTORY: ${{ secrets.SSH_PROJECT_DIRECTORY }}
           PORT: ${{ secrets.PORT }}
+          DEPLOY_SHA: ${{ github.sha }}

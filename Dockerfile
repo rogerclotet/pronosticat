@@ -4,7 +4,7 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm ci
 
 FROM base AS dev
 COPY package.json package-lock.json ./
@@ -27,7 +27,7 @@ RUN npm run build
 
 FROM base AS migrator
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm ci
 COPY drizzle.config.ts ./
 COPY drizzle ./drizzle
 COPY scripts/db-reset.mjs ./scripts/

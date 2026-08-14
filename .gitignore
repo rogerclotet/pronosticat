@@ -40,6 +40,9 @@ yarn-error.log*
 # conductor local overrides
 .conductor/settings.local.toml
 
+# postgres dumps written by the prod backup sidecar
+/backups/
+
 # vercel
 .vercel
 

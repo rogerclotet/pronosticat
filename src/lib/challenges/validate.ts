@@ -1,4 +1,4 @@
-import { MAX_PREDICTED_SCORE } from "@/lib/constants";
+import { MAX_NUMERIC_VALUE, MAX_PREDICTED_SCORE } from "@/lib/constants";
 import type { ChallengeTargetKind, TargetSide } from "@/lib/challenges/types";
 
 export type EntryInput = {
@@ -108,6 +108,9 @@ export function normalizeTarget(
       const value = input.numericValue;
       if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
         throw new Error("Pick a number");
+      }
+      if (value > MAX_NUMERIC_VALUE) {
+        throw new Error("Number out of range");
       }
       return { ...EMPTY, numericValue: value };
     }
