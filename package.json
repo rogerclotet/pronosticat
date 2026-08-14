@@ -18,7 +18,7 @@
     "docker:dev": "docker compose -f compose.yaml -f compose.dev.yaml up",
     "docker:dev:db": "docker compose -f compose.yaml -f compose.dev.yaml up db",
     "docker:dev:full": "docker compose -f compose.yaml -f compose.dev.yaml --profile full up --build",
-    "docker:prod": "docker compose -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans --wait --wait-timeout 180 app backup",
+    "docker:prod": "docker compose -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans --wait --wait-timeout 180 app backup cron",
     "docker:prod:down": "docker compose -f compose.yaml -f compose.prod.yaml down",
     "docker:prod:logs": "docker compose -f compose.yaml -f compose.prod.yaml logs -f",
     "docker:prod:backup": "bash scripts/db-backup.sh",

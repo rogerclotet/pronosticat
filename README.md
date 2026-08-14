@@ -42,7 +42,7 @@ Configura `.env` amb secrets reals. `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `PO
 npm run docker:prod
 ```
 
-Això construeix la imatge Next.js, aplica les migracions pendents i engega l'app a `http://localhost:3000` (o `APP_PORT`). El contenidor exposa `/api/health` per al healthcheck. El compose publica HTTP: el TLS el porta el reverse proxy.
+Això construeix la imatge Next.js, aplica les migracions pendents, engega l'app a `http://localhost:3000` (o `APP_PORT`) i un servei `cron` que sincronitza partits cada 10 minuts. El contenidor exposa `/api/health` per al healthcheck. El compose publica HTTP: el TLS el porta el reverse proxy.
 
 ```bash
 npm run docker:prod:logs   # veure logs
@@ -114,6 +114,7 @@ cp .env.example .env.local
 | `EMAIL_FROM` | Correu remitent |
 | `FOOTBALL_DATA_API_KEY` | API key de football-data.org |
 | `CRON_SECRET` | Secret per l'endpoint de sincronització |
+| `CRON_SCHEDULE` | Expressió cron del servei Compose (per defecte `*/10 * * * *`) |
 
 3. Aplica les migracions de base de dades:
 
@@ -168,13 +169,13 @@ Els reptes viuen a `src/lib/challenges/definitions/` com a funcions pures; afegi
 
 ## Sincronització
 
-L'endpoint `/api/cron/sync` sincronitza partits des de football-data.org, crea els taulers de la jornada, els bloqueja i els liquida. Configura un cron job amb el header `Authorization: Bearer <CRON_SECRET>`.
+L'endpoint `/api/cron/sync` sincronitza partits des de football-data.org, crea els taulers de la jornada, els bloqueja i els liquida. El servei Compose `cron` el truca per la xarxa interna (`http://app:3000`) cada 10 minuts i un cop en arrencar, amb `Authorization: Bearer <CRON_SECRET>`. No cal crontab al servidor; el pròxim `docker compose up` ja l'engega. Si encara tens un crontab manual, treu-lo perquè no es dupliquin les crides.
 
 Només es sincronitzen competicions amb grups actius (no totes les lligues configurades). Les pàgines llegeixen partits des de la base de dades; l'API externa només s'usa al cron.
 
 **Pla gratuït de football-data.org:** màxim 10 crides/minut. L'app limita internament a 8 crides/minut i reintenta un cop davant un 429.
 
-**Freqüència recomanada del cron:**
+L'interval per defecte (`*/10 * * * *`) està dins del rang recomanat en dies de partit. Es pot canviar amb `CRON_SCHEDULE` al `.env`:
 
 | Context | Interval |
 | --- | --- |
@@ -182,10 +183,8 @@ Només es sincronitzen competicions amb grups actius (no totes les lligues confi
 | Fora de temporada / sense partits | Cada 30–60 minuts |
 | Mínim segur | No més ràpid que 1/min si tens 3+ competicions actives |
 
-Exemple amb cron (cada 10 min en temporada):
-
 ```bash
-*/10 * * * * curl -s -H "Authorization: Bearer $CRON_SECRET" https://your-domain/api/cron/sync
+docker compose -f compose.yaml -f compose.prod.yaml logs -f cron
 ```
 
 ## Proves manuals (dev fixtures)

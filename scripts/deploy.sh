@@ -104,7 +104,7 @@ fi
 echo "Deploying $(git rev-parse HEAD) to $PROJECT_DIR"
 
 export APP_PORT
-docker compose -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans --wait --wait-timeout 180 app backup
+docker compose -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans --wait --wait-timeout 180 app backup cron
 docker image prune -f
 docker builder prune -f --filter "until=24h" || true
 REMOTE
