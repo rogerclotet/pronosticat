@@ -22,6 +22,13 @@
       "when": 1786692252884,
       "tag": "0002_starting_points_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786692727473,
+      "tag": "0003_group_soft_delete",
+      "breakpoints": true
     }
   ]
 }

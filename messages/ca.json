@@ -131,6 +131,11 @@
     "admin": "Administrador",
     "member": "Membre",
     "switch": "CANVIA DE GRUP →",
+    "delete": "Elimina el grup",
+    "deleteConfirmTitle": "Eliminar el grup?",
+    "deleteConfirmBody": "{name} deixarà de ser accessible per a tothom. El conservem per si ha estat un error.",
+    "deleteConfirm": "Sí, elimina'l",
+    "deleteCancel": "Cancel·la",
     "noMembers": "No hi ha membres al grup",
     "codeCopied": "Codi copiat!",
     "competitions": {

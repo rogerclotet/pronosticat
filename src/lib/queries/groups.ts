@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   entries,
@@ -8,6 +8,8 @@ import {
   userActiveGroup,
 } from "@/lib/db/schema";
 
+export const liveGroup = isNull(groups.deletedAt);
+
 export async function getActiveGroup(userId: string) {
   const active = await db.query.userActiveGroup.findFirst({
     where: eq(userActiveGroup.userId, userId),
@@ -15,17 +17,17 @@ export async function getActiveGroup(userId: string) {
 
   if (active) {
     const group = await db.query.groups.findFirst({
-      where: eq(groups.id, active.groupId),
+      where: and(eq(groups.id, active.groupId), liveGroup),
     });
     if (group) return group;
   }
 
-  const membership = await db.query.groupMembers.findFirst({
+  const memberships = await db.query.groupMembers.findMany({
     where: eq(groupMembers.userId, userId),
     with: { group: true },
   });
 
-  return membership?.group ?? null;
+  return memberships.find((m) => m.group.deletedAt == null)?.group ?? null;
 }
 
 export async function getUserGroups(userId: string) {
@@ -33,11 +35,13 @@ export async function getUserGroups(userId: string) {
     where: eq(groupMembers.userId, userId),
     with: { group: true },
   });
-  return memberships.map((m) => ({
-    ...m.group,
-    isAdmin: m.isAdmin,
-    points: m.points,
-  }));
+  return memberships
+    .filter((m) => m.group.deletedAt == null)
+    .map((m) => ({
+      ...m.group,
+      isAdmin: m.isAdmin,
+      points: m.points,
+    }));
 }
 
 export async function getUserGroupsWithMeta(userId: string) {
@@ -90,8 +94,9 @@ export async function isGroupMember(userId: string, groupId: string) {
       eq(groupMembers.groupId, groupId),
     ),
     columns: { id: true },
+    with: { group: { columns: { deletedAt: true } } },
   });
-  return member != null;
+  return member != null && member.group.deletedAt == null;
 }
 
 export async function getUserEntries(

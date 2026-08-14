@@ -1,14 +1,15 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { groups } from "@/lib/db/schema";
-import { requireSession } from "@/lib/session";
 import {
   getStandings,
   getUserEntries,
   isGroupMember,
+  liveGroup,
 } from "@/lib/queries/groups";
+import { requireSession } from "@/lib/session";
 import { getRivalStats, getWeeklyDelta, type RivalStats } from "@/lib/queries/stats";
 import { getCurrentRoundBoard } from "@/lib/queries/round-board";
 import {
@@ -55,7 +56,7 @@ export async function getRivalSheetData(
 
   // The board follows the group's own competition, never a caller-supplied one.
   const group = await db.query.groups.findFirst({
-    where: eq(groups.id, groupId),
+    where: and(eq(groups.id, groupId), liveGroup),
     columns: { competition: true },
   });
   if (!group) throw new Error("Group not found");
