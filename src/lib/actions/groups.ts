@@ -25,7 +25,7 @@ import {
   teamsClaimed,
   type EntryInput,
 } from "@/lib/challenges/validate";
-import { getUserGroupsWithMeta } from "@/lib/queries/groups";
+import { getUserGroupsWithMeta, liveGroup } from "@/lib/queries/groups";
 import { revalidatePath } from "next/cache";
 import { assertRateLimit } from "@/lib/security/rate-limit";
 
@@ -94,6 +94,37 @@ export async function createGroup(data: {
   return { id, inviteCode };
 }
 
+export async function deleteGroup(groupId: string) {
+  const session = await requireSession();
+  assertRateLimit(`delete-group:${session.user.id}`, 5, 60_000);
+
+  const member = await db.query.groupMembers.findFirst({
+    where: and(
+      eq(groupMembers.userId, session.user.id),
+      eq(groupMembers.groupId, groupId),
+      eq(groupMembers.isAdmin, true),
+    ),
+    with: { group: { columns: { deletedAt: true } } },
+  });
+  if (!member || member.group.deletedAt) {
+    throw new Error("Not allowed");
+  }
+
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(groups)
+      .set({ deletedAt: now, updatedAt: now })
+      .where(and(eq(groups.id, groupId), liveGroup))
+      .returning({ id: groups.id });
+    if (!updated) throw new Error("Not allowed");
+
+    await tx.delete(userActiveGroup).where(eq(userActiveGroup.groupId, groupId));
+  });
+
+  revalidatePath("/");
+}
+
 export async function joinGroup(inviteCode: string) {
   const session = await requireSession();
   assertRateLimit(`join-group:${session.user.id}`, 10, 60_000);
@@ -104,7 +135,7 @@ export async function joinGroup(inviteCode: string) {
   }
 
   const group = await db.query.groups.findFirst({
-    where: eq(groups.inviteCode, normalized),
+    where: and(eq(groups.inviteCode, normalized), liveGroup),
   });
 
   if (!group) throw new Error("Group not found");
@@ -140,8 +171,9 @@ export async function setActiveGroup(groupId: string) {
       eq(groupMembers.groupId, groupId),
     ),
     columns: { id: true },
+    with: { group: { columns: { deletedAt: true } } },
   });
-  if (!member) throw new Error("Not a group member");
+  if (!member || member.group.deletedAt) throw new Error("Not a group member");
 
   await db
     .insert(userActiveGroup)
@@ -180,7 +212,7 @@ export async function saveEntry(data: SaveEntryInput) {
     ),
     with: { group: true },
   });
-  if (!member) throw new Error("Not a group member");
+  if (!member || member.group.deletedAt) throw new Error("Not a group member");
 
   // A group only ever plays its own competition's board.
   if (member.group.competition !== round.competition) {

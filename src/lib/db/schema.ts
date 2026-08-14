@@ -106,6 +106,8 @@ export const groups = pgTable("groups", {
     .references(() => user.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  /** Set on soft-delete; the row stays so an accidental delete can be undone. */
+  deletedAt: timestamp("deleted_at"),
 });
 
 export const groupMembers = pgTable(
