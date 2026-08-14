@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { Sheet } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, formatOrdinal } from "@/lib/utils";
 import { getMyGroups, setActiveGroup } from "@/lib/actions/groups";
 
 type GroupWithMeta = Awaited<ReturnType<typeof getMyGroups>>[number];
@@ -91,7 +91,11 @@ export function GroupsSheet({ isOpen, onClose, activeGroupId }: GroupsSheetProps
                     {g.name}
                   </span>
                   <span className="font-mono text-[9px] uppercase tracking-[0.09em] text-muted">
-                    {t("meta", { members: g.memberCount, rank: g.rank, total: g.memberCount })}
+                    {t("meta", {
+                      members: g.memberCount,
+                      rank: formatOrdinal(g.rank),
+                      total: g.memberCount,
+                    })}
                   </span>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
