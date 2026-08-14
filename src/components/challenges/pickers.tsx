@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import type { TargetSide } from "@/lib/challenges/types";
 import { MAX_PREDICTED_SCORE } from "@/lib/constants";
@@ -11,11 +12,14 @@ export function MatchPicker({
   selectedId,
   onSelect,
   teamsInUse = EMPTY_TEAMS_IN_USE,
+  renderSelected,
 }: {
   matches: BoardMatch[];
   selectedId: string | null;
   onSelect: (matchId: string) => void;
   teamsInUse?: Map<string, string>;
+  /** Extra UI attached to the selected match (e.g. the scoreline for La porra). */
+  renderSelected?: (match: BoardMatch) => ReactNode;
 }) {
   const t = useTranslations("sheet");
 
@@ -27,41 +31,92 @@ export function MatchPicker({
           : teamsInUse.has(match.awayTeam)
             ? match.awayTeam
             : null;
-        const disabled = takenTeam !== null;
 
         return (
-          <div key={match.id} className="flex flex-col gap-1">
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onSelect(match.id)}
-              className={cn(
-                "flex items-center justify-between gap-2.5 border-2 px-2.5 py-2.5 text-left",
-                disabled
-                  ? "border-border bg-surface opacity-50"
-                  : match.id === selectedId
-                    ? "border-teal bg-highlight-bg"
-                    : "border-border bg-surface",
-              )}
-            >
-              <span className="font-sans text-[12.5px] font-semibold">
-                {match.homeTeam} – {match.awayTeam}
-              </span>
-              <span className="font-mono text-[9px] uppercase tracking-[0.09em] text-muted">
-                {formatKickoff(new Date(match.kickoff))}
-              </span>
-            </button>
-            {takenTeam && (
-              <p className="px-0.5 font-sans text-[10px] leading-snug text-text-secondary">
-                {t("teamTakenNote", {
-                  team: takenTeam,
-                  challenge: teamsInUse.get(takenTeam)!,
-                })}
-              </p>
-            )}
-          </div>
+          <MatchOption
+            key={match.id}
+            match={match}
+            selected={match.id === selectedId}
+            disabled={takenTeam !== null}
+            takenNote={
+              takenTeam
+                ? t("teamTakenNote", {
+                    team: takenTeam,
+                    challenge: teamsInUse.get(takenTeam) ?? "",
+                  })
+                : null
+            }
+            extra={
+              match.id === selectedId && renderSelected
+                ? renderSelected(match)
+                : null
+            }
+            onSelect={() => onSelect(match.id)}
+          />
         );
       })}
+    </div>
+  );
+}
+
+function MatchOption({
+  match,
+  selected,
+  disabled,
+  takenNote,
+  extra,
+  onSelect,
+}: {
+  match: BoardMatch;
+  selected: boolean;
+  disabled: boolean;
+  takenNote: string | null;
+  extra: ReactNode;
+  onSelect: () => void;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const hasExtra = extra != null;
+
+  useEffect(() => {
+    if (!selected || !hasExtra) return;
+    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [selected, hasExtra]);
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div
+        ref={cardRef}
+        className={cn(
+          "border-2",
+          disabled
+            ? "border-border bg-surface opacity-50"
+            : selected
+              ? "border-teal bg-highlight-bg"
+              : "border-border bg-surface",
+        )}
+      >
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={onSelect}
+          className="flex w-full items-center justify-between gap-2.5 px-2.5 py-2.5 text-left"
+        >
+          <span className="font-sans text-[12.5px] font-semibold">
+            {match.homeTeam} – {match.awayTeam}
+          </span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.09em] text-muted">
+            {formatKickoff(new Date(match.kickoff))}
+          </span>
+        </button>
+        {extra ? (
+          <div className="border-t-2 border-teal px-2.5 pb-3 pt-2">{extra}</div>
+        ) : null}
+      </div>
+      {takenNote ? (
+        <p className="px-0.5 font-sans text-[10px] leading-snug text-text-secondary">
+          {takenNote}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -162,17 +217,20 @@ export function ScorePicker({
   homeScore,
   awayScore,
   onChange,
+  embedded = false,
 }: {
   homeTeam: string;
   awayTeam: string;
   homeScore: number;
   awayScore: number;
   onChange: (home: number, away: number) => void;
+  /** Drop the outer box when the picker already sits inside a selected match. */
+  embedded?: boolean;
 }) {
   const t = useTranslations("sheet");
 
   return (
-    <div className="border-2 border-border bg-surface p-3.5">
+    <div className={cn(!embedded && "border-2 border-border bg-surface p-3.5")}>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5">
         <ScoreStepper
           label={t("local")}

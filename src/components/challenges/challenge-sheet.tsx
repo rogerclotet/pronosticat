@@ -58,7 +58,6 @@ export function ChallengeSheet({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedMatch = matches.find((m) => m.id === matchId) ?? null;
   const jokerLocked = jokerHolder !== null;
 
   async function handleConfirm() {
@@ -166,27 +165,27 @@ export function ChallengeSheet({
               selectedId={matchId}
               onSelect={setMatchId}
               teamsInUse={teamsInUse}
+              renderSelected={
+                slot.targetKind === "match_score"
+                  ? (match) => (
+                      <div className="flex flex-col gap-2">
+                        <span className="label-mono">{t("pickScore")}</span>
+                        <ScorePicker
+                          embedded
+                          homeTeam={match.homeTeam}
+                          awayTeam={match.awayTeam}
+                          homeScore={homeScore}
+                          awayScore={awayScore}
+                          onChange={(home, away) => {
+                            setHomeScore(home);
+                            setAwayScore(away);
+                          }}
+                        />
+                      </div>
+                    )
+                  : undefined
+              }
             />
-          </>
-        )}
-
-        {slot.targetKind === "match_score" && (
-          <>
-            <span className="label-mono">{t("pickScore")}</span>
-            {selectedMatch ? (
-              <ScorePicker
-                homeTeam={selectedMatch.homeTeam}
-                awayTeam={selectedMatch.awayTeam}
-                homeScore={homeScore}
-                awayScore={awayScore}
-                onChange={(home, away) => {
-                  setHomeScore(home);
-                  setAwayScore(away);
-                }}
-              />
-            ) : (
-              <p className="text-sm text-muted">{t("pickMatchFirst")}</p>
-            )}
           </>
         )}
 
