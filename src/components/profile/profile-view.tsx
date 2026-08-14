@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { EditNameButton } from "@/components/profile/edit-name-button";
 import { SignOutButton } from "@/components/profile/sign-out-button";
+import { NotificationSettings } from "@/components/push/notification-settings";
 import { SegmentedBar } from "@/components/ui/progress-bar";
 import type { Competition } from "@/lib/constants";
 import type { MatchdayHistoryRow, PendingStake } from "@/lib/queries/stats";
@@ -106,6 +107,8 @@ export async function ProfileView({
           })}
         </div>
       )}
+
+      <NotificationSettings />
 
       <div className="mt-1.5">
         <SignOutButton />

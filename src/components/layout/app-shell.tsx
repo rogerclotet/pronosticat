@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { GroupsSheet } from "@/components/groups/groups-sheet";
 import { RivalSheet } from "@/components/groups/rival-sheet";
+import { PushPermissionPrompt } from "@/components/push/push-permission-prompt";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { BottomNav } from "./bottom-nav";
 import { TopBar } from "./top-bar";
@@ -56,6 +57,7 @@ export function AppShell({
           rivalUserId={rivalId}
         />
       )}
+      <PushPermissionPrompt />
     </div>
   );
 }

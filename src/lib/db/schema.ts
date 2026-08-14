@@ -262,12 +262,54 @@ export const userActiveGroup = pgTable("user_active_group", {
     .references(() => groups.id, { onDelete: "cascade" }),
 });
 
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("push_subscriptions_endpoint_idx").on(table.endpoint),
+    index("push_subscriptions_user_idx").on(table.userId),
+  ],
+);
+
+/** One row per (user, kind, entity) so a cron tick cannot double-send. */
+export const pushDispatches = pgTable(
+  "push_dispatches",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    entityId: text("entity_id").notNull(),
+    sentAt: timestamp("sent_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("push_dispatches_user_kind_entity_idx").on(
+      table.userId,
+      table.kind,
+      table.entityId,
+    ),
+  ],
+);
+
 // Relations
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   groupMembers: many(groupMembers),
   entries: many(entries),
+  pushSubscriptions: many(pushSubscriptions),
+  pushDispatches: many(pushDispatches),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -327,4 +369,18 @@ export const entriesRelations = relations(entries, ({ one }) => ({
     fields: [entries.targetMatchId],
     references: [matches.id],
   }),
+}));
+
+export const pushSubscriptionsRelations = relations(
+  pushSubscriptions,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [pushSubscriptions.userId],
+      references: [user.id],
+    }),
+  }),
+);
+
+export const pushDispatchesRelations = relations(pushDispatches, ({ one }) => ({
+  user: one(user, { fields: [pushDispatches.userId], references: [user.id] }),
 }));

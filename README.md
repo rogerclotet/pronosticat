@@ -116,6 +116,9 @@ cp .env.example .env.local
 | `FOOTBALL_DATA_API_KEY` | API key de football-data.org |
 | `CRON_SECRET` | Secret per l'endpoint de sincronització |
 | `CRON_SCHEDULE` | Expressió cron del servei Compose (per defecte `*/10 * * * *`) |
+| `VAPID_PUBLIC_KEY` | Clau pública Web Push (opcional; sense ella no s'envien avisos) |
+| `VAPID_PRIVATE_KEY` | Clau privada Web Push |
+| `VAPID_SUBJECT` | `mailto:` o URL `https:` de contacte VAPID (si no, `BETTER_AUTH_URL` si és https) |
 
 3. Aplica les migracions de base de dades:
 
@@ -280,4 +283,23 @@ hi aplica les migracions i posa `RUN_DB_TESTS=1`.
 
 ## PWA
 
-L'app es pot instal·lar com a PWA en dispositius mòbils gràcies a `public/manifest.json` i les icones de `public/icons`. No hi ha service worker: no funciona sense connexió.
+L'app es pot instal·lar com a PWA en dispositius mòbils gràcies a `public/manifest.json` i les icones de `public/icons`. El service worker (`public/sw.js`) només gestiona avisos push: no hi ha cache offline, l'app continua necessitant xarxa.
+
+Els avisos s'activen amb un diàleg a l'app (i es poden canviar al perfil). Cal HTTPS (o localhost) i les claus VAPID:
+
+```bash
+pnpm exec web-push generate-vapid-keys
+```
+
+Copia la clau pública i la privada a `.env` (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`). A l'iPhone, Safari només lliura push si l'app està a la pantalla d'inici.
+
+El cron, després de sincronitzar i liquidar jornades, envia avisos de joc:
+
+- Tauler nou obert (si encara no has mogut fitxa)
+- Recordatori a 6 h / 1 h si et queden caselles, si ets l'únic del grup, o si el jòquer és al banc
+- Avis a l'admin si algú no ha posat cap jugada
+- El primer partit s'ha avançat (el termini s'acosta)
+- Un partit que has pronosticat comença, descansa, s'ajorna o acaba
+- La porra clavada / el segur fallat; la màquina o la pallissa que aguanta o penca en directe
+- Liquidació de jornada, canvi de posició, primer/últim, ratxa i pica-pica a dues jornades del final
+- Algú s'apunta al grup
