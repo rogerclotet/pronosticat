@@ -76,8 +76,8 @@ describe("goalFest", () => {
     expect(goalFest.score(target({ matchId: "a" }), round)).toBe(80);
   });
 
-  it("penalises a quieter match", () => {
-    expect(goalFest.score(target({ matchId: "c" }), round)).toBe(-20);
+  it("scores nothing for a quieter match", () => {
+    expect(goalFest.score(target({ matchId: "c" }), round)).toBe(0);
   });
 
   it("voids an unplayed target", () => {
@@ -90,8 +90,8 @@ describe("thrashing", () => {
     expect(thrashing.score(target({ matchId: "b" }), round)).toBe(80);
   });
 
-  it("penalises a tighter match", () => {
-    expect(thrashing.score(target({ matchId: "a" }), round)).toBe(-20);
+  it("scores nothing for a tighter match", () => {
+    expect(thrashing.score(target({ matchId: "a" }), round)).toBe(0);
   });
 
   it("counts an away thrashing the same as a home one", () => {
@@ -112,9 +112,9 @@ describe("goalMachine", () => {
     expect(goalMachine.score(pick, round)).toBe(80);
   });
 
-  it("penalises a team that scored less", () => {
+  it("scores nothing for a team that scored less", () => {
     const pick = target({ matchId: "a", side: "home" });
-    expect(goalMachine.score(pick, round)).toBe(-20);
+    expect(goalMachine.score(pick, round)).toBe(0);
   });
 
   it("rewards every team tied on goals", () => {

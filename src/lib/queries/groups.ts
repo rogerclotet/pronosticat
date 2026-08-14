@@ -98,7 +98,7 @@ export async function getStandings(groupId: string) {
       name: user.name,
       points: groupMembers.points,
       hits: count(sql`case when ${entries.pointsAwarded} > 0 then 1 end`),
-      misses: count(sql`case when ${entries.pointsAwarded} < 0 then 1 end`),
+      misses: count(sql`case when ${entries.pointsAwarded} <= 0 then 1 end`),
     })
     .from(groupMembers)
     .innerJoin(user, eq(groupMembers.userId, user.id))

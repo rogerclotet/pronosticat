@@ -1,7 +1,7 @@
 const EXACT = 100;
 const NEAR_1 = 50;
 const NEAR_2 = 20;
-const PENALTY = -20;
+const PENALTY = 0;
 
 /** Shared tiering for round-wide numeric predictions. */
 export function tieredNumberScore(

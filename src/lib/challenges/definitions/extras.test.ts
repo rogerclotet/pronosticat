@@ -47,8 +47,8 @@ describe("theBore", () => {
     expect(theBore.score(target({ matchId: "c" }), round)).toBe(80);
   });
 
-  it("penalises a high-scoring match", () => {
-    expect(theBore.score(target({ matchId: "b" }), round)).toBe(-20);
+  it("scores nothing for a high-scoring match", () => {
+    expect(theBore.score(target({ matchId: "b" }), round)).toBe(0);
   });
 });
 
@@ -57,8 +57,8 @@ describe("upset", () => {
     expect(upset.score(target({ matchId: "c", side: "away" }), round)).toBe(70);
   });
 
-  it("penalises a home pick", () => {
-    expect(upset.score(target({ matchId: "a", side: "home" }), round)).toBe(-20);
+  it("scores nothing for a home pick", () => {
+    expect(upset.score(target({ matchId: "a", side: "home" }), round)).toBe(0);
   });
 });
 
@@ -94,8 +94,8 @@ describe("btts", () => {
     expect(btts.score(target({ matchId: "a" }), round)).toBe(40);
   });
 
-  it("penalises a clean sheet match", () => {
-    expect(btts.score(target({ matchId: "b" }), round)).toBe(-20);
+  it("scores nothing for a clean sheet match", () => {
+    expect(btts.score(target({ matchId: "b" }), round)).toBe(0);
   });
 });
 
@@ -114,7 +114,7 @@ describe("totalGoalsRound", () => {
   it("uses tiered scoring for the round total", () => {
     expect(totalGoalsRound.score(target({ numericValue: 9 }), round)).toBe(100);
     expect(totalGoalsRound.score(target({ numericValue: 8 }), round)).toBe(50);
-    expect(totalGoalsRound.score(target({ numericValue: 5 }), round)).toBe(-20);
+    expect(totalGoalsRound.score(target({ numericValue: 5 }), round)).toBe(0);
   });
 });
 

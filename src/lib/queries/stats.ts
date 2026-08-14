@@ -91,7 +91,7 @@ export async function getMatchdayHistory(
       matchday: rounds.matchday,
       picks: count(entries.id),
       hits: count(sql`case when ${entries.pointsAwarded} > 0 then 1 end`),
-      misses: count(sql`case when ${entries.pointsAwarded} < 0 then 1 end`),
+      misses: count(sql`case when ${entries.pointsAwarded} <= 0 then 1 end`),
       netDelta: sql<number>`coalesce(sum(${entries.pointsAwarded}), 0)`,
     })
     .from(entries)

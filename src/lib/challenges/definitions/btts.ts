@@ -4,7 +4,7 @@ import {
 } from "@/lib/challenges/types";
 
 const REWARD = 40;
-const PENALTY = -20;
+const PENALTY = 0;
 
 /** Marquen tots dos: both teams score. */
 export const btts: ChallengeDefinition = {

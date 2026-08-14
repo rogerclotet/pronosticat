@@ -4,7 +4,7 @@ import {
 } from "@/lib/challenges/types";
 
 const REWARD = 60;
-const PENALTY = -20;
+const PENALTY = 0;
 
 /** Es queden a zero: a team that fails to score. */
 export const blank: ChallengeDefinition = {

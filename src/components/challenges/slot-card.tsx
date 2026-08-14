@@ -43,7 +43,7 @@ export function SlotCard({ slot, entry, matches, interactive, onOpen }: SlotCard
         ? { label: t("resultHit", { points: settled }), tone: "text-teal" }
         : settled < 0
           ? { label: t("resultMiss", { points: settled }), tone: "text-danger" }
-          : { label: t("resultVoid"), tone: "text-muted" };
+          : { label: t("resultMiss", { points: settled }), tone: "text-muted" };
 
   const trailing = outcome ? (
     <span className={cn("shrink-0", outcome.tone)}>{outcome.label}</span>
@@ -92,8 +92,12 @@ export function SlotCard({ slot, entry, matches, interactive, onOpen }: SlotCard
         </p>
         <span className="relative flex items-center gap-1 font-mono text-[9px] font-bold tracking-[0.08em]">
           <span className="text-teal">+{slot.reward}</span>
-          <span className="text-border-strong">/</span>
-          <span className="text-danger">{slot.penalty}</span>
+          {slot.penalty !== 0 && (
+            <>
+              <span className="text-border-strong">/</span>
+              <span className="text-danger">{slot.penalty}</span>
+            </>
+          )}
         </span>
       </div>
 

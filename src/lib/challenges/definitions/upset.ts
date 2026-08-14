@@ -4,7 +4,7 @@ import {
 } from "@/lib/challenges/types";
 
 const REWARD = 70;
-const PENALTY = -20;
+const PENALTY = 0;
 
 /** La sorpresa: an away team that wins. */
 export const upset: ChallengeDefinition = {

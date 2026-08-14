@@ -5,7 +5,7 @@ import {
 } from "@/lib/challenges/types";
 
 const REWARD = 80;
-const PENALTY = -20;
+const PENALTY = 0;
 
 export function totalGoals(match: ResolvedMatch): number {
   return match.homeScore + match.awayScore;
