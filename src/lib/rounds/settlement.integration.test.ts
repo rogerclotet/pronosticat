@@ -154,11 +154,11 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
     expect(bySlug).toEqual({
       exact_score: 100, // clavat
       goal_fest: 80, // tied on goals, still counts
-      thrashing: -20, // m2 was the thrashing, not m1
+      thrashing: 0, // m2 was the thrashing, not m1
       goal_machine: 160, // 80 doubled by the joker
       banker: -40, // Betis lost
     });
-    expect(await points()).toBe(1000 + 280);
+    expect(await points()).toBe(1000 + 300);
   });
 
   it("is idempotent: a second scoring run does not pay twice", async () => {
@@ -244,7 +244,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
 
     const standings = await getStandings(GROUP_ID);
     expect(standings).toEqual([
-      { userId: USER_ID, name: "Test", points: 1020, hits: 1, misses: 1 },
+      { userId: USER_ID, name: "Test", points: 1040, hits: 1, misses: 1 },
       { userId: "u-idle", name: "Idle", points: 1000, hits: 0, misses: 0 },
     ]);
   });

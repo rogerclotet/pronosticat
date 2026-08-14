@@ -6,7 +6,7 @@ export const homeWins: ChallengeDefinition = {
   slug: "home_wins",
   targetKind: "number",
   reward: 100,
-  penalty: -20,
+  penalty: 0,
   score: (target, round) => {
     if (target.numericValue === null) return null;
 

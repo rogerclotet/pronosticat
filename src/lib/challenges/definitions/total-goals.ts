@@ -7,7 +7,7 @@ export const totalGoalsRound: ChallengeDefinition = {
   slug: "total_goals",
   targetKind: "number",
   reward: 100,
-  penalty: -20,
+  penalty: 0,
   score: (target, round) => {
     if (target.numericValue === null) return null;
 

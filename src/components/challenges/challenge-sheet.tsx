@@ -128,12 +128,14 @@ export function ChallengeSheet({
             accent="teal"
             className="flex-1"
           />
-          <StatTile
-            label={t("penaltyLabel")}
-            value={String(slot.penalty * (isJoker ? 2 : 1))}
-            accent="danger"
-            className="-ml-0.5 flex-1"
-          />
+          {slot.penalty !== 0 && (
+            <StatTile
+              label={t("penaltyLabel")}
+              value={String(slot.penalty * (isJoker ? 2 : 1))}
+              accent="danger"
+              className="-ml-0.5 flex-1"
+            />
+          )}
         </div>
 
         {slot.targetKind === "number" ? (

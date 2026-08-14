@@ -5,7 +5,7 @@ import {
 } from "@/lib/challenges/types";
 
 const REWARD = 80;
-const PENALTY = -20;
+const PENALTY = 0;
 
 function bestTeamTally(round: ResolvedMatch[]): number {
   return Math.max(

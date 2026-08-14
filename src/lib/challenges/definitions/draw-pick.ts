@@ -4,7 +4,7 @@ import {
 } from "@/lib/challenges/types";
 
 const REWARD = 60;
-const PENALTY = -20;
+const PENALTY = 0;
 
 /** L'empat: a match that ends level. */
 export const drawPick: ChallengeDefinition = {

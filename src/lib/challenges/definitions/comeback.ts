@@ -4,7 +4,7 @@ import {
 } from "@/lib/challenges/types";
 
 const REWARD = 90;
-const PENALTY = -20;
+const PENALTY = 0;
 
 /** La remuntada: the side losing at half-time does not lose at full-time. */
 export const comeback: ChallengeDefinition = {

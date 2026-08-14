@@ -4,7 +4,7 @@ import {
 } from "@/lib/challenges/types";
 
 const REWARD = 50;
-const PENALTY = -20;
+const PENALTY = 0;
 
 /** El pringat: a team that loses. */
 export const choke: ChallengeDefinition = {

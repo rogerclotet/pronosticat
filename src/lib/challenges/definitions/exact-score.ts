@@ -8,7 +8,7 @@ const EXACT_REWARD = 100;
 const OUTCOME_REWARD = 25;
 const PENALTY = -25;
 
-/** El clàssic: pick a match and call its exact scoreline. */
+/** La porra: pick a match and call its exact scoreline. */
 export const exactScore: ChallengeDefinition = {
   slug: "exact_score",
   targetKind: "match_score",
