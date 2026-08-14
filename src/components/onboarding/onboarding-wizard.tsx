@@ -69,7 +69,7 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
               <Input
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                maxLength={6}
+                maxLength={12}
                 required
               />
             ),

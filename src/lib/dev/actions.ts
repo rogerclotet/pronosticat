@@ -12,13 +12,13 @@ import {
   type CreateDevMatchInput,
   type UpdateDevMatchInput,
 } from "@/lib/dev/fixtures";
-import { isDevFixturesEnabled } from "@/lib/dev/guard";
+import { isDevFixturesUiEnabled } from "@/lib/dev/guard";
 import type { Competition } from "@/lib/constants";
 
 const DEV_FIXTURES_PATH = "/dev/fixtures";
 
 function assertDevEnabled() {
-  if (!isDevFixturesEnabled()) {
+  if (!isDevFixturesUiEnabled()) {
     throw new Error("Dev fixtures are disabled");
   }
 }

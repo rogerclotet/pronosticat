@@ -6,7 +6,6 @@ import type { ChallengeTargetKind, TargetSide } from "@/lib/challenges/types";
 import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
 import { getCurrentRound } from "@/lib/queries/matchday";
 import { getRoundMatches } from "@/lib/queries/matches";
-import { syncMatches } from "@/lib/sync/run";
 import type { Competition } from "@/lib/constants";
 
 async function hasCompetitionMatches(competition: Competition) {
@@ -64,8 +63,10 @@ export async function getCurrentRoundBoard(
 ): Promise<RoundBoard | null> {
   let round = await getCurrentRound(competition);
   if (!round) {
+    // Page renders must not call football-data.org: that burns quota, can wait
+    // on 429s, and lets any logged-in user trigger an outbound sync.
     if (!(await hasCompetitionMatches(competition))) {
-      await syncMatches(competition);
+      return null;
     }
     await ensureCompetitionRounds(competition);
     round = await getCurrentRound(competition);

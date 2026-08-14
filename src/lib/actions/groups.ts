@@ -8,6 +8,7 @@ import {
   groupMembers,
   matches,
   roundChallenges,
+  rounds,
   userActiveGroup,
 } from "@/lib/db/schema";
 import { requireSession } from "@/lib/session";
@@ -26,6 +27,7 @@ import {
 } from "@/lib/challenges/validate";
 import { getUserGroupsWithMeta } from "@/lib/queries/groups";
 import { revalidatePath } from "next/cache";
+import { assertRateLimit } from "@/lib/security/rate-limit";
 
 /**
  * Every export of this module is a public RPC endpoint, so nothing here may
@@ -46,6 +48,7 @@ export async function createGroup(data: {
   startingPoints?: number;
 }) {
   const session = await requireSession();
+  assertRateLimit(`create-group:${session.user.id}`, 5, 60_000);
 
   const name = data.name.trim();
   if (!name || name.length > MAX_GROUP_NAME_LENGTH) {
@@ -67,21 +70,23 @@ export async function createGroup(data: {
   const id = generateId();
   const inviteCode = generateInviteCode();
 
-  await db.insert(groups).values({
-    id,
-    name,
-    competition: data.competition,
-    inviteCode,
-    startingPoints,
-    createdById: session.user.id,
-  });
+  await db.transaction(async (tx) => {
+    await tx.insert(groups).values({
+      id,
+      name,
+      competition: data.competition,
+      inviteCode,
+      startingPoints,
+      createdById: session.user.id,
+    });
 
-  await db.insert(groupMembers).values({
-    id: generateId(),
-    groupId: id,
-    userId: session.user.id,
-    points: startingPoints,
-    isAdmin: true,
+    await tx.insert(groupMembers).values({
+      id: generateId(),
+      groupId: id,
+      userId: session.user.id,
+      points: startingPoints,
+      isAdmin: true,
+    });
   });
 
   await setActiveGroup(id);
@@ -91,8 +96,15 @@ export async function createGroup(data: {
 
 export async function joinGroup(inviteCode: string) {
   const session = await requireSession();
+  assertRateLimit(`join-group:${session.user.id}`, 10, 60_000);
+
+  const normalized = inviteCode.trim().toUpperCase();
+  if (!/^[A-Z2-9]{6,12}$/.test(normalized)) {
+    throw new Error("Group not found");
+  }
+
   const group = await db.query.groups.findFirst({
-    where: eq(groups.inviteCode, inviteCode.toUpperCase()),
+    where: eq(groups.inviteCode, normalized),
   });
 
   if (!group) throw new Error("Group not found");
@@ -158,10 +170,6 @@ export async function saveEntry(data: SaveEntryInput) {
   if (!slot) throw new Error("Challenge not found");
 
   const { round } = slot;
-  if (round.status !== "open" || new Date() >= round.lockAt) {
-    throw new Error("Round already locked");
-  }
-
   const challenge = getChallenge(slot.slug);
   if (!challenge) throw new Error("Challenge not available");
 
@@ -180,61 +188,85 @@ export async function saveEntry(data: SaveEntryInput) {
   }
 
   const target = normalizeTarget(challenge.targetKind, data, challenge.requiredSide);
-  if (target.targetMatchId) {
-    const match = await db.query.matches.findFirst({
+
+  await db.transaction(async (tx) => {
+    const [locked] = await tx
+      .select({ status: rounds.status, lockAt: rounds.lockAt })
+      .from(rounds)
+      .where(eq(rounds.id, round.id))
+      .for("update");
+    if (!locked || locked.status !== "open" || new Date() >= locked.lockAt) {
+      throw new Error("Round already locked");
+    }
+
+    if (target.targetMatchId) {
+      const match = await tx.query.matches.findFirst({
+        where: and(
+          eq(matches.id, target.targetMatchId),
+          eq(matches.competition, round.competition),
+          eq(matches.matchday, round.matchday),
+        ),
+      });
+      if (!match) throw new Error("Match is not in this round");
+
+      const teams = teamsClaimed(challenge.targetKind, target, match);
+      if (teams.length > 0) {
+        await assertTeamsFree(
+          tx,
+          session.user.id,
+          data.groupId,
+          round.id,
+          slot.id,
+          teams,
+        );
+      }
+    }
+
+    const isJoker = data.isJoker ?? false;
+    if (isJoker) {
+      await assertJokerFree(tx, session.user.id, data.groupId, round.id, slot.id);
+    }
+
+    const existing = await tx.query.entries.findFirst({
       where: and(
-        eq(matches.id, target.targetMatchId),
-        eq(matches.competition, round.competition),
-        eq(matches.matchday, round.matchday),
+        eq(entries.userId, session.user.id),
+        eq(entries.groupId, data.groupId),
+        eq(entries.roundChallengeId, slot.id),
       ),
     });
-    if (!match) throw new Error("Match is not in this round");
 
-    const teams = teamsClaimed(challenge.targetKind, target, match);
-    if (teams.length > 0) {
-      await assertTeamsFree(session.user.id, data.groupId, round.id, slot.id, teams);
+    if (existing) {
+      await tx
+        .update(entries)
+        .set({ ...target, isJoker, updatedAt: new Date() })
+        .where(eq(entries.id, existing.id));
+    } else {
+      await tx.insert(entries).values({
+        id: generateId(),
+        userId: session.user.id,
+        groupId: data.groupId,
+        roundChallengeId: slot.id,
+        roundId: round.id,
+        isJoker,
+        ...target,
+      });
     }
-  }
-
-  const isJoker = data.isJoker ?? false;
-  if (isJoker) await assertJokerFree(session.user.id, data.groupId, round.id, slot.id);
-
-  const existing = await db.query.entries.findFirst({
-    where: and(
-      eq(entries.userId, session.user.id),
-      eq(entries.groupId, data.groupId),
-      eq(entries.roundChallengeId, slot.id),
-    ),
   });
-
-  if (existing) {
-    await db
-      .update(entries)
-      .set({ ...target, isJoker, updatedAt: new Date() })
-      .where(eq(entries.id, existing.id));
-  } else {
-    await db.insert(entries).values({
-      id: generateId(),
-      userId: session.user.id,
-      groupId: data.groupId,
-      roundChallengeId: slot.id,
-      roundId: round.id,
-      isJoker,
-      ...target,
-    });
-  }
 
   revalidateEntries();
 }
 
+type QueryClient = Pick<typeof db, "query">;
+
 /** The joker is one per round: refuse rather than silently move it. */
 async function assertJokerFree(
+  client: QueryClient,
   userId: string,
   groupId: string,
   roundId: string,
   slotId: string,
 ) {
-  const other = await db.query.entries.findFirst({
+  const other = await client.query.entries.findFirst({
     where: and(
       eq(entries.userId, userId),
       eq(entries.groupId, groupId),
@@ -251,13 +283,14 @@ async function assertJokerFree(
  * both its teams, so it clashes with any other pick anchored to either side.
  */
 async function assertTeamsFree(
+  client: QueryClient,
   userId: string,
   groupId: string,
   roundId: string,
   slotId: string,
   teams: string[],
 ) {
-  const others = await db.query.entries.findMany({
+  const others = await client.query.entries.findMany({
     where: and(
       eq(entries.userId, userId),
       eq(entries.groupId, groupId),

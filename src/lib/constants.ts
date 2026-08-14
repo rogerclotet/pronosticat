@@ -17,8 +17,8 @@ export const COMPETITIONS: Record<
   },
 };
 
-/** Server + client router cache TTL in seconds (5 minutes). */
-export const DATA_CACHE_TTL = 300;
+/** Server cache TTL in seconds for round fixtures. Cron revalidateTag busts this. */
+export const DATA_CACHE_TTL = 60;
 
 export const POINTS = {
   DEFAULT_STARTING: 1000,
@@ -37,6 +37,9 @@ export const ROUND_SETTLE_GRACE_HOURS = 48;
 /** Upper bound for a predicted scoreline, so a crafted payload can't store nonsense. */
 export const MAX_PREDICTED_SCORE = 20;
 
+/** Upper bound for numeric challenges (e.g. total goals in a round). */
+export const MAX_NUMERIC_VALUE = 99;
+
 export function getOutcome(
   homeScore: number,
   awayScore: number,
@@ -48,11 +51,8 @@ export function getOutcome(
 
 export function generateInviteCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, (byte) => chars[byte % chars.length]).join("");
 }
 
 export function generateId(): string {

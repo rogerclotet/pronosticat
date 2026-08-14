@@ -36,13 +36,13 @@ npm run dev
 
 ### Producció
 
-Configura `.env` amb secrets reals (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, etc.) i arrenca:
+Configura `.env` amb secrets reals. `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `POSTGRES_PASSWORD` i `CRON_SECRET` són obligatoris (el compose de producció no arrenca sense ells). `BETTER_AUTH_URL` ha de ser l'URL pública HTTPS. Arrenca:
 
 ```bash
 npm run docker:prod
 ```
 
-Això construeix la imatge Next.js, aplica les migracions pendents, engega l'app a `http://localhost:3000` (o `APP_PORT`) i un servei `cron` que sincronitza partits cada 10 minuts.
+Això construeix la imatge Next.js, aplica les migracions pendents, engega l'app a `http://localhost:3000` (o `APP_PORT`) i un servei `cron` que sincronitza partits cada 10 minuts. El contenidor exposa `/api/health` per al healthcheck. El compose publica HTTP: el TLS el porta el reverse proxy.
 
 ```bash
 npm run docker:prod:logs   # veure logs
@@ -51,19 +51,47 @@ npm run docker:prod:down   # aturar
 
 ### Desplegament continu
 
-Cada push a `main` que passi `lint`+`typecheck` (`.github/workflows/ci.yml`) desplega automàticament via SSH (`scripts/deploy.sh`): fa `git pull` al servidor i `docker compose -f compose.yaml -f compose.prod.yaml up -d --build --remove-orphans`.
+Cada push a `main` que passi `lint`+`typecheck`+`test` (`.github/workflows/ci.yml`) desplega el **commit exacte** via SSH (`scripts/deploy.sh`): `git fetch` + reset al SHA de CI, després `docker compose --wait`. També es pot relançar a mà amb `workflow_dispatch`.
 
-Cal configurar aquests secrets al repositori de GitHub:
+El servidor ha de tenir el repositori clonat, Docker, i un `.env` de producció (compose el llegeix sol).
+
+**Clau SSH (un cop):**
+
+```bash
+ssh-keygen -t ed25519 -f github-deploy -N "" -C "pronosticat-github-deploy"
+# Clau pública → ~/.ssh/authorized_keys de l'usuari SSH al servidor
+# Clau privada → secret SSH_PRIVATE_KEY de GitHub
+
+ssh-keyscan -H YOUR_SERVER_HOST
+# Enganxa la sortida al secret SSH_KNOWN_HOSTS (no desactivis la verificació del host)
+```
+
+Secrets del repositori:
 
 | Secret | Descripció |
 |---|---|
-| `SSH_PASSWORD` | Contrasenya SSH del servidor |
+| `SSH_PRIVATE_KEY` | Clau privada Ed25519 (substitueix `SSH_PASSWORD`) |
+| `SSH_KNOWN_HOSTS` | Sortida de `ssh-keyscan -H <host>` |
 | `SSH_USERNAME` | Usuari SSH |
-| `SSH_IP` | IP o host del servidor |
-| `SSH_PROJECT_DIRECTORY` | Ruta del repositori clonat al servidor |
+| `SSH_HOST` | Host o IP (`SSH_IP` encara s'accepta com a àlies) |
+| `SSH_PROJECT_DIRECTORY` | Ruta del clone al servidor |
 | `PORT` | Port públic de l'app (`APP_PORT`) |
+| `SSH_PORT` | Opcional, per defecte 22 |
 
-El servidor ha de tenir el repositori clonat amb un `.env` de producció ja configurat (docker compose el llegeix automàticament).
+Treu `SSH_PASSWORD` dels secrets un cop la clau funcioni.
+
+### Copies de seguretat
+
+En producció un sidecar (`postgres:16-alpine`) fa un `pg_dump --format=custom` en arrencar i després cada 24 h. Els fitxers queden a `./backups` (o `POSTGRES_BACKUP_DIR`) **al disc del servidor**, amb retenció de 14 dies (sempre se'n queden 3 com a mínim).
+
+```bash
+npm run docker:prod:backup                          # dump manual
+DB_RESTORE_CONFIRM=yes npm run docker:prod:restore -- backups/pronosticat-YYYYMMDDTHHMMSSZ.dump
+```
+
+El restore atura l'app, aplica el dump amb `pg_restore --clean`, i la torna a engegar. El fitxer ha de ser dins del directori de backups (el contenidor de Postgres el munta a `/backups`).
+
+Això no treu la necessitat d'una còpia fora de la màquina: rsync/restic cap a un altre disc o bucket. `docker compose down -v` esborra el volum de Postgres però **no** el bind mount de `./backups`.
 
 ## Configuració
 
@@ -216,7 +244,7 @@ curl -X PATCH "http://localhost:3000/api/dev/fixtures/MATCH_ID" \
 
 Els partits ficticis tenen `externalId` negatiu per distingir-los dels partits reals. Només es poden modificar o eliminar aquests partits.
 
-En producció els endpoints retornen 404 tret que activis `DEV_FIXTURES_ENABLED=true`. Opcionalment pots protegir-los amb `DEV_FIXTURES_SECRET` o reutilitzar `CRON_SECRET` com a Bearer token.
+La pàgina `/dev/fixtures` i les server actions només funcionen en `NODE_ENV=development`. En producció els endpoints `/api/dev/*` retornen 404 tret que `DEV_FIXTURES_ENABLED=true` **i** hi hagi `DEV_FIXTURES_SECRET` o `CRON_SECRET`. Llavors cal `Authorization: Bearer <secret>`.
 
 ## Tests automatitzats
 

@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation";
 import { DevFixturesAdmin } from "@/components/dev/dev-fixtures-admin";
 import { getDevFixturesAction, getDevRoundsAction } from "@/lib/dev/actions";
-import { isDevFixturesEnabled } from "@/lib/dev/guard";
+import { isDevFixturesUiEnabled } from "@/lib/dev/guard";
 
 export const metadata = {
   title: "Dev Fixtures · Pronosticat",
 };
 
 export default async function DevFixturesPage() {
-  if (!isDevFixturesEnabled()) {
+  if (!isDevFixturesUiEnabled()) {
     notFound();
   }
 
