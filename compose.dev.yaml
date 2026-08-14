@@ -46,6 +46,31 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then(()=>process.exit(0)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 60s
+
+  cron:
+    profiles: [full]
+    build:
+      context: ./docker/cron
+    restart: unless-stopped
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-}
+      CRON_URL: http://app:3000/api/cron/sync
+      CRON_SCHEDULE: ${CRON_SCHEDULE:-*/10 * * * *}
+    depends_on:
+      app:
+        condition: service_healthy
 
 volumes:
   app_node_modules:
