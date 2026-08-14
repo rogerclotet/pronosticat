@@ -156,7 +156,7 @@ pots gastar un cop: hi apuntes **un partit** o **un equip** de la jornada.
 
 A més, cada jornada inclou **un repte extra** triat a l'atzar d'un pool rotatiu (El rotllo, La sorpresa, El comptador, etc.) — 6 caselles en total. Només **La porra** i **El segur** resten punts si falles; la resta de caselles només sumen.
 
-- Cada jugador comença amb punts inicials (per defecte 1000).
+- Cada jugador comença amb punts inicials (per defecte 0).
 - Un **jòquer** per jornada dobla el premi i el càstig de la jugada on el poses.
 - Si empaten dos partits (o dos equips) al capdamunt, **totes les jugades empatades encerten**.
 - Tot el tauler **es tanca al primer xiulet de la jornada**: un sol termini per a tothom.
