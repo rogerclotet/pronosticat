@@ -16,7 +16,7 @@
   "challenges": {
     "exact_score": {
       "name": "La porra",
-      "rule": "Tria un partit i clava'n el resultat."
+      "rule": "Tria un partit i clava el resultat."
     },
     "goal_fest": {
       "name": "La golejada",
@@ -71,7 +71,7 @@
       "rule": "Quants gols hi haurà en tota la jornada."
     },
     "home_wins": {
-      "name": "Mando de casa",
+      "name": "L'efecte camp",
       "rule": "Quants equips de casa guanyaran la jornada."
     }
   },
@@ -98,7 +98,7 @@
     "pickTeam": "TRIA L'EQUIP",
     "pickScore": "EL TEU RESULTAT",
     "pickNumber": "EL TEU NÚMERO",
-    "pickMatchFirst": "Tria un partit per posar-hi resultat.",
+    "pickMatchFirst": "Tria un partit per posar-hi el resultat.",
     "jokerLabel": "FES SERVIR EL JÒQUER",
     "jokerNote": "Dobla el premi i dobla el càstig. Un per jornada.",
     "jokerTakenNote": "Ja el tens posat a «{challenge}».",
@@ -121,7 +121,7 @@
   },
   "group": {
     "title": "Classificació",
-    "note": "{count} JUGADORS",
+    "note": "{count, plural, one {# JUGADOR} other {# JUGADORS}}",
     "invite": "+ FICA-HI MÉS GENT",
     "manage": "Gestiona el grup",
     "inviteCode": "CODI D'ENTRADA",
@@ -141,7 +141,7 @@
   },
   "groupsSheet": {
     "title": "Els meus grups",
-    "meta": "{members} JUGADORS · {rank}è DE {total}",
+    "meta": "{members, plural, one {# JUGADOR} other {# JUGADORS}} · {rank} DE {total}",
     "roleAdmin": "ADMIN",
     "roleMember": "MEMBRE",
     "createNew": "+ CREA UN GRUP NOU",
@@ -164,8 +164,8 @@
     "swing": "EN JOC",
     "historyTitle": "Historial de jornades",
     "historyRound": "Jornada {round} · {competition}",
-    "historyMeta": "{count} JUGADES · {hits} ENCERTS",
-    "viewOnboarding": "VEURE ONBOARDING / CREAR GRUP",
+    "historyMeta": "{count, plural, one {# JUGADA} other {# JUGADES}} · {hits, plural, one {# ENCERT} other {# ENCERTS}}",
+    "viewOnboarding": "VEURE BENVINGUDA / CREAR GRUP",
     "signOut": "Sortir",
     "noHistory": "Encara no tens jornades tancades."
   },
