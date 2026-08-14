@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray, min, ne } from "drizzle-orm";
+import type { Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches, rounds } from "@/lib/db/schema";
-import type { Competition } from "@/lib/constants";
 
 export type CurrentRound = typeof rounds.$inferSelect;
 
@@ -14,7 +14,10 @@ export async function getCurrentRound(
   competition: Competition,
 ): Promise<CurrentRound | null> {
   const round = await db.query.rounds.findFirst({
-    where: and(eq(rounds.competition, competition), ne(rounds.status, "settled")),
+    where: and(
+      eq(rounds.competition, competition),
+      ne(rounds.status, "settled"),
+    ),
     orderBy: [asc(rounds.matchday)],
   });
 

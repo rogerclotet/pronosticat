@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { normalizeTarget, teamsClaimed } from "./validate";
 import { MAX_NUMERIC_VALUE, MAX_PREDICTED_SCORE } from "@/lib/constants";
+import { normalizeTarget, teamsClaimed } from "./validate";
 
 describe("normalizeTarget", () => {
   it("keeps only the match for a match challenge", () => {
@@ -74,13 +74,21 @@ describe("normalizeTarget", () => {
 
   it("accepts the required side for a one-sided team challenge", () => {
     expect(
-      normalizeTarget("team", { targetMatchId: "a", targetSide: "away" }, "away"),
+      normalizeTarget(
+        "team",
+        { targetMatchId: "a", targetSide: "away" },
+        "away",
+      ),
     ).toMatchObject({ targetMatchId: "a", targetSide: "away" });
   });
 
   it("rejects the wrong side for a one-sided team challenge", () => {
     expect(() =>
-      normalizeTarget("team", { targetMatchId: "a", targetSide: "home" }, "away"),
+      normalizeTarget(
+        "team",
+        { targetMatchId: "a", targetSide: "home" },
+        "away",
+      ),
     ).toThrow("only takes the away team");
   });
 

@@ -2,19 +2,19 @@
 
 import { ArrowRight, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Pill } from "@/components/ui/pill";
 import {
   challengeIcons,
   fallbackChallengeIcon,
 } from "@/components/challenges/challenge-icon";
 import {
-  describePick,
-  describePickTeams,
   type BoardMatch,
   type BoardSlotView,
+  describePick,
+  describePickTeams,
   type EntryView,
   type PickTeam,
 } from "@/components/challenges/types";
+import { Pill } from "@/components/ui/pill";
 import { cn, teamCode } from "@/lib/utils";
 
 type SlotCardProps = {
@@ -26,7 +26,13 @@ type SlotCardProps = {
 };
 
 /** A single challenge slot: its rule, the current pick (if any), and its outcome once settled. */
-export function SlotCard({ slot, entry, matches, interactive, onOpen }: SlotCardProps) {
+export function SlotCard({
+  slot,
+  entry,
+  matches,
+  interactive,
+  onOpen,
+}: SlotCardProps) {
   const t = useTranslations("board");
   const tChallenge = useTranslations("challenges");
 

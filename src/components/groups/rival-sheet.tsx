@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { Pill } from "@/components/ui/pill";
 import { Sheet } from "@/components/ui/sheet";
 import { StatTile } from "@/components/ui/stat-tile";
-import { Pill } from "@/components/ui/pill";
 import { getRivalSheetData, type RivalSheetData } from "@/lib/actions/rival";
 
 type RivalSheetProps = {
@@ -93,7 +93,9 @@ export function RivalSheet({
                     <span className="font-sans text-[12.5px] font-semibold">
                       {tChallenge(`${pick.slug}.name`)}
                     </span>
-                    {pick.isJoker && <Pill tone="teal">{tBoard("jokerBadge")}</Pill>}
+                    {pick.isJoker && (
+                      <Pill tone="teal">{tBoard("jokerBadge")}</Pill>
+                    )}
                   </span>
                   <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-muted">
                     {masked ? t("hidden") : (pick.label ?? "—")}

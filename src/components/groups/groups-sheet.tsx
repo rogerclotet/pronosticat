@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
-import { Sheet } from "@/components/ui/sheet";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { cn, formatOrdinal } from "@/lib/utils";
+import { Sheet } from "@/components/ui/sheet";
+import { useRouter } from "@/i18n/routing";
 import { getMyGroups, setActiveGroup } from "@/lib/actions/groups";
+import { cn, formatOrdinal } from "@/lib/utils";
 
 type GroupWithMeta = Awaited<ReturnType<typeof getMyGroups>>[number];
 
@@ -16,7 +16,11 @@ type GroupsSheetProps = {
   activeGroupId?: string;
 };
 
-export function GroupsSheet({ isOpen, onClose, activeGroupId }: GroupsSheetProps) {
+export function GroupsSheet({
+  isOpen,
+  onClose,
+  activeGroupId,
+}: GroupsSheetProps) {
   const t = useTranslations("groupsSheet");
   const router = useRouter();
   const [groups, setGroups] = useState<GroupWithMeta[] | null>(null);
@@ -77,7 +81,9 @@ export function GroupsSheet({ isOpen, onClose, activeGroupId }: GroupsSheetProps
               onClick={() => handleSelect(g.id)}
               className={cn(
                 "w-full border-2 text-left disabled:opacity-60",
-                isActive ? "border-teal bg-highlight-bg" : "border-border bg-surface",
+                isActive
+                  ? "border-teal bg-highlight-bg"
+                  : "border-border bg-surface",
               )}
             >
               <div className="flex items-center justify-between gap-2.5 p-3">

@@ -5,7 +5,11 @@ export function cn(...classes: (string | undefined | false)[]): string {
 export function teamCode(name: string): string {
   const words = name.trim().split(/\s+/);
   if (words.length >= 2) {
-    return words.slice(0, 3).map((w) => w[0]).join("").toUpperCase();
+    return words
+      .slice(0, 3)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
   }
   return name.slice(0, 3).toUpperCase();
 }

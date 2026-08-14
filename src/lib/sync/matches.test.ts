@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { syncMatchesToDb } from "./matches";
 import {
+  type FootballDataMatch,
   fetchCompetitionMatches,
   mapMatchStatus,
-  type FootballDataMatch,
 } from "@/lib/football/api";
+import { syncMatchesToDb } from "./matches";
 
 const mockOnConflictDoUpdate = vi.fn().mockResolvedValue(undefined);
-const mockValues = vi.fn(() => ({ onConflictDoUpdate: mockOnConflictDoUpdate }));
+const mockValues = vi.fn(() => ({
+  onConflictDoUpdate: mockOnConflictDoUpdate,
+}));
 const mockInsert = vi.fn(() => ({ values: mockValues }));
 
 vi.mock("@/lib/db", () => ({
@@ -24,7 +26,9 @@ vi.mock("@/lib/football/api", async (importOriginal) => {
   };
 });
 
-function makeMatch(overrides: Partial<FootballDataMatch> = {}): FootballDataMatch {
+function makeMatch(
+  overrides: Partial<FootballDataMatch> = {},
+): FootballDataMatch {
   return {
     id: 100,
     utcDate: "2026-08-03T20:00:00Z",
@@ -121,7 +125,11 @@ describe("syncMatchesToDb", () => {
   it("syncs multiple matches in one competition", async () => {
     vi.mocked(fetchCompetitionMatches).mockResolvedValue([
       makeMatch({ id: 1 }),
-      makeMatch({ id: 2, status: "SCHEDULED", score: { fullTime: { home: null, away: null } } }),
+      makeMatch({
+        id: 2,
+        status: "SCHEDULED",
+        score: { fullTime: { home: null, away: null } },
+      }),
     ]);
 
     await syncMatchesToDb("premier_league");

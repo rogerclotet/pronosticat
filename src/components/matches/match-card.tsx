@@ -2,7 +2,12 @@ import { useTranslations } from "next-intl";
 import { Pill } from "@/components/ui/pill";
 import { cn, formatKickoff, teamCode } from "@/lib/utils";
 
-type MatchStatus = "scheduled" | "live" | "finished" | "postponed" | "cancelled";
+type MatchStatus =
+  | "scheduled"
+  | "live"
+  | "finished"
+  | "postponed"
+  | "cancelled";
 
 type MatchCardProps = {
   homeTeam: string;
@@ -74,7 +79,9 @@ function TeamBlock({ name, crest }: { name: string; crest?: string | null }) {
           </span>
         </div>
       )}
-      <span className="text-center font-sans text-xs font-semibold leading-tight">{name}</span>
+      <span className="text-center font-sans text-xs font-semibold leading-tight">
+        {name}
+      </span>
     </div>
   );
 }

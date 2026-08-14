@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import type { Competition } from "@/lib/constants";
+import { createDevMatch, listDevMatches } from "@/lib/dev/fixtures";
 import {
   checkDevFixturesAuth,
   devFixturesDisabledResponse,
   devFixturesUnauthorizedResponse,
   isDevFixturesEnabled,
 } from "@/lib/dev/guard";
-import { createDevMatch, listDevMatches } from "@/lib/dev/fixtures";
-import type { Competition } from "@/lib/constants";
 
 export async function GET(request: Request) {
   if (!isDevFixturesEnabled()) return devFixturesDisabledResponse();
@@ -20,7 +20,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ matches });
   } catch (error) {
     console.error("List dev fixtures failed:", error);
-    return NextResponse.json({ error: "Failed to list fixtures" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to list fixtures" },
+      { status: 500 },
+    );
   }
 }
 
@@ -34,7 +37,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ match }, { status: 201 });
   } catch (error) {
     console.error("Create dev fixture failed:", error);
-    const message = error instanceof Error ? error.message : "Failed to create fixture";
+    const message =
+      error instanceof Error ? error.message : "Failed to create fixture";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

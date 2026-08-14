@@ -1,7 +1,7 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
+import { Suspense } from "react";
 import { sanitizeAuthCallbackUrl } from "@/lib/invite";
+import { getSession } from "@/lib/session";
 
 export default function LoginPage({
   searchParams,

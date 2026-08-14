@@ -1,9 +1,9 @@
+import { revalidateTag } from "next/cache";
+import type { Competition } from "@/lib/constants";
 import { FootballDataRateLimitError } from "@/lib/football/api";
+import { getActiveCompetitions } from "@/lib/queries/active-competitions";
 import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
 import { syncMatchesToDb } from "@/lib/sync/matches";
-import { getActiveCompetitions } from "@/lib/queries/active-competitions";
-import type { Competition } from "@/lib/constants";
-import { revalidateTag } from "next/cache";
 
 export async function syncMatches(competition: Competition) {
   try {

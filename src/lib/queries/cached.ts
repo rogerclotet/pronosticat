@@ -1,8 +1,8 @@
 import { cache } from "react";
-import { getSession } from "@/lib/session";
+import type { Competition } from "@/lib/constants";
 import { getActiveGroup, getUserEntries } from "@/lib/queries/groups";
 import { getCurrentRoundBoard } from "@/lib/queries/round-board";
-import type { Competition } from "@/lib/constants";
+import { getSession } from "@/lib/session";
 
 /** Dedupe auth/group reads within a single request (layout + page). */
 export const getCachedSession = cache(getSession);

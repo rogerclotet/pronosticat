@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
-import { createGroup, joinGroup } from "@/lib/actions/groups";
+import { useState } from "react";
+import { InviteShareButton } from "@/components/groups/invite-share-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { InviteShareButton } from "@/components/groups/invite-share-button";
+import { useRouter } from "@/i18n/routing";
+import { createGroup, joinGroup } from "@/lib/actions/groups";
 import type { Competition } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +14,18 @@ type View = "create-1" | "create-2" | "join";
 
 const CREATE_STEPS: View[] = ["create-1", "create-2"];
 
-export function OnboardingWizard({ initialMode }: { initialMode: "create" | "join" }) {
+export function OnboardingWizard({
+  initialMode,
+}: {
+  initialMode: "create" | "join";
+}) {
   const t = useTranslations("onboarding");
   const tGroup = useTranslations("group");
   const router = useRouter();
 
-  const [view, setView] = useState<View>(initialMode === "join" ? "join" : "create-1");
+  const [view, setView] = useState<View>(
+    initialMode === "join" ? "join" : "create-1",
+  );
   const [name, setName] = useState("");
   const [competition, setCompetition] = useState<Competition>("laliga");
   const [code, setCode] = useState("");
@@ -161,7 +167,13 @@ export function OnboardingWizard({ initialMode }: { initialMode: "create" | "joi
   );
 }
 
-function StaticValue({ value, accent }: { value: string | number; accent?: boolean }) {
+function StaticValue({
+  value,
+  accent,
+}: {
+  value: string | number;
+  accent?: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -200,7 +212,10 @@ function OnboardingScreen({
   step: { index: number; total: number } | null;
 }) {
   return (
-    <form onSubmit={onSubmit} className="mx-auto flex min-h-full w-full max-w-lg flex-col bg-header-bg">
+    <form
+      onSubmit={onSubmit}
+      className="mx-auto flex min-h-full w-full max-w-lg flex-col bg-header-bg"
+    >
       <div className="flex flex-1 flex-col gap-4 overflow-auto px-5 pb-5 pt-16">
         <h1 className="font-sans text-[34px] font-extrabold uppercase leading-[0.95] tracking-tight">
           {title}
@@ -241,7 +256,12 @@ function OnboardingScreen({
           {cta}
         </Button>
         {alt && (
-          <Button type="button" variant="ghost" onClick={onAlt} disabled={loading}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onAlt}
+            disabled={loading}
+          >
             {alt}
           </Button>
         )}

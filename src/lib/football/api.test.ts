@@ -1,16 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  fetchCompetitionMatches,
-  FootballDataRateLimitError,
-  mapMatchStatus,
   type FootballDataMatch,
+  FootballDataRateLimitError,
+  fetchCompetitionMatches,
+  mapMatchStatus,
 } from "./api";
 
 vi.mock("@/lib/football/rate-limit", () => ({
   withFootballApiRateLimit: <T>(fn: () => Promise<T>) => fn(),
 }));
 
-function makeMatch(overrides: Partial<FootballDataMatch> = {}): FootballDataMatch {
+function makeMatch(
+  overrides: Partial<FootballDataMatch> = {},
+): FootballDataMatch {
   return {
     id: 1,
     utcDate: "2026-08-03T18:00:00Z",

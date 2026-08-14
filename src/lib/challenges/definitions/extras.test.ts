@@ -64,9 +64,9 @@ describe("upset", () => {
 
 describe("cleanSheet", () => {
   it("rewards a team that concedes zero", () => {
-    expect(cleanSheet.score(target({ matchId: "b", side: "home" }), round)).toBe(
-      60,
-    );
+    expect(
+      cleanSheet.score(target({ matchId: "b", side: "home" }), round),
+    ).toBe(60);
   });
 });
 

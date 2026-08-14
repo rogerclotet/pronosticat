@@ -1,5 +1,5 @@
-import { MAX_NUMERIC_VALUE, MAX_PREDICTED_SCORE } from "@/lib/constants";
 import type { ChallengeTargetKind, TargetSide } from "@/lib/challenges/types";
+import { MAX_NUMERIC_VALUE, MAX_PREDICTED_SCORE } from "@/lib/constants";
 
 export type EntryInput = {
   targetMatchId?: string | null;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { scoreEntry, type ScorableEntry } from "@/lib/challenges/score";
+import { type ScorableEntry, scoreEntry } from "@/lib/challenges/score";
 import type { ResolvedMatch } from "@/lib/challenges/types";
 
 const round: ResolvedMatch[] = [
@@ -46,7 +46,9 @@ describe("scoreEntry", () => {
   });
 
   it("voids an unknown challenge", () => {
-    expect(scoreEntry("nonexistent", entry({ side: "home" }), round)).toBeNull();
+    expect(
+      scoreEntry("nonexistent", entry({ side: "home" }), round),
+    ).toBeNull();
   });
 
   it("does not double a void pick into a number", () => {

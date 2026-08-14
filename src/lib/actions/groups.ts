@@ -1,34 +1,34 @@
 "use server";
 
-import { eq, and, ne } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { getChallenge } from "@/lib/challenges/registry";
+import {
+  type EntryInput,
+  normalizeTarget,
+  teamsClaimed,
+} from "@/lib/challenges/validate";
+import {
+  COMPETITIONS,
+  type Competition,
+  generateId,
+  generateInviteCode,
+  POINTS,
+} from "@/lib/constants";
 import { db } from "@/lib/db";
 import {
   entries,
-  groups,
   groupMembers,
+  groups,
   matches,
   roundChallenges,
   rounds,
   userActiveGroup,
 } from "@/lib/db/schema";
-import { requireSession } from "@/lib/session";
-import {
-  COMPETITIONS,
-  generateId,
-  generateInviteCode,
-  POINTS,
-  type Competition,
-} from "@/lib/constants";
-import { getChallenge } from "@/lib/challenges/registry";
-import {
-  normalizeTarget,
-  teamsClaimed,
-  type EntryInput,
-} from "@/lib/challenges/validate";
-import { getUserGroupsWithMeta, liveGroup } from "@/lib/queries/groups";
-import { revalidatePath } from "next/cache";
-import { assertRateLimit } from "@/lib/security/rate-limit";
 import { normalizeInviteCode } from "@/lib/invite";
+import { getUserGroupsWithMeta, liveGroup } from "@/lib/queries/groups";
+import { assertRateLimit } from "@/lib/security/rate-limit";
+import { requireSession } from "@/lib/session";
 
 /**
  * Every export of this module is a public RPC endpoint, so nothing here may
@@ -120,7 +120,9 @@ export async function deleteGroup(groupId: string) {
       .returning({ id: groups.id });
     if (!updated) throw new Error("Not allowed");
 
-    await tx.delete(userActiveGroup).where(eq(userActiveGroup.groupId, groupId));
+    await tx
+      .delete(userActiveGroup)
+      .where(eq(userActiveGroup.groupId, groupId));
   });
 
   revalidatePath("/");
@@ -218,7 +220,11 @@ export async function saveEntry(data: SaveEntryInput) {
     throw new Error("Round is not part of this group's competition");
   }
 
-  const target = normalizeTarget(challenge.targetKind, data, challenge.requiredSide);
+  const target = normalizeTarget(
+    challenge.targetKind,
+    data,
+    challenge.requiredSide,
+  );
 
   await db.transaction(async (tx) => {
     const [locked] = await tx
@@ -255,7 +261,13 @@ export async function saveEntry(data: SaveEntryInput) {
 
     const isJoker = data.isJoker ?? false;
     if (isJoker) {
-      await assertJokerFree(tx, session.user.id, data.groupId, round.id, slot.id);
+      await assertJokerFree(
+        tx,
+        session.user.id,
+        data.groupId,
+        round.id,
+        slot.id,
+      );
     }
 
     const existing = await tx.query.entries.findFirst({
@@ -343,7 +355,9 @@ async function assertTeamsFree(
     );
     const clash = teams.find((team) => otherTeams.includes(team));
     if (clash) {
-      throw new Error(`${clash} is already picked in another challenge this round`);
+      throw new Error(
+        `${clash} is already picked in another challenge this round`,
+      );
     }
   }
 }

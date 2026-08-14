@@ -1,20 +1,20 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { StatTile } from "@/components/ui/stat-tile";
-import { SegmentedBar } from "@/components/ui/progress-bar";
-import { SlotCard } from "@/components/challenges/slot-card";
+import { useState } from "react";
 import { ChallengeSheet } from "@/components/challenges/challenge-sheet";
+import { SlotCard } from "@/components/challenges/slot-card";
 import {
-  describePickTeams,
   type BoardMatch,
   type BoardRound,
   type BoardSlotView,
+  describePickTeams,
   type EntryView,
 } from "@/components/challenges/types";
-import type { MatchdayHistoryRow } from "@/lib/queries/stats";
+import { SegmentedBar } from "@/components/ui/progress-bar";
+import { StatTile } from "@/components/ui/stat-tile";
 import type { Competition } from "@/lib/constants";
+import type { MatchdayHistoryRow } from "@/lib/queries/stats";
 import { cn } from "@/lib/utils";
 
 type PredictionsViewProps = {
@@ -192,7 +192,9 @@ function RoundHistoryCard({
     <div className="flex flex-col border-2 border-border bg-surface">
       <div className="flex items-start justify-between gap-1 p-2">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate font-sans text-[10.5px] font-semibold">{label}</span>
+          <span className="truncate font-sans text-[10.5px] font-semibold">
+            {label}
+          </span>
           <span className="font-mono text-[8px] uppercase tracking-[0.08em] text-muted">
             {meta}
           </span>

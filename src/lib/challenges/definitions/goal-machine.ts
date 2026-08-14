@@ -1,7 +1,7 @@
 import {
-  resolveTeamTarget,
   type ChallengeDefinition,
   type ResolvedMatch,
+  resolveTeamTarget,
 } from "@/lib/challenges/types";
 
 const REWARD = 80;

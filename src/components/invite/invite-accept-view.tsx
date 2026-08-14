@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/routing";
 import { joinGroup } from "@/lib/actions/groups";
-import { loginWithInvitePath } from "@/lib/invite";
 import type { Competition } from "@/lib/constants";
+import { loginWithInvitePath } from "@/lib/invite";
 import { cn } from "@/lib/utils";
 
 type InviteAcceptViewProps = {
@@ -30,7 +30,9 @@ export function InviteAcceptView({
   const tGroup = useTranslations("group");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(initialError ? t("error") : null);
+  const [error, setError] = useState<string | null>(
+    initialError ? t("error") : null,
+  );
 
   function handleAccept() {
     setError(null);
@@ -64,10 +66,7 @@ export function InviteAcceptView({
             label={t("competitionLabel")}
             value={tGroup(`competitions.${competition}`)}
           />
-          <InviteFact
-            label={t("membersLabel")}
-            value={String(memberCount)}
-          />
+          <InviteFact label={t("membersLabel")} value={String(memberCount)} />
           <InviteFact label={t("codeLabel")} value={inviteCode} />
         </div>
 
@@ -75,7 +74,12 @@ export function InviteAcceptView({
       </div>
 
       <div className="flex flex-col gap-2 px-5 pb-8">
-        <Button type="button" size="lg" disabled={pending} onClick={handleAccept}>
+        <Button
+          type="button"
+          size="lg"
+          disabled={pending}
+          onClick={handleAccept}
+        >
           {t("accept")}
         </Button>
         {isLoggedIn ? null : (

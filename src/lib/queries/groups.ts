@@ -2,8 +2,8 @@ import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   entries,
-  groups,
   groupMembers,
+  groups,
   user,
   userActiveGroup,
 } from "@/lib/db/schema";
