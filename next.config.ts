@@ -26,7 +26,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
-  cacheComponents: true,
+  // Not cacheComponents: PPR's static shell cannot carry the per-request CSP
+  // nonce from src/proxy.ts, so the browser blocks /_next/static/chunks/*.
   experimental: {
     staleTimes: {
       dynamic: 30,
