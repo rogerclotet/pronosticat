@@ -1,25 +1,15 @@
-import { redirect } from "next/navigation";
-import { AppShell } from "@/components/layout/app-shell";
-import { getCachedActiveGroup, getCachedSession } from "@/lib/queries/cached";
+import { Suspense } from "react";
+import { AppShellSkeleton } from "@/components/layout/app-shell-skeleton";
+import { MainChrome } from "@/components/layout/main-chrome";
 
-export default async function MainLayout({
+export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getCachedSession();
-  if (!session) {
-    redirect("/login");
-  }
-
-  const activeGroup = await getCachedActiveGroup(session.user.id);
-  if (!activeGroup) {
-    redirect("/onboarding");
-  }
-
   return (
-    <AppShell groupName={activeGroup.name} activeGroupId={activeGroup.id}>
-      {children}
-    </AppShell>
+    <Suspense fallback={<AppShellSkeleton />}>
+      <MainChrome>{children}</MainChrome>
+    </Suspense>
   );
 }

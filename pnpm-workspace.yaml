@@ -1,3 +1,8 @@
+# Next's standalone output traces a real file tree, and pnpm's default
+# symlinked layout leaves transitive deps (@swc/helpers) outside it, so
+# `node server.js` in the runner image fails to boot. A hoisted node_modules
+# is what the tracer expects.
+nodeLinker: hoisted
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true

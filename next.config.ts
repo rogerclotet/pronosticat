@@ -26,6 +26,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  cacheComponents: true,
   experimental: {
     staleTimes: {
       dynamic: 30,
