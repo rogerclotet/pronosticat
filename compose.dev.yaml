@@ -35,6 +35,9 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-onboarding@resend.dev}
       FOOTBALL_DATA_API_KEY: ${FOOTBALL_DATA_API_KEY:-}
       CRON_SECRET: ${CRON_SECRET:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
     volumes:
       - .:/app
       - app_node_modules:/app/node_modules

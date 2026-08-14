@@ -26,6 +26,7 @@ import {
   userActiveGroup,
 } from "@/lib/db/schema";
 import { normalizeInviteCode } from "@/lib/invite";
+import { notifyMemberJoined } from "@/lib/push/dispatch";
 import { getUserGroupsWithMeta, liveGroup } from "@/lib/queries/groups";
 import { assertRateLimit } from "@/lib/security/rate-limit";
 import { requireSession } from "@/lib/session";
@@ -156,6 +157,16 @@ export async function joinGroup(inviteCode: string) {
       points: group.startingPoints,
       isAdmin: false,
     });
+    try {
+      await notifyMemberJoined({
+        groupId: group.id,
+        groupName: group.name,
+        joinerId: session.user.id,
+        joinerName: session.user.name,
+      });
+    } catch (error) {
+      console.error("[push] member joined notify failed:", error);
+    }
   }
 
   await setActiveGroup(group.id);

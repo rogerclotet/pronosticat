@@ -219,5 +219,23 @@
     "error": "S'ha produït un error",
     "save": "Desa",
     "cancel": "Cancel·la"
+  },
+  "push": {
+    "askTitle": "Que no se t'escapi la jornada",
+    "askBody": "Et volem avisar només quan calgui moure fitxa: resultats de les teves jugades i el tancament del tauler. Sense ofertes ni soroll.",
+    "askReasonResults": "Quan un partit que has pronosticat s'acaba, o quan es liquiden els punts.",
+    "askReasonDeadline": "Si et queden caselles i s'acosta el primer xiulet.",
+    "askCta": "ACTIVA ELS AVISOS",
+    "askLater": "ARA NO",
+    "enableError": "No s'han pogut activar. Torna-ho a provar.",
+    "installTitle": "Afegeix-la a l'inici",
+    "installBody": "A l'iPhone, els avisos només arriben si tens Pronosticat instal·lada. Al Safari, obre Comparteix i tria «Afegeix a la pantalla d'inici».",
+    "installCta": "D'ACORD",
+    "settingsLabel": "AVISOS",
+    "enabled": "Actius en aquest dispositiu. T'avisem dels resultats i del tancament de jornada.",
+    "disabled": "Desactivats en aquest dispositiu. Pots activar-los per no perdre't el tancament ni els resultats.",
+    "disableCta": "DESACTIVA",
+    "denied": "Has bloquejat les notificacions. Torna-les a permetre des de la configuració del navegador o del telèfon.",
+    "unsupported": "Aquest navegador no admet avisos emergents."
   }
 }

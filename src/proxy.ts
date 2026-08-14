@@ -23,6 +23,7 @@ function buildCsp(nonce: string): string {
     "font-src 'self'",
     "connect-src 'self'",
     "object-src 'none'",
+    "worker-src 'self'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
