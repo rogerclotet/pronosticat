@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { deleteGroup } from "@/lib/actions/groups";
 import type { Competition } from "@/lib/constants";
 
 type StandingRow = {
@@ -39,13 +37,9 @@ export function GroupTabView({
   viewerUserId,
 }: GroupTabViewProps) {
   const t = useTranslations("group");
-  const tCommon = useTranslations("common");
   const router = useRouter();
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
 
   const maxPoints = standings[0]?.points ?? 1;
 
@@ -53,19 +47,6 @@ export function GroupTabView({
     await navigator.clipboard.writeText(activeGroup.inviteCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
-
-  function handleDelete() {
-    setDeleteError(null);
-    startTransition(async () => {
-      try {
-        await deleteGroup(activeGroup.id);
-        setConfirmDelete(false);
-        router.refresh();
-      } catch {
-        setDeleteError(tCommon("error"));
-      }
-    });
   }
 
   return (
@@ -146,53 +127,6 @@ export function GroupTabView({
           {t("switch")}
         </button>
       </div>
-
-      {viewerIsAdmin ? (
-        <Button
-          type="button"
-          variant="danger"
-          onClick={() => {
-            setDeleteError(null);
-            setConfirmDelete(true);
-          }}
-        >
-          {t("delete")}
-        </Button>
-      ) : null}
-
-      {confirmDelete ? (
-        <Dialog
-          title={t("deleteConfirmTitle")}
-          onClose={() => {
-            if (!pending) setConfirmDelete(false);
-          }}
-          footer={
-            <>
-              <Button
-                type="button"
-                variant="danger"
-                disabled={pending}
-                onClick={handleDelete}
-              >
-                {t("deleteConfirm")}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={pending}
-                onClick={() => setConfirmDelete(false)}
-              >
-                {t("deleteCancel")}
-              </Button>
-            </>
-          }
-        >
-          <p className="text-sm text-text-secondary">
-            {t("deleteConfirmBody", { name: activeGroup.name })}
-          </p>
-          {deleteError ? <p className="mt-2 text-sm text-danger">{deleteError}</p> : null}
-        </Dialog>
-      ) : null}
     </div>
   );
 }
