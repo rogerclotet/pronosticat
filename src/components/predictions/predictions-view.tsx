@@ -1,7 +1,7 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 import { ChallengeSheet } from "@/components/challenges/challenge-sheet";
 import { SlotCard } from "@/components/challenges/slot-card";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/challenges/types";
 import { SegmentedBar } from "@/components/ui/progress-bar";
 import { StatTile } from "@/components/ui/stat-tile";
+import { usePathname, useRouter } from "@/i18n/routing";
 import type { Competition } from "@/lib/constants";
 import type { MatchdayHistoryRow } from "@/lib/queries/stats";
 import { cn } from "@/lib/utils";
@@ -42,7 +43,10 @@ export function PredictionsView({
   const tGroup = useTranslations("group");
   const tPerfil = useTranslations("perfil");
 
-  const [openSlotId, setOpenSlotId] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const openSlotId = searchParams.get("slot");
 
   const entryBySlot = new Map(entries.map((e) => [e.roundChallengeId, e]));
   const played = slots.filter((slot) => entryBySlot.has(slot.id));
@@ -127,7 +131,7 @@ export function PredictionsView({
               entry={entryBySlot.get(slot.id)}
               matches={matches}
               interactive={isOpen}
-              onOpen={() => setOpenSlotId(slot.id)}
+              onOpen={() => router.push(`${pathname}?slot=${slot.id}`)}
             />
           ))}
         </div>
@@ -159,7 +163,7 @@ export function PredictionsView({
 
       {openSlot && (
         <ChallengeSheet
-          onClose={() => setOpenSlotId(null)}
+          onClose={() => router.replace(pathname)}
           groupId={groupId}
           slot={openSlot}
           matches={matches}

@@ -1,18 +1,17 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import { getSession } from "@/lib/session";
 
-export default async function OnboardingPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ mode?: string }>;
-}) {
+export default async function OnboardingPage() {
   const session = await getSession();
   if (!session) {
     redirect("/login");
   }
 
-  const { mode } = await searchParams;
-
-  return <OnboardingWizard initialMode={mode === "join" ? "join" : "create"} />;
+  return (
+    <Suspense fallback={null}>
+      <OnboardingWizard />
+    </Suspense>
+  );
 }

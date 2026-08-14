@@ -1,37 +1,41 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { InviteShareButton } from "@/components/groups/invite-share-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "@/i18n/routing";
+import { usePathname, useRouter } from "@/i18n/routing";
 import { createGroup, joinGroup } from "@/lib/actions/groups";
 import type { Competition } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-type View = "create-1" | "create-2" | "join";
+const CREATE_STEPS_TOTAL = 2;
 
-const CREATE_STEPS: View[] = ["create-1", "create-2"];
-
-export function OnboardingWizard({
-  initialMode,
-}: {
-  initialMode: "create" | "join";
-}) {
+export function OnboardingWizard() {
   const t = useTranslations("onboarding");
   const tGroup = useTranslations("group");
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const [view, setView] = useState<View>(
-    initialMode === "join" ? "join" : "create-1",
-  );
   const [name, setName] = useState("");
   const [competition, setCompetition] = useState<Competition>("laliga");
   const [code, setCode] = useState("");
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const mode = searchParams.get("mode") === "join" ? "join" : "create";
+  // Only trust the invite step if we actually have a code to show — a
+  // fresh visit/refresh at ?step=invite has no code in memory to display.
+  const view =
+    mode === "join"
+      ? "join"
+      : searchParams.get("step") === "invite" && inviteCode
+        ? "create-2"
+        : "create-1";
 
   async function handleCreateStep1(e: React.FormEvent) {
     e.preventDefault();
@@ -40,7 +44,7 @@ export function OnboardingWizard({
     try {
       const group = await createGroup({ name, competition });
       setInviteCode(group.inviteCode);
-      setView("create-2");
+      router.push(`${pathname}?mode=create&step=invite`);
     } catch {
       setError(t("error"));
     } finally {
@@ -85,7 +89,7 @@ export function OnboardingWizard({
         cta={t("joinCta")}
         loading={loading}
         alt={t("createInsteadAlt")}
-        onAlt={() => setView("create-1")}
+        onAlt={() => router.push(`${pathname}?mode=create`)}
         step={null}
       />
     );
@@ -131,8 +135,8 @@ export function OnboardingWizard({
         cta={t("createCta")}
         loading={loading}
         alt={t("haveCodeAlt")}
-        onAlt={() => setView("join")}
-        step={{ index: 0, total: CREATE_STEPS.length }}
+        onAlt={() => router.push(`${pathname}?mode=join`)}
+        step={{ index: 0, total: CREATE_STEPS_TOTAL }}
       />
     );
   }
@@ -162,7 +166,7 @@ export function OnboardingWizard({
           />
         ) : null
       }
-      step={{ index: 1, total: CREATE_STEPS.length }}
+      step={{ index: 1, total: CREATE_STEPS_TOTAL }}
     />
   );
 }
