@@ -9,6 +9,7 @@ const CREST_HOST = "https://crests.football-data.org";
 /**
  * A fresh nonce per request is what lets the policy stay strict: Next tags its
  * own inline bootstrap scripts with it, so nothing else inline can run.
+ * Incompatible with `cacheComponents` (PPR) — the static shell has no nonce.
  */
 function buildCsp(nonce: string): string {
   const isDev = process.env.NODE_ENV === "development";
