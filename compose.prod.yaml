@@ -1,6 +1,13 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ${POSTGRES_BACKUP_DIR:-./backups}:/backups
@@ -8,6 +15,7 @@ services:
   backup:
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       PGHOST: db
       PGPORT: 5432
@@ -29,6 +37,7 @@ services:
     build:
       context: .
       target: migrator
+    logging: *default-logging
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-pronosticat}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-pronosticat}
     depends_on:
@@ -42,6 +51,7 @@ services:
       target: runner
     ports:
       - "${APP_PORT:-3000}:3000"
+    logging: *default-logging
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-pronosticat}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-pronosticat}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
@@ -78,6 +88,7 @@ services:
     build:
       context: ./docker/cron
     restart: unless-stopped
+    logging: *default-logging
     environment:
       CRON_SECRET: ${CRON_SECRET:?CRON_SECRET is required}
       CRON_URL: http://app:3000/api/cron/sync
