@@ -22,7 +22,9 @@ describe("generateInviteCode", () => {
   });
 
   it("does not emit the same code twice in a short sample", () => {
-    const codes = new Set(Array.from({ length: 50 }, () => generateInviteCode()));
+    const codes = new Set(
+      Array.from({ length: 50 }, () => generateInviteCode()),
+    );
     expect(codes.size).toBe(50);
   });
 });

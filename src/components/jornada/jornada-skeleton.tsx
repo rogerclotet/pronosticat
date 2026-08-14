@@ -18,7 +18,11 @@ function MatchCardSkeleton() {
 
 export function JornadaSkeleton() {
   return (
-    <div className="flex flex-col gap-3 p-4 pb-6" aria-busy aria-label="Loading">
+    <div
+      className="flex flex-col gap-3 p-4 pb-6"
+      aria-busy
+      aria-label="Loading"
+    >
       <div className="flex items-baseline justify-between border-b-2 border-border pb-2">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-3 w-24" />

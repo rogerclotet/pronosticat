@@ -1,7 +1,7 @@
 import { totalGoals } from "@/lib/challenges/definitions/goal-fest";
 import {
-  findTargetMatch,
   type ChallengeDefinition,
+  findTargetMatch,
 } from "@/lib/challenges/types";
 
 const REWARD = 80;

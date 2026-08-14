@@ -1,17 +1,17 @@
 import { getTranslations } from "next-intl/server";
-import { PredictionsView } from "@/components/predictions/predictions-view";
 import {
   toBoardMatch,
   toBoardRound,
   toEntryView,
 } from "@/components/challenges/types";
-import { getMatchdayHistory } from "@/lib/queries/stats";
+import { PredictionsView } from "@/components/predictions/predictions-view";
 import {
   getCachedActiveGroup,
   getCachedRoundBoard,
   getCachedSession,
   getCachedUserEntries,
 } from "@/lib/queries/cached";
+import { getMatchdayHistory } from "@/lib/queries/stats";
 
 export async function PredictionsContent() {
   const session = await getCachedSession();

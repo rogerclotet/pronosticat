@@ -1,11 +1,8 @@
 import { sql } from "drizzle-orm";
+import { COMPETITIONS, type Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches } from "@/lib/db/schema";
-import { COMPETITIONS, type Competition } from "@/lib/constants";
-import {
-  fetchCompetitionMatches,
-  mapMatchStatus,
-} from "@/lib/football/api";
+import { fetchCompetitionMatches, mapMatchStatus } from "@/lib/football/api";
 
 const UPSERT_CHUNK = 100;
 

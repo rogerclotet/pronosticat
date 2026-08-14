@@ -1,5 +1,5 @@
-import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
+import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 
 const intlProxy = createMiddleware(routing);
@@ -9,6 +9,7 @@ const CREST_HOST = "https://crests.football-data.org";
 /**
  * A fresh nonce per request is what lets the policy stay strict: Next tags its
  * own inline bootstrap scripts with it, so nothing else inline can run.
+ * Incompatible with `cacheComponents` (PPR) — the static shell has no nonce.
  */
 function buildCsp(nonce: string): string {
   const isDev = process.env.NODE_ENV === "development";

@@ -1,8 +1,8 @@
 import { and, count, desc, eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { entries, rounds } from "@/lib/db/schema";
 import { getChallenge } from "@/lib/challenges/registry";
 import { JOKER_MULTIPLIER } from "@/lib/constants";
+import { db } from "@/lib/db";
+import { entries, rounds } from "@/lib/db/schema";
 import { getMemberPoints } from "@/lib/queries/groups";
 
 export type PendingStake = {

@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { SegmentedBar } from "@/components/ui/progress-bar";
 import { SignOutButton } from "@/components/profile/sign-out-button";
+import { SegmentedBar } from "@/components/ui/progress-bar";
 import type { Competition } from "@/lib/constants";
 import type { MatchdayHistoryRow, PendingStake } from "@/lib/queries/stats";
 
@@ -10,20 +10,31 @@ type ProfileViewProps = {
   competition: Competition;
 };
 
-export async function ProfileView({ summary, history, competition }: ProfileViewProps) {
+export async function ProfileView({
+  summary,
+  history,
+  competition,
+}: ProfileViewProps) {
   const t = await getTranslations("perfil");
   const tGroup = await getTranslations("group");
   const competitionLabel = tGroup(`competitions.${competition}`);
-  const deltaLabel = summary.weeklyDelta >= 0 ? `+${summary.weeklyDelta}` : `${summary.weeklyDelta}`;
+  const deltaLabel =
+    summary.weeklyDelta >= 0
+      ? `+${summary.weeklyDelta}`
+      : `${summary.weeklyDelta}`;
 
   return (
     <div className="flex flex-col gap-3.5 p-4 pb-6">
       <div className="flex flex-col gap-2.5 border-2 border-teal bg-highlight-bg p-4">
         <span className="label-mono">{t("balance")}</span>
-        <span className="font-mono text-4xl font-bold text-teal">{summary.balance}</span>
+        <span className="font-mono text-4xl font-bold text-teal">
+          {summary.balance}
+        </span>
         <div className="mt-1 flex">
           <div className="flex-1 border-2 border-border p-2.5">
-            <div className="font-mono text-sm font-bold">{summary.pending.picks}</div>
+            <div className="font-mono text-sm font-bold">
+              {summary.pending.picks}
+            </div>
             <div className="label-mono mt-1.5">{t("pending")}</div>
           </div>
           <div className="-ml-0.5 flex-1 border-2 border-border p-2.5">
@@ -51,13 +62,20 @@ export async function ProfileView({ summary, history, competition }: ProfileView
           {history.map((h) => {
             const hitPct = h.picks > 0 ? (h.hits / h.picks) * 100 : 0;
             const missPct = h.picks > 0 ? (h.misses / h.picks) * 100 : 0;
-            const netLabel = h.netDelta >= 0 ? `+${h.netDelta}` : `${h.netDelta}`;
+            const netLabel =
+              h.netDelta >= 0 ? `+${h.netDelta}` : `${h.netDelta}`;
             return (
-              <div key={h.matchday} className="border-2 border-border bg-surface">
+              <div
+                key={h.matchday}
+                className="border-2 border-border bg-surface"
+              >
                 <div className="flex items-center justify-between gap-2.5 p-2.5">
                   <div className="flex flex-col gap-1.5">
                     <span className="font-sans text-[12.5px] font-semibold">
-                      {t("historyRound", { round: h.matchday, competition: competitionLabel })}
+                      {t("historyRound", {
+                        round: h.matchday,
+                        competition: competitionLabel,
+                      })}
                     </span>
                     <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-muted">
                       {t("historyMeta", { count: h.picks, hits: h.hits })}

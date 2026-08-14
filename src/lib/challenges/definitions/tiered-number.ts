@@ -4,10 +4,7 @@ const NEAR_2 = 20;
 const PENALTY = 0;
 
 /** Shared tiering for round-wide numeric predictions. */
-export function tieredNumberScore(
-  predicted: number,
-  actual: number,
-): number {
+export function tieredNumberScore(predicted: number, actual: number): number {
   const diff = Math.abs(predicted - actual);
   if (diff === 0) return EXACT;
   if (diff === 1) return NEAR_1;

@@ -1,6 +1,6 @@
 import {
-  findTargetMatch,
   type ChallengeDefinition,
+  findTargetMatch,
 } from "@/lib/challenges/types";
 
 const REWARD = 40;

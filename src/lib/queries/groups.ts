@@ -2,8 +2,8 @@ import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   entries,
-  groups,
   groupMembers,
+  groups,
   user,
   userActiveGroup,
 } from "@/lib/db/schema";
@@ -143,4 +143,24 @@ export async function getGroupMembers(groupId: string) {
     where: eq(groupMembers.groupId, groupId),
     with: { user: true },
   });
+}
+
+/** Public preview for an invite link. No membership or ids beyond the code. */
+export async function getGroupInvitePreview(inviteCode: string) {
+  const group = await db.query.groups.findFirst({
+    where: and(eq(groups.inviteCode, inviteCode), liveGroup),
+    columns: { id: true, name: true, competition: true },
+  });
+  if (!group) return null;
+
+  const [row] = await db
+    .select({ memberCount: count() })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, group.id));
+
+  return {
+    name: group.name,
+    competition: group.competition,
+    memberCount: row?.memberCount ?? 0,
+  };
 }

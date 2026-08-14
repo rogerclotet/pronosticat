@@ -6,7 +6,13 @@ type SheetProps = {
   footer?: React.ReactNode;
 };
 
-export function Sheet({ title, subtitle, onClose, children, footer }: SheetProps) {
+export function Sheet({
+  title,
+  subtitle,
+  onClose,
+  children,
+  footer,
+}: SheetProps) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
       <div className="border-b-2 border-border bg-header-bg">
@@ -31,7 +37,9 @@ export function Sheet({ title, subtitle, onClose, children, footer }: SheetProps
       </div>
 
       <div className="flex-1 overflow-auto">
-        <div className="mx-auto w-full max-w-lg px-4 pb-5 pt-3.5">{children}</div>
+        <div className="mx-auto w-full max-w-lg px-4 pb-5 pt-3.5">
+          {children}
+        </div>
       </div>
 
       {footer && (

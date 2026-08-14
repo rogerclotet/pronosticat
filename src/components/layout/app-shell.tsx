@@ -1,11 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { GroupsSheet } from "@/components/groups/groups-sheet";
+import { RivalSheet } from "@/components/groups/rival-sheet";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { BottomNav } from "./bottom-nav";
 import { TopBar } from "./top-bar";
-import { GroupsSheet } from "@/components/groups/groups-sheet";
-import { RivalSheet } from "@/components/groups/rival-sheet";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -39,11 +39,13 @@ export function AppShell({
       </main>
       <BottomNav />
 
-      <GroupsSheet
-        isOpen={sheet === "groups"}
-        onClose={closeSheet}
-        activeGroupId={activeGroupId}
-      />
+      {sheet === "groups" ? (
+        <GroupsSheet
+          isOpen
+          onClose={closeSheet}
+          activeGroupId={activeGroupId}
+        />
+      ) : null}
       {rivalId && (
         <RivalSheet
           // Remount per rival so a previous rival's data never shows through.

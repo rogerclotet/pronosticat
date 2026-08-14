@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "@/i18n/routing";
+import { InviteShareButton } from "@/components/groups/invite-share-button";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { usePathname, useRouter } from "@/i18n/routing";
 import type { Competition } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 type StandingRow = {
   userId: string;
@@ -39,20 +38,15 @@ export function GroupTabView({
   const t = useTranslations("group");
   const router = useRouter();
   const pathname = usePathname();
-  const [copied, setCopied] = useState(false);
 
   const maxPoints = standings[0]?.points ?? 1;
-
-  async function handleInvite() {
-    await navigator.clipboard.writeText(activeGroup.inviteCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
 
   return (
     <div className="flex flex-col gap-3 p-4 pb-6">
       <div className="flex items-baseline justify-between border-b-2 border-border pb-2">
-        <span className="font-sans text-[15px] font-extrabold uppercase">{t("title")}</span>
+        <span className="font-sans text-[15px] font-extrabold uppercase">
+          {t("title")}
+        </span>
         <span className="font-mono text-[9.5px] uppercase tracking-[0.09em] text-muted">
           {t("note", { count: memberCount })}
         </span>
@@ -69,11 +63,14 @@ export function GroupTabView({
                 key={row.userId}
                 type="button"
                 onClick={() =>
-                  !isMe && router.push(`${pathname}?sheet=rival&rival=${row.userId}`)
+                  !isMe &&
+                  router.push(`${pathname}?sheet=rival&rival=${row.userId}`)
                 }
                 className={cn(
                   "flex w-full items-center gap-2.5 border-2 p-2.5 text-left",
-                  isMe ? "border-teal bg-highlight-bg" : "border-border bg-surface",
+                  isMe
+                    ? "border-teal bg-highlight-bg"
+                    : "border-border bg-surface",
                 )}
               >
                 <span
@@ -86,7 +83,9 @@ export function GroupTabView({
                 </span>
                 <div className="flex flex-1 flex-col gap-1.5">
                   <span className="flex items-baseline justify-between gap-2">
-                    <span className="font-sans text-[12.5px] font-semibold">{row.name}</span>
+                    <span className="font-sans text-[12.5px] font-semibold">
+                      {row.name}
+                    </span>
                     <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-muted">
                       {row.hits}✓ {row.misses}✗
                     </span>
@@ -96,16 +95,19 @@ export function GroupTabView({
                     color={isMe ? "teal" : "muted"}
                   />
                 </div>
-                <span className="font-mono text-sm font-bold tabular-nums">{row.points}</span>
+                <span className="font-mono text-sm font-bold tabular-nums">
+                  {row.points}
+                </span>
               </button>
             );
           })}
         </div>
       )}
 
-      <Button type="button" variant="secondary" onClick={handleInvite}>
-        {copied ? t("codeCopied") : t("invite")}
-      </Button>
+      <InviteShareButton
+        inviteCode={activeGroup.inviteCode}
+        groupName={activeGroup.name}
+      />
 
       <div className="mt-1.5 border-b-2 border-border pb-2 font-sans text-[13.5px] font-extrabold uppercase">
         {t("manage")}
@@ -113,7 +115,10 @@ export function GroupTabView({
       <div className="border-2 border-border bg-surface">
         <ManageRow label={t("inviteCode")} value={activeGroup.inviteCode} />
         <ManageRow label={t("members")} value={String(memberCount)} />
-        <ManageRow label={t("yourRole")} value={viewerIsAdmin ? t("admin") : t("member")} />
+        <ManageRow
+          label={t("yourRole")}
+          value={viewerIsAdmin ? t("admin") : t("member")}
+        />
         <ManageRow
           label={t("competition")}
           value={t(`competitions.${activeGroup.competition}`)}
@@ -131,7 +136,15 @@ export function GroupTabView({
   );
 }
 
-function ManageRow({ label, value, last }: { label: string; value: string; last?: boolean }) {
+function ManageRow({
+  label,
+  value,
+  last,
+}: {
+  label: string;
+  value: string;
+  last?: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -139,7 +152,9 @@ function ManageRow({ label, value, last }: { label: string; value: string; last?
         !last && "border-b-2 border-border",
       )}
     >
-      <span className="font-mono text-[9px] uppercase tracking-[0.09em] text-muted">{label}</span>
+      <span className="font-mono text-[9px] uppercase tracking-[0.09em] text-muted">
+        {label}
+      </span>
       <span className="font-mono text-sm font-bold">{value}</span>
     </div>
   );

@@ -44,7 +44,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ca" className={`${archivo.variable} ${jetbrainsMono.variable} h-full`}>
+    <html
+      lang="ca"
+      className={`${archivo.variable} ${jetbrainsMono.variable} h-full`}
+    >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

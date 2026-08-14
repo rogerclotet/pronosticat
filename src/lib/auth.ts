@@ -1,5 +1,5 @@
-import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
 import { Resend } from "resend";
 import { db } from "./db";
@@ -7,8 +7,7 @@ import * as schema from "./db/schema";
 
 const resendApiKey = process.env.RESEND_API_KEY?.trim();
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const emailFrom =
-  process.env.EMAIL_FROM?.trim() || "onboarding@resend.dev";
+const emailFrom = process.env.EMAIL_FROM?.trim() || "onboarding@resend.dev";
 
 const authUrl = process.env.BETTER_AUTH_URL?.trim();
 

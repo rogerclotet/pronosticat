@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { isRoundSettleable, roundId, toResolvedMatches } from "./lifecycle";
 import { ROUND_SETTLE_GRACE_HOURS } from "@/lib/constants";
 import type { matches } from "@/lib/db/schema";
+import { isRoundSettleable, roundId, toResolvedMatches } from "./lifecycle";
 
 type MatchRow = typeof matches.$inferSelect;
 

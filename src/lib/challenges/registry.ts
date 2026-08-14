@@ -1,5 +1,5 @@
-import { blank } from "@/lib/challenges/definitions/blank";
 import { banker } from "@/lib/challenges/definitions/banker";
+import { blank } from "@/lib/challenges/definitions/blank";
 import { btts } from "@/lib/challenges/definitions/btts";
 import { choke } from "@/lib/challenges/definitions/choke";
 import { cleanSheet } from "@/lib/challenges/definitions/clean-sheet";
@@ -38,15 +38,16 @@ const ROTATING: readonly ChallengeDefinition[] = [
 
 const ALL: readonly ChallengeDefinition[] = [...CORE, ...ROTATING];
 
-export const CHALLENGES: Record<string, ChallengeDefinition> = Object.fromEntries(
-  ALL.map((challenge) => [challenge.slug, challenge]),
-);
+export const CHALLENGES: Record<string, ChallengeDefinition> =
+  Object.fromEntries(ALL.map((challenge) => [challenge.slug, challenge]));
 
 /** The board every round gets, in display order. */
 export const CORE_CHALLENGE_SLUGS = CORE.map((challenge) => challenge.slug);
 
 /** One of these is added at random each round (deterministic per round id). */
-export const EXTRA_CHALLENGE_SLUGS = ROTATING.map((challenge) => challenge.slug);
+export const EXTRA_CHALLENGE_SLUGS = ROTATING.map(
+  (challenge) => challenge.slug,
+);
 
 export function getChallenge(slug: string): ChallengeDefinition | null {
   return CHALLENGES[slug] ?? null;

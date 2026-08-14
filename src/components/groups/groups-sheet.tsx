@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/routing";
-import { Sheet } from "@/components/ui/sheet";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { cn, formatOrdinal } from "@/lib/utils";
+import { Sheet } from "@/components/ui/sheet";
+import { useRouter } from "@/i18n/routing";
 import { deleteGroup, getMyGroups, setActiveGroup } from "@/lib/actions/groups";
+import { cn, formatOrdinal } from "@/lib/utils";
 
 type GroupWithMeta = Awaited<ReturnType<typeof getMyGroups>>[number];
 
@@ -17,12 +17,18 @@ type GroupsSheetProps = {
   activeGroupId?: string;
 };
 
-export function GroupsSheet({ isOpen, onClose, activeGroupId }: GroupsSheetProps) {
+export function GroupsSheet({
+  isOpen,
+  onClose,
+  activeGroupId,
+}: GroupsSheetProps) {
   const t = useTranslations("groupsSheet");
   const tCommon = useTranslations("common");
   const router = useRouter();
   const [groups, setGroups] = useState<GroupWithMeta[] | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<GroupWithMeta | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<GroupWithMeta | null>(
+    null,
+  );
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -98,7 +104,9 @@ export function GroupsSheet({ isOpen, onClose, activeGroupId }: GroupsSheetProps
                 key={g.id}
                 className={cn(
                   "w-full border-2",
-                  isActive ? "border-teal bg-highlight-bg" : "border-border bg-surface",
+                  isActive
+                    ? "border-teal bg-highlight-bg"
+                    : "border-border bg-surface",
                 )}
               >
                 <button
@@ -187,7 +195,9 @@ export function GroupsSheet({ isOpen, onClose, activeGroupId }: GroupsSheetProps
           <p className="text-sm text-text-secondary">
             {t("deleteConfirmBody", { name: pendingDelete.name })}
           </p>
-          {deleteError ? <p className="mt-2 text-sm text-danger">{deleteError}</p> : null}
+          {deleteError ? (
+            <p className="mt-2 text-sm text-danger">{deleteError}</p>
+          ) : null}
         </Dialog>
       ) : null}
     </>

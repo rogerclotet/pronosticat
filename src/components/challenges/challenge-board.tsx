@@ -1,10 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { MatchCard } from "@/components/matches/match-card";
 import type { BoardMatch, BoardRound } from "@/components/challenges/types";
-import { formatKickoff } from "@/lib/utils";
+import { MatchCard } from "@/components/matches/match-card";
 import type { Competition } from "@/lib/constants";
+import { formatKickoff } from "@/lib/utils";
 
 type ChallengeBoardProps = {
   round: BoardRound;
@@ -13,7 +13,11 @@ type ChallengeBoardProps = {
 };
 
 /** Read-only round summary: kickoff/lock status and fixture results. Picks are made from the predictions tab. */
-export function ChallengeBoard({ round, matches, competition }: ChallengeBoardProps) {
+export function ChallengeBoard({
+  round,
+  matches,
+  competition,
+}: ChallengeBoardProps) {
   const t = useTranslations("board");
   const tGroup = useTranslations("group");
 

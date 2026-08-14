@@ -69,6 +69,14 @@ export function resolveTeamTarget(
   if (!match || !target.side) return null;
 
   return target.side === "home"
-    ? { scored: match.homeScore, conceded: match.awayScore, team: match.homeTeam }
-    : { scored: match.awayScore, conceded: match.homeScore, team: match.awayTeam };
+    ? {
+        scored: match.homeScore,
+        conceded: match.awayScore,
+        team: match.homeTeam,
+      }
+    : {
+        scored: match.awayScore,
+        conceded: match.homeScore,
+        team: match.awayTeam,
+      };
 }

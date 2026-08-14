@@ -119,8 +119,12 @@ describe("goalMachine", () => {
 
   it("rewards every team tied on goals", () => {
     const tied = [match("a", 3, 0), match("b", 0, 3)];
-    expect(goalMachine.score(target({ matchId: "a", side: "home" }), tied)).toBe(80);
-    expect(goalMachine.score(target({ matchId: "b", side: "away" }), tied)).toBe(80);
+    expect(
+      goalMachine.score(target({ matchId: "a", side: "home" }), tied),
+    ).toBe(80);
+    expect(
+      goalMachine.score(target({ matchId: "b", side: "away" }), tied),
+    ).toBe(80);
   });
 
   it("voids a team pick with no side", () => {
@@ -130,19 +134,27 @@ describe("goalMachine", () => {
 
 describe("banker", () => {
   it("rewards a winning team", () => {
-    expect(banker.score(target({ matchId: "a", side: "home" }), round)).toBe(40);
+    expect(banker.score(target({ matchId: "a", side: "home" }), round)).toBe(
+      40,
+    );
   });
 
   it("penalises a losing team", () => {
-    expect(banker.score(target({ matchId: "a", side: "away" }), round)).toBe(-40);
+    expect(banker.score(target({ matchId: "a", side: "away" }), round)).toBe(
+      -40,
+    );
   });
 
   it("penalises a draw as heavily as a loss", () => {
     const drawn = [match("a", 1, 1)];
-    expect(banker.score(target({ matchId: "a", side: "home" }), drawn)).toBe(-40);
+    expect(banker.score(target({ matchId: "a", side: "home" }), drawn)).toBe(
+      -40,
+    );
   });
 
   it("reads an away win from the away side", () => {
-    expect(banker.score(target({ matchId: "c", side: "away" }), round)).toBe(40);
+    expect(banker.score(target({ matchId: "c", side: "away" }), round)).toBe(
+      40,
+    );
   });
 });

@@ -1,6 +1,6 @@
 import {
-  findTargetMatch,
   type ChallengeDefinition,
+  findTargetMatch,
 } from "@/lib/challenges/types";
 
 const REWARD = 90;
@@ -14,11 +14,7 @@ export const comeback: ChallengeDefinition = {
   penalty: PENALTY,
   score: (target, round) => {
     const match = findTargetMatch(target, round);
-    if (
-      !match ||
-      match.homeScoreHt === null ||
-      match.awayScoreHt === null
-    ) {
+    if (!match || match.homeScoreHt === null || match.awayScoreHt === null) {
       return null;
     }
 

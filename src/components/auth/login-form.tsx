@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 
-export function LoginForm() {
+export function LoginForm({ callbackURL = "/" }: { callbackURL?: string }) {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
   const [email, setEmail] = useState("");
@@ -20,7 +20,7 @@ export function LoginForm() {
     setError(null);
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/",
+      callbackURL,
     });
   }
 
@@ -31,7 +31,7 @@ export function LoginForm() {
 
     const { error: authError } = await authClient.signIn.magicLink({
       email,
-      callbackURL: "/",
+      callbackURL,
     });
 
     setLoading(false);
