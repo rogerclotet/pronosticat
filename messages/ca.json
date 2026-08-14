@@ -175,7 +175,9 @@
     "historyMeta": "{count, plural, one {# JUGADA} other {# JUGADES}} · {hits, plural, one {# ENCERT} other {# ENCERTS}}",
     "viewOnboarding": "VEURE BENVINGUDA / CREAR GRUP",
     "signOut": "Sortir",
-    "noHistory": "Encara no tens jornades tancades."
+    "noHistory": "Encara no tens jornades tancades.",
+    "editNameTitle": "Canvia el nom",
+    "nameInvalid": "El nom ha de tenir entre 1 i {max} caràcters."
   },
   "onboarding": {
     "createTitle": "Fes la teva penya",
@@ -216,6 +218,8 @@
     "statusFinished": "FINALITZAT"
   },
   "common": {
-    "error": "S'ha produït un error"
+    "error": "S'ha produït un error",
+    "save": "Desa",
+    "cancel": "Cancel·la"
   }
 }

@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { EditNameButton } from "@/components/profile/edit-name-button";
 import { SignOutButton } from "@/components/profile/sign-out-button";
 import { SegmentedBar } from "@/components/ui/progress-bar";
 import { Link } from "@/i18n/routing";
@@ -6,12 +7,14 @@ import type { Competition } from "@/lib/constants";
 import type { MatchdayHistoryRow, PendingStake } from "@/lib/queries/stats";
 
 type ProfileViewProps = {
+  userName: string;
   summary: { balance: number; pending: PendingStake; weeklyDelta: number };
   history: MatchdayHistoryRow[];
   competition: Competition;
 };
 
 export async function ProfileView({
+  userName,
   summary,
   history,
   competition,
@@ -26,6 +29,8 @@ export async function ProfileView({
 
   return (
     <div className="flex flex-col gap-3.5 p-4 pb-6">
+      <EditNameButton name={userName} />
+
       <div className="flex flex-col gap-2.5 border-2 border-teal bg-highlight-bg p-4">
         <span className="label-mono">{t("balance")}</span>
         <span className="font-mono text-4xl font-bold text-teal">

@@ -16,6 +16,7 @@ export async function ProfileContent() {
 
   return (
     <ProfileView
+      userName={session.user.name}
       summary={summary}
       history={history}
       competition={activeGroup.competition}
