@@ -57,7 +57,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
       id: generateId(),
       groupId: GROUP_ID,
       userId: USER_ID,
-      points: 1000,
+      points: 0,
     });
   }
 
@@ -136,7 +136,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
     expect(locked?.status).toBe("locked");
     const lockedEntries = await db.query.entries.findMany();
     expect(lockedEntries.every((e) => e.lockedAt !== null)).toBe(true);
-    expect(await points()).toBe(1000); // slots are free: nothing is charged at lock
+    expect(await points()).toBe(0); // slots are free: nothing is charged at lock
 
     await settleLockedRounds();
 
@@ -158,7 +158,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
       goal_machine: 160, // 80 doubled by the joker
       banker: -40, // Betis lost
     });
-    expect(await points()).toBe(1000 + 300);
+    expect(await points()).toBe(300);
   });
 
   it("is idempotent: a second scoring run does not pay twice", async () => {
@@ -171,12 +171,12 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
 
     await lockOpenRounds();
     await settleLockedRounds();
-    expect(await points()).toBe(1040);
+    expect(await points()).toBe(40);
 
     await ensureRounds();
     await lockOpenRounds();
     await settleLockedRounds();
-    expect(await points()).toBe(1040);
+    expect(await points()).toBe(40);
   });
 
   it("waits on a postponed match, then settles once the grace period passes", async () => {
@@ -191,7 +191,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
 
     await settleLockedRounds();
     expect((await db.query.rounds.findFirst())?.status).toBe("locked");
-    expect(await points()).toBe(1000);
+    expect(await points()).toBe(0);
 
     // Push both kickoffs past the grace window.
     const stale = new Date(Date.now() - (ROUND_SETTLE_GRACE_HOURS + 1) * HOUR);
@@ -199,7 +199,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
 
     await settleLockedRounds();
     expect((await db.query.rounds.findFirst())?.status).toBe("settled");
-    expect(await points()).toBe(1040);
+    expect(await points()).toBe(40);
   });
 
   it("refuses a second joker in the same round", async () => {
@@ -234,7 +234,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
       id: generateId(),
       groupId: GROUP_ID,
       userId: "u-idle",
-      points: 1000,
+      points: 0,
     });
 
     await addEntry("banker", { targetMatchId: "m1", targetSide: "home" }); // hit
@@ -244,8 +244,8 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
 
     const standings = await getStandings(GROUP_ID);
     expect(standings).toEqual([
-      { userId: USER_ID, name: "Test", points: 1040, hits: 1, misses: 1 },
-      { userId: "u-idle", name: "Idle", points: 1000, hits: 0, misses: 0 },
+      { userId: USER_ID, name: "Test", points: 40, hits: 1, misses: 1 },
+      { userId: "u-idle", name: "Idle", points: 0, hits: 0, misses: 0 },
     ]);
   });
 });
