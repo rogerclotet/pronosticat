@@ -35,10 +35,19 @@ function getHeaders(): HeadersInit {
   };
 }
 
+const DEFAULT_RETRY_AFTER_SECONDS = 60;
+/**
+ * Never hold a sync open longer than the cron route's own budget. A longer
+ * Retry-After is honoured by giving up now; the next tick retries anyway.
+ */
+const MAX_RETRY_AFTER_SECONDS = 60;
+
 function parseRetryAfter(header: string | null): number {
-  if (!header) return 60;
+  if (!header) return DEFAULT_RETRY_AFTER_SECONDS;
   const seconds = Number.parseInt(header, 10);
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : 60;
+  return Number.isFinite(seconds) && seconds > 0
+    ? seconds
+    : DEFAULT_RETRY_AFTER_SECONDS;
 }
 
 function sleep(ms: number) {
@@ -60,6 +69,9 @@ async function fetchFootballData(url: string): Promise<Response> {
       console.warn(
         `[pronosticat] Football Data API 429, retry after ${retryAfterSeconds}s`,
       );
+      if (retryAfterSeconds > MAX_RETRY_AFTER_SECONDS) {
+        throw new FootballDataRateLimitError(retryAfterSeconds);
+      }
       await sleep(retryAfterSeconds * 1000);
       const retry = await fetch(url, {
         headers: getHeaders(),

@@ -9,18 +9,47 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: pronosticat
+          POSTGRES_PASSWORD: pronosticat
+          POSTGRES_DB: pronosticat_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://pronosticat:pronosticat@localhost:5432/pronosticat_test
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run test
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+
+      - name: Apply migrations to the test database
+        run: pnpm db:migrate
+
+      # RUN_DB_TESTS turns on the settlement suite that needs a real Postgres.
+      - name: Test
+        run: pnpm test
+        env:
+          RUN_DB_TESTS: "1"
 
   deploy:
     needs: lint
