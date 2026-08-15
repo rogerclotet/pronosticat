@@ -1,4 +1,5 @@
-import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import type { Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import {
   entries,
@@ -7,6 +8,8 @@ import {
   user,
   userActiveGroup,
 } from "@/lib/db/schema";
+import { type PickSnapshot, samePicks } from "@/lib/predictions/same-picks";
+import { competitionRanks } from "@/lib/ranking";
 
 export const liveGroup = isNull(groups.deletedAt);
 
@@ -72,8 +75,12 @@ export async function getUserGroupsWithMeta(userId: string) {
 
   return base.map((g) => {
     const list = byGroup.get(g.id) ?? [];
-    const rank = list.findIndex((m) => m.userId === userId) + 1;
-    return { ...g, memberCount: list.length, rank: rank || list.length };
+    const mine = list.find((m) => m.userId === userId);
+    // Competition rank: everyone tied on points shares the better position.
+    const ahead = mine
+      ? list.filter((m) => m.points > mine.points).length
+      : list.length - 1;
+    return { ...g, memberCount: list.length, rank: ahead + 1 };
   });
 }
 
@@ -114,8 +121,96 @@ export async function getUserEntries(
   });
 }
 
-export async function getStandings(groupId: string) {
-  return db
+export type CopyableSourceGroup = {
+  id: string;
+  name: string;
+  pickCount: number;
+};
+
+/**
+ * Other live groups the user is in, same competition, that already have
+ * picks for this round that differ from the current board.
+ */
+export async function getCopyableSourceGroups(
+  userId: string,
+  currentGroupId: string,
+  competition: Competition,
+  roundId: string,
+): Promise<CopyableSourceGroup[]> {
+  const rows = await db
+    .select({
+      groupId: groups.id,
+      groupName: groups.name,
+      roundChallengeId: entries.roundChallengeId,
+      targetMatchId: entries.targetMatchId,
+      targetSide: entries.targetSide,
+      predictedHome: entries.predictedHome,
+      predictedAway: entries.predictedAway,
+      numericValue: entries.numericValue,
+      targetsJson: entries.targetsJson,
+      isJoker: entries.isJoker,
+    })
+    .from(groupMembers)
+    .innerJoin(groups, eq(groups.id, groupMembers.groupId))
+    .innerJoin(
+      entries,
+      and(
+        eq(entries.groupId, groups.id),
+        eq(entries.userId, userId),
+        eq(entries.roundId, roundId),
+      ),
+    )
+    .where(
+      and(
+        eq(groupMembers.userId, userId),
+        eq(groups.competition, competition),
+        liveGroup,
+      ),
+    );
+
+  const byGroup = new Map<string, { name: string; picks: PickSnapshot[] }>();
+  for (const row of rows) {
+    const pick: PickSnapshot = {
+      roundChallengeId: row.roundChallengeId,
+      targetMatchId: row.targetMatchId,
+      targetSide: row.targetSide,
+      predictedHome: row.predictedHome,
+      predictedAway: row.predictedAway,
+      numericValue: row.numericValue,
+      targetsJson: row.targetsJson,
+      isJoker: row.isJoker,
+    };
+    const existing = byGroup.get(row.groupId);
+    if (existing) existing.picks.push(pick);
+    else byGroup.set(row.groupId, { name: row.groupName, picks: [pick] });
+  }
+
+  const current = byGroup.get(currentGroupId)?.picks ?? [];
+
+  return [...byGroup]
+    .filter(
+      ([id, { picks }]) => id !== currentGroupId && !samePicks(current, picks),
+    )
+    .map(([id, { name, picks }]) => ({
+      id,
+      name,
+      pickCount: picks.length,
+    }))
+    .sort((a, b) => b.pickCount - a.pickCount || a.name.localeCompare(b.name));
+}
+
+export type StandingRow = {
+  userId: string;
+  name: string;
+  points: number;
+  hits: number;
+  misses: number;
+  /** Competition rank (1, 2, 2, 4) — not the row's position in the list. */
+  rank: number;
+};
+
+export async function getStandings(groupId: string): Promise<StandingRow[]> {
+  const rows = await db
     .select({
       userId: groupMembers.userId,
       name: user.name,
@@ -135,7 +230,12 @@ export async function getStandings(groupId: string) {
     )
     .where(eq(groupMembers.groupId, groupId))
     .groupBy(groupMembers.userId, user.name, groupMembers.points)
-    .orderBy(desc(groupMembers.points));
+    // Name breaks the tie so equal-point members keep a stable order; without
+    // it Postgres is free to return them in a different order every render.
+    .orderBy(desc(groupMembers.points), asc(user.name));
+
+  const ranks = competitionRanks(rows);
+  return rows.map((row) => ({ ...row, rank: ranks.get(row.userId) ?? 0 }));
 }
 
 export async function getGroupMembers(groupId: string) {

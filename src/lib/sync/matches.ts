@@ -2,9 +2,34 @@ import { sql } from "drizzle-orm";
 import { COMPETITIONS, type Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches } from "@/lib/db/schema";
-import { fetchCompetitionMatches, mapMatchStatus } from "@/lib/football/api";
+import {
+  fetchCompetitionMatches,
+  mapMatchStatus,
+  mapSeason,
+} from "@/lib/football/api";
 
 const UPSERT_CHUNK = 100;
+
+/**
+ * The API returns the whole season on every sync, but almost nothing changes
+ * between ticks. Without this guard every row's `updatedAt` moves each time,
+ * which makes the "what changed since the last tick" push queries match every
+ * match ever played.
+ */
+const CHANGED_COLUMNS = sql`
+  ${matches.homeScore} is distinct from excluded.home_score
+  or ${matches.awayScore} is distinct from excluded.away_score
+  or ${matches.homeScoreHt} is distinct from excluded.home_score_ht
+  or ${matches.awayScoreHt} is distinct from excluded.away_score_ht
+  or ${matches.matchday} is distinct from excluded.matchday
+  or ${matches.season} is distinct from excluded.season
+  or ${matches.status} is distinct from excluded.status
+  or ${matches.kickoff} is distinct from excluded.kickoff
+  or ${matches.homeTeam} is distinct from excluded.home_team
+  or ${matches.awayTeam} is distinct from excluded.away_team
+  or ${matches.homeTeamCrest} is distinct from excluded.home_team_crest
+  or ${matches.awayTeamCrest} is distinct from excluded.away_team_crest
+`;
 
 /** Upsert competition matches from the Football Data API. */
 export async function syncMatchesToDb(competition: Competition) {
@@ -20,6 +45,7 @@ export async function syncMatchesToDb(competition: Competition) {
       homeScoreHt: m.score.halfTime?.home ?? null,
       awayScoreHt: m.score.halfTime?.away ?? null,
       matchday: m.matchday ?? 1,
+      season: mapSeason(m),
       status: mapMatchStatus(m.status),
       kickoff: new Date(m.utcDate),
     };
@@ -49,6 +75,7 @@ export async function syncMatchesToDb(competition: Competition) {
           homeScoreHt: sql`excluded.home_score_ht`,
           awayScoreHt: sql`excluded.away_score_ht`,
           matchday: sql`excluded.matchday`,
+          season: sql`excluded.season`,
           status: sql`excluded.status`,
           kickoff: sql`excluded.kickoff`,
           homeTeam: sql`excluded.home_team`,
@@ -57,6 +84,7 @@ export async function syncMatchesToDb(competition: Competition) {
           awayTeamCrest: sql`excluded.away_team_crest`,
           updatedAt: now,
         },
+        setWhere: CHANGED_COLUMNS,
       });
   }
 }

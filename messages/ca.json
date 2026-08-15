@@ -117,7 +117,17 @@
     "statMade": "JUGADES J{round}",
     "statHits": "ENCERTS",
     "statPoints": "PUNTS AQUESTA JORNADA",
-    "historyTitle": "Jornades anteriors"
+    "historyTitle": "Jornades anteriors",
+    "copyFromOne": "Copia les jugades de {name}",
+    "copyFromOther": "Copia d'un altre grup",
+    "copyTitle": "Copia d'un altre grup",
+    "copyBody": "Agafa les jugades que ja tens fetes en un altre grup d'aquesta competició i posa-les aquí. Després les pots retocar.",
+    "copyPickMeta": "{count, plural, one {# JUGADA} other {# JUGADES}}",
+    "copyCta": "Copia les jugades",
+    "copyConfirmTitle": "Substitueixes les jugades?",
+    "copyConfirmBody": "Les jugades que ja has posat en aquest grup es canviaran per les de {name}. Això no es pot desfer.",
+    "copyConfirm": "Sí, substitueix-les",
+    "copyError": "No s'han pogut copiar. Torna-ho a provar."
   },
   "group": {
     "title": "Classificació",
@@ -131,6 +141,11 @@
     "admin": "Administrador",
     "member": "Membre",
     "switch": "CANVIA DE GRUP →",
+    "rotateInvite": "CANVIA EL CODI D'ENTRADA",
+    "rotateInviteTitle": "Canviar el codi?",
+    "rotateInviteBody": "El codi actual deixarà de funcionar immediatament. Els enllaços que ja hagis compartit no serviran i hauràs de repartir-ne un de nou. Els membres actuals es queden al grup.",
+    "rotateInviteConfirm": "Canvia el codi",
+    "rotateInviteCancel": "Cancel·la",
     "noMembers": "No hi ha membres al grup.",
     "codeCopied": "Codi copiat!",
     "linkCopied": "Enllaç copiat!",
@@ -140,7 +155,10 @@
       "laliga": "LaLiga",
       "premier_league": "Premier League",
       "champions_league": "Champions League"
-    }
+    },
+    "archive": "ARXIU DE TEMPORADES →",
+    "chartTitle": "EVOLUCIÓ DE PUNTS",
+    "chartRound": "Jornada {round}"
   },
   "groupsSheet": {
     "title": "Els meus grups",
@@ -236,6 +254,32 @@
     "disabled": "Desactivats en aquest dispositiu. Pots activar-los per no perdre't el tancament ni els resultats.",
     "disableCta": "DESACTIVA",
     "denied": "Has bloquejat les notificacions. Torna-les a permetre des de la configuració del navegador o del telèfon.",
-    "unsupported": "Aquest navegador no admet avisos emergents."
+    "unsupported": "Aquest navegador no admet avisos emergents.",
+    "emailLabel": "AVISOS PER CORREU",
+    "emailEnabled": "Com que no tens els avisos del mòbil activats, t'enviem un correu quan el tauler es tanca aviat i quan es liquida la jornada.",
+    "emailEnabledPushOn": "Tens els avisos del mòbil activats, així que no t'enviem correus. Si algun dia els desactives, els rebràs per correu.",
+    "emailDisabled": "No rebràs cap correu. Si tampoc tens els avisos del mòbil, no t'avisarem de res.",
+    "emailDisableCta": "No vull correus",
+    "emailEnableCta": "Vull rebre correus"
+  },
+  "archive": {
+    "title": "Arxiu",
+    "empty": "Encara no hi ha cap jornada liquidada. Quan se n'acabi una, apareixerà aquí.",
+    "champion": "CAMPIÓ",
+    "tableFinal": "CLASSIFICACIÓ FINAL",
+    "tableSoFar": "CLASSIFICACIÓ FINS ARA",
+    "roundCount": "{count, plural, one {# JORNADA} other {# JORNADES}}",
+    "roundsToggle": "VEURE LES JORNADES →",
+    "round": "Jornada {round} · {competition}",
+    "roundMeta": "{count, plural, one {# jugada} other {# jugades}} · {hits} encerts",
+    "roundSkipped": "No hi vas jugar"
+  },
+  "offline": {
+    "title": "Sense connexió",
+    "body": "Pronosticat necessita xarxa per carregar el tauler i els resultats. Torna-ho a provar quan recuperis la connexió."
+  },
+  "update": {
+    "available": "Hi ha una versió nova de Pronosticat.",
+    "cta": "Actualitza"
   }
 }

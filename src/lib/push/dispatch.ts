@@ -24,9 +24,19 @@ import {
   rounds,
   user,
 } from "@/lib/db/schema";
+import type { EmailRecipient } from "@/lib/email/recipients";
+import { emailOptedInUsers } from "@/lib/email/recipients";
+import { appBaseUrl, isEmailConfigured, sendEmail } from "@/lib/email/send";
+import { deadlineEmail, roundSettledEmail } from "@/lib/email/templates";
+import { unsubscribeUrl } from "@/lib/email/unsubscribe";
 import { liveGroup } from "@/lib/queries/groups";
 import { toScoredSnapshot } from "./live";
-import { competitionLabel, notifyUser, subscribedUserIds } from "./notify";
+import {
+  competitionLabel,
+  notifyUser,
+  notifyUserByEmail,
+  subscribedUserIds,
+} from "./notify";
 import {
   adminEmptyPicksPayload,
   bankerMissedPayload,
@@ -125,10 +135,20 @@ function memberKey(userId: string, groupId: string) {
   return `${userId}:${groupId}`;
 }
 
-async function dispatchBoardReminders(now: Date, subscribed: Set<string>) {
+/** Where the email fallback sends, and the base URL its links point at. */
+type EmailFallback = {
+  recipients: Map<string, EmailRecipient>;
+  baseUrl: string;
+};
+
+async function dispatchBoardReminders(
+  now: Date,
+  subscribed: Set<string>,
+  email: EmailFallback | null,
+) {
   const open = await db.query.rounds.findMany({
     where: eq(rounds.status, "open"),
-    orderBy: [asc(rounds.matchday)],
+    orderBy: [asc(rounds.season), asc(rounds.matchday)],
   });
 
   const earliestOpen = new Map<string, string>();
@@ -205,18 +225,45 @@ async function dispatchBoardReminders(now: Date, subscribed: Set<string>) {
         });
       } else {
         for (const member of incomplete) {
-          if (!subscribed.has(member.userId)) continue;
           const used =
             filled.get(memberKey(member.userId, member.groupId))?.n ?? 0;
-          await notifyUser({
+          const entityId = `${round.id}:${windowId}`;
+
+          if (subscribed.has(member.userId)) {
+            await notifyUser({
+              userId: member.userId,
+              kind: PUSH_KINDS.deadlineReminder,
+              entityId,
+              payload: deadlinePayload({
+                missingSlots: slots - used,
+                remainingMs,
+                competitionLabel: label,
+              }),
+            });
+            continue;
+          }
+
+          const recipient = email?.recipients.get(member.userId);
+          if (!email || !recipient) continue;
+          await notifyUserByEmail({
             userId: member.userId,
             kind: PUSH_KINDS.deadlineReminder,
-            entityId: `${round.id}:${windowId}`,
-            payload: deadlinePayload({
-              missingSlots: slots - used,
-              remainingMs,
-              competitionLabel: label,
-            }),
+            entityId,
+            send: () =>
+              sendEmail({
+                to: recipient.email,
+                unsubscribeUrl: unsubscribeUrl(recipient.userId, email.baseUrl),
+                ...deadlineEmail({
+                  missingSlots: slots - used,
+                  remainingMs,
+                  competitionLabel: label,
+                  appUrl: email.baseUrl,
+                  unsubscribeUrl: unsubscribeUrl(
+                    recipient.userId,
+                    email.baseUrl,
+                  ),
+                }),
+              }),
           });
         }
       }
@@ -379,12 +426,13 @@ async function dispatchMatchEvents(
   >();
 
   async function snapshotFor(match: (typeof live)[number]) {
-    const key = `${match.competition}:${match.matchday}`;
+    const key = `${match.competition}:${match.season}:${match.matchday}`;
     const cached = roundSnapshot.get(key);
     if (cached) return cached;
     const roundMatches = await db.query.matches.findMany({
       where: and(
         eq(matches.competition, match.competition),
+        eq(matches.season, match.season),
         eq(matches.matchday, match.matchday),
       ),
     });
@@ -546,7 +594,11 @@ async function dispatchMatchEvents(
   }
 }
 
-async function dispatchRoundSettled(since: Date, subscribed: Set<string>) {
+async function dispatchRoundSettled(
+  since: Date,
+  subscribed: Set<string>,
+  email: EmailFallback | null,
+) {
   const settled = await db.query.rounds.findMany({
     where: and(
       eq(rounds.status, "settled"),
@@ -569,17 +621,41 @@ async function dispatchRoundSettled(since: Date, subscribed: Set<string>) {
       .groupBy(entries.userId, entries.groupId, groups.name);
 
     for (const row of scored) {
-      if (!subscribed.has(row.userId)) continue;
-      await notifyUser({
+      const entityId = `${round.id}:${row.groupId}`;
+
+      if (subscribed.has(row.userId)) {
+        await notifyUser({
+          userId: row.userId,
+          kind: PUSH_KINDS.roundSettled,
+          entityId,
+          payload: roundSettledPayload({
+            matchday: round.matchday,
+            groupName: row.groupName,
+            points: Number(row.points),
+            groupId: row.groupId,
+          }),
+        });
+        continue;
+      }
+
+      const recipient = email?.recipients.get(row.userId);
+      if (!email || !recipient) continue;
+      await notifyUserByEmail({
         userId: row.userId,
         kind: PUSH_KINDS.roundSettled,
-        entityId: `${round.id}:${row.groupId}`,
-        payload: roundSettledPayload({
-          matchday: round.matchday,
-          groupName: row.groupName,
-          points: Number(row.points),
-          groupId: row.groupId,
-        }),
+        entityId,
+        send: () =>
+          sendEmail({
+            to: recipient.email,
+            unsubscribeUrl: unsubscribeUrl(recipient.userId, email.baseUrl),
+            ...roundSettledEmail({
+              matchday: round.matchday,
+              groupName: row.groupName,
+              points: Number(row.points),
+              appUrl: `${email.baseUrl}/group`,
+              unsubscribeUrl: unsubscribeUrl(recipient.userId, email.baseUrl),
+            }),
+          }),
       });
     }
 
@@ -600,12 +676,14 @@ async function dispatchRoundSettled(since: Date, subscribed: Set<string>) {
       COMPETITIONS[round.competition as Competition].matchdayCount -
       round.matchday;
 
+    // Streaks are a within-season run: the summer break ends one.
     const settledRounds = await db.query.rounds.findMany({
       where: and(
         eq(rounds.competition, round.competition),
+        eq(rounds.season, round.season),
         eq(rounds.status, "settled"),
       ),
-      orderBy: [desc(rounds.matchday)],
+      orderBy: [desc(rounds.season), desc(rounds.matchday)],
     });
 
     for (const [groupId, groupMembersList] of byGroup) {
@@ -755,14 +833,24 @@ async function dispatchRoundSettled(since: Date, subscribed: Set<string>) {
 
 /** Fan out due game events. Safe to call on every cron tick. */
 export async function dispatchPushNotifications(now = new Date()) {
-  if (!isPushConfigured()) return;
+  const pushOn = isPushConfigured();
+  const emailOn = isEmailConfigured();
+  if (!pushOn && !emailOn) return;
 
-  const subscribed = await subscribedUserIds();
-  if (subscribed.size === 0) return;
+  const subscribed = pushOn ? await subscribedUserIds() : new Set<string>();
+  // Email only goes to people push cannot reach, so the opted-in set is
+  // filtered against the subscribers we just read.
+  const email: EmailFallback | null = emailOn
+    ? { recipients: await emailOptedInUsers(), baseUrl: appBaseUrl() }
+    : null;
+
+  if (subscribed.size === 0 && !email) return;
 
   const since = new Date(now.getTime() - PUSH_LOOKBACK_MS);
 
-  await dispatchBoardReminders(now, subscribed);
-  await dispatchMatchEvents(since, now, subscribed);
-  await dispatchRoundSettled(since, subscribed);
+  await dispatchBoardReminders(now, subscribed, email);
+  if (subscribed.size > 0) {
+    await dispatchMatchEvents(since, now, subscribed);
+  }
+  await dispatchRoundSettled(since, subscribed, email);
 }

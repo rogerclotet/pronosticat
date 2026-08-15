@@ -75,7 +75,7 @@ export async function getCurrentRoundBoard(
 
   const [initialSlots, roundMatches] = await Promise.all([
     loadSlots(round.id),
-    getRoundMatches(competition, round.matchday),
+    getRoundMatches(competition, round.season, round.matchday),
   ]);
   let slots = initialSlots;
 

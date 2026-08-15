@@ -1,6 +1,10 @@
 import { and, asc, desc, eq, lt } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
-import { COMPETITIONS, type Competition } from "@/lib/constants";
+import {
+  COMPETITIONS,
+  type Competition,
+  seasonFromDate,
+} from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches, rounds } from "@/lib/db/schema";
 import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
@@ -19,6 +23,7 @@ export type CreateDevMatchInput = {
   homeTeam: string;
   awayTeam: string;
   matchday?: number;
+  season?: number;
   kickoff?: string;
   homeTeamCrest?: string;
   awayTeamCrest?: string;
@@ -65,6 +70,7 @@ export async function createDevMatch(input: CreateDevMatchInput) {
     homeScore: null,
     awayScore: null,
     matchday: input.matchday ?? 1,
+    season: input.season ?? seasonFromDate(kickoff),
     status: "scheduled",
     kickoff,
   });
@@ -145,7 +151,11 @@ export async function simulateDevRoundKickoff(
 
 export async function listRounds() {
   return db.query.rounds.findMany({
-    orderBy: [asc(rounds.competition), asc(rounds.matchday)],
+    orderBy: [
+      asc(rounds.competition),
+      asc(rounds.season),
+      asc(rounds.matchday),
+    ],
     with: { challenges: true },
   });
 }

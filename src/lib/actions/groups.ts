@@ -28,6 +28,7 @@ import {
 import { normalizeInviteCode } from "@/lib/invite";
 import { notifyMemberJoined } from "@/lib/push/dispatch";
 import { getUserGroupsWithMeta, liveGroup } from "@/lib/queries/groups";
+import { getCurrentRound } from "@/lib/queries/matchday";
 import { assertRateLimit } from "@/lib/security/rate-limit";
 import { requireSession } from "@/lib/session";
 
@@ -129,6 +130,37 @@ export async function deleteGroup(groupId: string) {
   revalidatePath("/");
 }
 
+/**
+ * An invite code is a bearer token for joining, so an admin needs a way to
+ * retire one that leaked. Old links stop resolving the moment this returns.
+ */
+export async function rotateInviteCode(groupId: string) {
+  const session = await requireSession();
+  assertRateLimit(`rotate-invite:${session.user.id}`, 5, 60_000);
+
+  const member = await db.query.groupMembers.findFirst({
+    where: and(
+      eq(groupMembers.userId, session.user.id),
+      eq(groupMembers.groupId, groupId),
+      eq(groupMembers.isAdmin, true),
+    ),
+    columns: { id: true },
+    with: { group: { columns: { deletedAt: true } } },
+  });
+  if (!member || member.group.deletedAt) throw new Error("Not allowed");
+
+  const inviteCode = generateInviteCode();
+  const [updated] = await db
+    .update(groups)
+    .set({ inviteCode, updatedAt: new Date() })
+    .where(and(eq(groups.id, groupId), liveGroup))
+    .returning({ inviteCode: groups.inviteCode });
+  if (!updated) throw new Error("Not allowed");
+
+  revalidatePath("/");
+  return { inviteCode: updated.inviteCode };
+}
+
 export async function joinGroup(inviteCode: string) {
   const session = await requireSession();
   assertRateLimit(`join-group:${session.user.id}`, 10, 60_000);
@@ -206,6 +238,7 @@ export type SaveEntryInput = EntryInput & {
 
 export async function saveEntry(data: SaveEntryInput) {
   const session = await requireSession();
+  assertRateLimit(`save-entry:${session.user.id}`, 60, 60_000);
 
   const slot = await db.query.roundChallenges.findFirst({
     where: eq(roundChallenges.id, data.roundChallengeId),
@@ -243,7 +276,7 @@ export async function saveEntry(data: SaveEntryInput) {
       .from(rounds)
       .where(eq(rounds.id, round.id))
       .for("update");
-    if (!locked || locked.status !== "open" || new Date() >= locked.lockAt) {
+    if (locked?.status !== "open" || new Date() >= locked.lockAt) {
       throw new Error("Round already locked");
     }
 
@@ -252,6 +285,7 @@ export async function saveEntry(data: SaveEntryInput) {
         where: and(
           eq(matches.id, target.targetMatchId),
           eq(matches.competition, round.competition),
+          eq(matches.season, round.season),
           eq(matches.matchday, round.matchday),
         ),
       });
@@ -371,6 +405,103 @@ async function assertTeamsFree(
       );
     }
   }
+}
+
+export async function copyEntriesFromGroup(data: {
+  sourceGroupId: string;
+  targetGroupId: string;
+}) {
+  const session = await requireSession();
+  assertRateLimit(`copy-entries:${session.user.id}`, 10, 60_000);
+
+  if (data.sourceGroupId === data.targetGroupId) {
+    throw new Error("Cannot copy a group onto itself");
+  }
+
+  const [sourceMember, targetMember] = await Promise.all([
+    db.query.groupMembers.findFirst({
+      where: and(
+        eq(groupMembers.userId, session.user.id),
+        eq(groupMembers.groupId, data.sourceGroupId),
+      ),
+      with: { group: true },
+    }),
+    db.query.groupMembers.findFirst({
+      where: and(
+        eq(groupMembers.userId, session.user.id),
+        eq(groupMembers.groupId, data.targetGroupId),
+      ),
+      with: { group: true },
+    }),
+  ]);
+
+  if (
+    !sourceMember ||
+    sourceMember.group.deletedAt ||
+    !targetMember ||
+    targetMember.group.deletedAt
+  ) {
+    throw new Error("Not a group member");
+  }
+  if (sourceMember.group.competition !== targetMember.group.competition) {
+    throw new Error("Groups are not in the same competition");
+  }
+
+  const round = await getCurrentRound(targetMember.group.competition);
+  if (!round) throw new Error("Round not found");
+
+  await db.transaction(async (tx) => {
+    const [locked] = await tx
+      .select({ status: rounds.status, lockAt: rounds.lockAt })
+      .from(rounds)
+      .where(eq(rounds.id, round.id))
+      .for("update");
+    if (locked?.status !== "open" || new Date() >= locked.lockAt) {
+      throw new Error("Round already locked");
+    }
+
+    const sourceEntries = await tx.query.entries.findMany({
+      where: and(
+        eq(entries.userId, session.user.id),
+        eq(entries.groupId, data.sourceGroupId),
+        eq(entries.roundId, round.id),
+      ),
+    });
+    if (sourceEntries.length === 0) {
+      throw new Error("No predictions to copy");
+    }
+
+    // Replace the whole board so the copied set stays internally valid
+    // (one joker, no team reused across slots).
+    await tx
+      .delete(entries)
+      .where(
+        and(
+          eq(entries.userId, session.user.id),
+          eq(entries.groupId, data.targetGroupId),
+          eq(entries.roundId, round.id),
+        ),
+      );
+
+    await tx.insert(entries).values(
+      sourceEntries.map((entry) => ({
+        id: generateId(),
+        userId: session.user.id,
+        groupId: data.targetGroupId,
+        roundChallengeId: entry.roundChallengeId,
+        roundId: entry.roundId,
+        targetMatchId: entry.targetMatchId,
+        targetSide: entry.targetSide,
+        predictedHome: entry.predictedHome,
+        predictedAway: entry.predictedAway,
+        numericValue: entry.numericValue,
+        targetsJson: entry.targetsJson,
+        isJoker: entry.isJoker,
+      })),
+    );
+  });
+
+  revalidateEntries();
 }
 
 export async function deleteEntry(entryId: string) {

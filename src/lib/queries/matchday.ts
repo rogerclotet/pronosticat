@@ -1,5 +1,5 @@
-import { and, asc, eq, inArray, min, ne } from "drizzle-orm";
-import type { Competition } from "@/lib/constants";
+import { and, asc, eq, inArray, ne } from "drizzle-orm";
+import { type Competition, seasonFromDate } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches, rounds } from "@/lib/db/schema";
 
@@ -18,7 +18,7 @@ export async function getCurrentRound(
       eq(rounds.competition, competition),
       ne(rounds.status, "settled"),
     ),
-    orderBy: [asc(rounds.matchday)],
+    orderBy: [asc(rounds.season), asc(rounds.matchday)],
   });
 
   return round ?? null;
@@ -27,16 +27,18 @@ export async function getCurrentRound(
 /** Fallback for when no round row exists yet (fixtures synced, cron not run). */
 export async function getCurrentMatchdayFromDb(
   competition: Competition,
-): Promise<number> {
+): Promise<{ season: number; matchday: number }> {
   const [row] = await db
-    .select({ matchday: min(matches.matchday) })
+    .select({ season: matches.season, matchday: matches.matchday })
     .from(matches)
     .where(
       and(
         eq(matches.competition, competition),
         inArray(matches.status, ["scheduled", "live"]),
       ),
-    );
+    )
+    .orderBy(asc(matches.season), asc(matches.matchday))
+    .limit(1);
 
-  return row?.matchday ?? 1;
+  return row ?? { season: seasonFromDate(new Date()), matchday: 1 };
 }

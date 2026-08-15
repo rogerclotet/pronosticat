@@ -40,6 +40,21 @@ export const MAX_PREDICTED_SCORE = 20;
 /** Upper bound for numeric challenges (e.g. total goals in a round). */
 export const MAX_NUMERIC_VALUE = 99;
 
+/**
+ * A season is named by the calendar year it starts in: 2025 is 2025/26. European
+ * seasons run August–May, so anything from July onwards belongs to that year's
+ * season. Used to derive a season when the API does not give us one.
+ */
+export function seasonFromDate(date: Date): number {
+  const year = date.getUTCFullYear();
+  return date.getUTCMonth() >= 6 ? year : year - 1;
+}
+
+/** `2025` → `2025/26`, the way everyone actually writes it. */
+export function formatSeason(season: number): string {
+  return `${season}/${String((season + 1) % 100).padStart(2, "0")}`;
+}
+
 export function getOutcome(
   homeScore: number,
   awayScore: number,

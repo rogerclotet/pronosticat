@@ -3,6 +3,11 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  type EmailPrefs,
+  getEmailPrefs,
+  setEmailEnabled,
+} from "@/lib/actions/notifications";
 import { getPushPublicKey } from "@/lib/actions/push";
 import {
   getExistingPushSubscription,
@@ -97,7 +102,9 @@ export function NotificationSettings() {
     }
   }
 
-  if (status === "loading" || status === "unconfigured") return null;
+  if (status === "loading" || status === "unconfigured") {
+    return <EmailSettings pushOn={false} />;
+  }
 
   const copy =
     status === "unsupported"
@@ -137,6 +144,74 @@ export function NotificationSettings() {
           {t("disableCta")}
         </Button>
       ) : null}
+      {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
+
+      <EmailSettings pushOn={status === "on"} />
+    </div>
+  );
+}
+
+/**
+ * Email only ever fires when push cannot reach you, so the copy says so
+ * rather than implying two parallel streams of notifications.
+ */
+function EmailSettings({ pushOn }: { pushOn: boolean }) {
+  const t = useTranslations("push");
+  const tCommon = useTranslations("common");
+  const [prefs, setPrefs] = useState<EmailPrefs | null>(null);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getEmailPrefs()
+      .then((value) => {
+        if (!cancelled) setPrefs(value);
+      })
+      .catch(() => {
+        if (!cancelled) setPrefs(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!prefs?.configured) return null;
+
+  async function toggle() {
+    if (!prefs) return;
+    setPending(true);
+    setError(null);
+    try {
+      const next = await setEmailEnabled(!prefs.enabled);
+      setPrefs({ ...prefs, enabled: next.enabled });
+    } catch {
+      setError(tCommon("error"));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 border-t-2 border-border pt-3">
+      <div className="label-mono">{t("emailLabel")}</div>
+      <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+        {prefs.enabled
+          ? pushOn
+            ? t("emailEnabledPushOn")
+            : t("emailEnabled")
+          : t("emailDisabled")}
+      </p>
+      <Button
+        type="button"
+        size="sm"
+        variant={prefs.enabled ? "secondary" : "primary"}
+        className="mt-3"
+        disabled={pending}
+        onClick={toggle}
+      >
+        {prefs.enabled ? t("emailDisableCta") : t("emailEnableCta")}
+      </Button>
       {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
     </div>
   );

@@ -109,6 +109,7 @@ cp .env.example .env.local
 | `DATABASE_URL` | URL de connexió PostgreSQL |
 | `BETTER_AUTH_SECRET` | Clau secreta (mín. 32 caràcters) |
 | `BETTER_AUTH_URL` | URL de l'app (ex: `http://localhost:3000`) |
+| `TRUSTED_IP_HEADERS` | Capçalera amb la IP real del client, per limitar l'accés per IP (per defecte `x-forwarded-for`). Només capçaleres que el proxy **sobreescrigui** |
 | `GOOGLE_CLIENT_ID` | OAuth Google |
 | `GOOGLE_CLIENT_SECRET` | OAuth Google |
 | `RESEND_API_KEY` | Per enviar magic links |
