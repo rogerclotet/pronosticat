@@ -333,8 +333,38 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
 
     const standings = await getStandings(GROUP_ID);
     expect(standings).toEqual([
-      { userId: USER_ID, name: "Test", points: 40, hits: 1, misses: 1 },
-      { userId: "u-idle", name: "Idle", points: 0, hits: 0, misses: 0 },
+      {
+        userId: USER_ID,
+        name: "Test",
+        points: 40,
+        hits: 1,
+        misses: 1,
+        rank: 1,
+      },
+      {
+        userId: "u-idle",
+        name: "Idle",
+        points: 0,
+        hits: 0,
+        misses: 0,
+        rank: 2,
+      },
     ]);
+  });
+
+  it("gives members tied on points the same rank", async () => {
+    const { getStandings } = await import("@/lib/queries/groups");
+    await db
+      .insert(schema.user)
+      .values({ id: "u-tied", name: "Tied", email: "tied@example.com" });
+    await db.insert(schema.groupMembers).values({
+      id: generateId(),
+      groupId: GROUP_ID,
+      userId: "u-tied",
+      points: 0,
+    });
+
+    const standings = await getStandings(GROUP_ID);
+    expect(standings.map((row) => row.rank)).toEqual([1, 1]);
   });
 });

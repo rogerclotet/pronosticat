@@ -66,12 +66,13 @@ export async function sendPushToUser(
     where: eq(pushSubscriptions.userId, userId),
   });
 
-  let sent = 0;
-  let failed = 0;
-  for (const row of rows) {
-    const result = await sendPushToSubscription(row, payload);
-    if (result === "sent") sent += 1;
-    else if (result === "failed") failed += 1;
-  }
-  return { sent, failed };
+  // One user's devices are independent round trips to different push services.
+  const results = await Promise.all(
+    rows.map((row) => sendPushToSubscription(row, payload)),
+  );
+
+  return {
+    sent: results.filter((result) => result === "sent").length,
+    failed: results.filter((result) => result === "failed").length,
+  };
 }

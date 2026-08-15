@@ -129,6 +129,37 @@ export async function deleteGroup(groupId: string) {
   revalidatePath("/");
 }
 
+/**
+ * An invite code is a bearer token for joining, so an admin needs a way to
+ * retire one that leaked. Old links stop resolving the moment this returns.
+ */
+export async function rotateInviteCode(groupId: string) {
+  const session = await requireSession();
+  assertRateLimit(`rotate-invite:${session.user.id}`, 5, 60_000);
+
+  const member = await db.query.groupMembers.findFirst({
+    where: and(
+      eq(groupMembers.userId, session.user.id),
+      eq(groupMembers.groupId, groupId),
+      eq(groupMembers.isAdmin, true),
+    ),
+    columns: { id: true },
+    with: { group: { columns: { deletedAt: true } } },
+  });
+  if (!member || member.group.deletedAt) throw new Error("Not allowed");
+
+  const inviteCode = generateInviteCode();
+  const [updated] = await db
+    .update(groups)
+    .set({ inviteCode, updatedAt: new Date() })
+    .where(and(eq(groups.id, groupId), liveGroup))
+    .returning({ inviteCode: groups.inviteCode });
+  if (!updated) throw new Error("Not allowed");
+
+  revalidatePath("/");
+  return { inviteCode: updated.inviteCode };
+}
+
 export async function joinGroup(inviteCode: string) {
   const session = await requireSession();
   assertRateLimit(`join-group:${session.user.id}`, 10, 60_000);
@@ -206,6 +237,7 @@ export type SaveEntryInput = EntryInput & {
 
 export async function saveEntry(data: SaveEntryInput) {
   const session = await requireSession();
+  assertRateLimit(`save-entry:${session.user.id}`, 60, 60_000);
 
   const slot = await db.query.roundChallenges.findFirst({
     where: eq(roundChallenges.id, data.roundChallengeId),
@@ -243,7 +275,7 @@ export async function saveEntry(data: SaveEntryInput) {
       .from(rounds)
       .where(eq(rounds.id, round.id))
       .for("update");
-    if (!locked || locked.status !== "open" || new Date() >= locked.lockAt) {
+    if (locked?.status !== "open" || new Date() >= locked.lockAt) {
       throw new Error("Round already locked");
     }
 

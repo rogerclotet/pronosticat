@@ -43,6 +43,13 @@
       "when": 1786731554158,
       "tag": "0005_push_kind_text",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786776342248,
+      "tag": "0006_lyrical_doorman",
+      "breakpoints": true
     }
   ]
 }

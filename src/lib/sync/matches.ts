@@ -6,6 +6,26 @@ import { fetchCompetitionMatches, mapMatchStatus } from "@/lib/football/api";
 
 const UPSERT_CHUNK = 100;
 
+/**
+ * The API returns the whole season on every sync, but almost nothing changes
+ * between ticks. Without this guard every row's `updatedAt` moves each time,
+ * which makes the "what changed since the last tick" push queries match every
+ * match ever played.
+ */
+const CHANGED_COLUMNS = sql`
+  ${matches.homeScore} is distinct from excluded.home_score
+  or ${matches.awayScore} is distinct from excluded.away_score
+  or ${matches.homeScoreHt} is distinct from excluded.home_score_ht
+  or ${matches.awayScoreHt} is distinct from excluded.away_score_ht
+  or ${matches.matchday} is distinct from excluded.matchday
+  or ${matches.status} is distinct from excluded.status
+  or ${matches.kickoff} is distinct from excluded.kickoff
+  or ${matches.homeTeam} is distinct from excluded.home_team
+  or ${matches.awayTeam} is distinct from excluded.away_team
+  or ${matches.homeTeamCrest} is distinct from excluded.home_team_crest
+  or ${matches.awayTeamCrest} is distinct from excluded.away_team_crest
+`;
+
 /** Upsert competition matches from the Football Data API. */
 export async function syncMatchesToDb(competition: Competition) {
   const config = COMPETITIONS[competition];
@@ -57,6 +77,7 @@ export async function syncMatchesToDb(competition: Competition) {
           awayTeamCrest: sql`excluded.away_team_crest`,
           updatedAt: now,
         },
+        setWhere: CHANGED_COLUMNS,
       });
   }
 }

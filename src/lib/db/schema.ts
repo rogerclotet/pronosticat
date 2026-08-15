@@ -250,6 +250,8 @@ export const entries = pgTable(
       table.groupId,
       table.roundId,
     ),
+    /** Push dispatch looks up every pick anchored to a match, once per tick. */
+    index("entries_target_match_idx").on(table.targetMatchId),
   ],
 );
 

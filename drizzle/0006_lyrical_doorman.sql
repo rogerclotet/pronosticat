@@ -1,0 +1,1 @@
+CREATE INDEX "entries_target_match_idx" ON "entries" USING btree ("target_match_id");

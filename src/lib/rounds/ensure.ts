@@ -1,4 +1,5 @@
 import { and, eq, min } from "drizzle-orm";
+import { CORE_CHALLENGE_SLUGS } from "@/lib/challenges/registry";
 import { boardChallengeSlugs } from "@/lib/challenges/rotating";
 import type { Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
@@ -22,29 +23,70 @@ export async function ensureCompetitionRounds(competition: Competition) {
 
   const now = new Date();
 
+  // One read for the whole competition instead of a lookup per matchday: most
+  // ticks find every round already built and settled, and do nothing at all.
+  const existingRounds = await db.query.rounds.findMany({
+    where: eq(rounds.competition, competition),
+    columns: { id: true, lockAt: true, status: true },
+  });
+  const roundById = new Map(existingRounds.map((row) => [row.id, row]));
+
+  const existingSlots = await db
+    .select({ roundId: roundChallenges.roundId, slug: roundChallenges.slug })
+    .from(roundChallenges)
+    .innerJoin(rounds, eq(rounds.id, roundChallenges.roundId))
+    .where(eq(rounds.competition, competition));
+  const slugsByRound = new Map<string, Set<string>>();
+  for (const row of existingSlots) {
+    const set = slugsByRound.get(row.roundId);
+    if (set) set.add(row.slug);
+    else slugsByRound.set(row.roundId, new Set([row.slug]));
+  }
+
   for (const { matchday, firstKickoff } of matchdays) {
     if (!firstKickoff) continue;
     const lockAt = new Date(firstKickoff);
     const id = roundId(competition, matchday);
+    const known = roundById.get(id);
 
-    await db
-      .insert(rounds)
-      .values({ id, competition, matchday, lockAt })
-      .onConflictDoNothing({ target: rounds.id });
+    // A round that is no longer open has a frozen deadline and a full board;
+    // there is nothing left to reconcile for it.
+    if (
+      known &&
+      known.status !== "open" &&
+      (slugsByRound.get(id)?.size ?? 0) > CORE_CHALLENGE_SLUGS.length
+    ) {
+      continue;
+    }
 
-    const openRound = await db.query.rounds.findFirst({
-      where: eq(rounds.id, id),
-      columns: { lockAt: true, status: true },
-    });
+    if (!known) {
+      await db
+        .insert(rounds)
+        .values({ id, competition, matchday, lockAt })
+        .onConflictDoNothing({ target: rounds.id });
+    }
+
+    const openRound =
+      known ??
+      (await db.query.rounds.findFirst({
+        where: eq(rounds.id, id),
+        columns: { lockAt: true, status: true },
+      }));
     const deadlineMoved =
       openRound?.status === "open" &&
       isMeaningfulDeadlineAdvance(openRound.lockAt, lockAt);
 
-    // Fixtures move; the deadline follows them until the round locks.
-    await db
-      .update(rounds)
-      .set({ lockAt, updatedAt: now })
-      .where(and(eq(rounds.id, id), eq(rounds.status, "open")));
+    // Fixtures move; the deadline follows them until the round locks. Writing
+    // only on an actual move keeps the common no-op tick free of updates.
+    if (
+      openRound?.status === "open" &&
+      openRound.lockAt.getTime() !== lockAt.getTime()
+    ) {
+      await db
+        .update(rounds)
+        .set({ lockAt, updatedAt: now })
+        .where(and(eq(rounds.id, id), eq(rounds.status, "open")));
+    }
 
     if (deadlineMoved) {
       try {
@@ -54,11 +96,7 @@ export async function ensureCompetitionRounds(competition: Competition) {
       }
     }
 
-    const existing = await db.query.roundChallenges.findMany({
-      where: eq(roundChallenges.roundId, id),
-      columns: { slug: true },
-    });
-    const existingSlugs = new Set(existing.map((row) => row.slug));
+    const existingSlugs = slugsByRound.get(id) ?? new Set<string>();
     const slugs = boardChallengeSlugs(id, existingSlugs);
 
     const toInsert = slugs
