@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { GroupPicksSheet } from "@/components/groups/group-picks-sheet";
 import { GroupsSheet } from "@/components/groups/groups-sheet";
 import { RivalSheet } from "@/components/groups/rival-sheet";
 import { PushPermissionPrompt } from "@/components/push/push-permission-prompt";
@@ -58,6 +59,9 @@ export function AppShell({
           rivalUserId={rivalId}
         />
       )}
+      {sheet === "group-picks" ? (
+        <GroupPicksSheet isOpen onClose={closeSheet} groupId={activeGroupId} />
+      ) : null}
       <PushPermissionPrompt />
       <ServiceWorkerUpdater />
     </div>

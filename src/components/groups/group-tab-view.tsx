@@ -137,6 +137,14 @@ export function GroupTabView({
 
         {chart}
 
+        <button
+          type="button"
+          onClick={() => router.push(`${pathname}?sheet=group-picks`)}
+          className="w-full border-2 border-border bg-surface px-2.5 py-3 text-left font-mono text-[10.5px] font-bold uppercase tracking-[0.09em] text-teal"
+        >
+          {t("viewPicks")}
+        </button>
+
         <InviteShareButton
           inviteCode={activeGroup.inviteCode}
           groupName={activeGroup.name}
