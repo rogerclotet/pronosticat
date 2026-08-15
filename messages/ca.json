@@ -263,5 +263,13 @@
     "round": "Jornada {round} · {competition}",
     "roundMeta": "{count, plural, one {# jugada} other {# jugades}} · {hits} encerts",
     "roundSkipped": "No hi vas jugar"
+  },
+  "offline": {
+    "title": "Sense connexió",
+    "body": "Pronosticat necessita xarxa per carregar el tauler i els resultats. Torna-ho a provar quan recuperis la connexió."
+  },
+  "update": {
+    "available": "Hi ha una versió nova de Pronosticat.",
+    "cta": "Actualitza"
   }
 }
