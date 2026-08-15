@@ -1,3 +1,4 @@
+import { seasonFromDate } from "@/lib/constants";
 import { withFootballApiRateLimit } from "@/lib/football/rate-limit";
 
 export type FootballDataMatch = {
@@ -5,6 +6,8 @@ export type FootballDataMatch = {
   utcDate: string;
   status: string;
   matchday: number | null;
+  /** Present on v4 competition responses; we fall back to the kickoff date. */
+  season?: { startDate?: string | null } | null;
   homeTeam: { id: number; name: string; shortName: string; crest: string };
   awayTeam: { id: number; name: string; shortName: string; crest: string };
   score: {
@@ -101,6 +104,20 @@ export async function fetchCompetitionMatches(
 
   const data: FootballDataResponse = await res.json();
   return data.matches ?? [];
+}
+
+/**
+ * The API dates a season by its start date; a fixture's own kickoff is the
+ * fallback, and is correct except for matches played in the calendar year the
+ * season started but before July, which European seasons do not have.
+ */
+export function mapSeason(match: FootballDataMatch): number {
+  const startDate = match.season?.startDate;
+  if (startDate) {
+    const parsed = new Date(startDate);
+    if (!Number.isNaN(parsed.getTime())) return parsed.getUTCFullYear();
+  }
+  return seasonFromDate(new Date(match.utcDate));
 }
 
 export function mapMatchStatus(

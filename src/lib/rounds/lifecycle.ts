@@ -9,8 +9,17 @@ const TERMINAL_STATUSES = new Set(["finished", "cancelled"]);
 
 const GRACE_MS = ROUND_SETTLE_GRACE_HOURS * 60 * 60 * 1000;
 
-export function roundId(competition: string, matchday: number): string {
-  return `${competition}-${matchday}`;
+/**
+ * Rounds created before seasons existed keep their `<competition>-<matchday>`
+ * id: ids are opaque, and rewriting them would have to cascade through every
+ * entry and slot. Only the id *scheme* changed, never an existing id.
+ */
+export function roundId(
+  competition: string,
+  season: number,
+  matchday: number,
+): string {
+  return `${competition}-${season}-${matchday}`;
 }
 
 /**

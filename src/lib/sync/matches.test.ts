@@ -78,6 +78,7 @@ describe("syncMatchesToDb", () => {
         homeScoreHt: 1,
         awayScoreHt: 0,
         matchday: 4,
+        season: 2026,
         status: mapMatchStatus("FINISHED"),
         kickoff: new Date("2026-08-03T20:00:00Z"),
       },
@@ -108,6 +109,34 @@ describe("syncMatchesToDb", () => {
         }),
       }),
     );
+  });
+
+  it("takes the season from the API when it is given", async () => {
+    vi.mocked(fetchCompetitionMatches).mockResolvedValue([
+      // A May fixture belongs to the season that started the previous August.
+      makeMatch({
+        utcDate: "2027-05-20T18:00:00Z",
+        season: { startDate: "2026-08-14" },
+      }),
+    ]);
+
+    await syncMatchesToDb("laliga");
+
+    expect(mockValues).toHaveBeenCalledWith([
+      expect.objectContaining({ season: 2026 }),
+    ]);
+  });
+
+  it("falls back to the kickoff date when the API omits the season", async () => {
+    vi.mocked(fetchCompetitionMatches).mockResolvedValue([
+      makeMatch({ utcDate: "2027-05-20T18:00:00Z", season: null }),
+    ]);
+
+    await syncMatchesToDb("laliga");
+
+    expect(mockValues).toHaveBeenCalledWith([
+      expect.objectContaining({ season: 2026 }),
+    ]);
   });
 
   it("tolerates a payload without half-time scores", async () => {

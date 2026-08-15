@@ -22,6 +22,7 @@ function match(overrides: Partial<MatchRow> = {}): MatchRow {
     homeScoreHt: 1,
     awayScoreHt: 1,
     matchday: 3,
+    season: 2026,
     status: "finished",
     kickoff: KICKOFF,
     updatedAt: KICKOFF,
@@ -30,8 +31,12 @@ function match(overrides: Partial<MatchRow> = {}): MatchRow {
 }
 
 describe("roundId", () => {
-  it("keys a round by competition and matchday", () => {
-    expect(roundId("laliga", 12)).toBe("laliga-12");
+  it("keys a round by competition, season and matchday", () => {
+    expect(roundId("laliga", 2026, 12)).toBe("laliga-2026-12");
+  });
+
+  it("keeps seasons apart so matchday 1 does not collide", () => {
+    expect(roundId("laliga", 2026, 1)).not.toBe(roundId("laliga", 2027, 1));
   });
 });
 

@@ -6,6 +6,7 @@ import { RivalSheet } from "@/components/groups/rival-sheet";
 import { PushPermissionPrompt } from "@/components/push/push-permission-prompt";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { BottomNav } from "./bottom-nav";
+import { ServiceWorkerUpdater } from "./service-worker-updater";
 import { TopBar } from "./top-bar";
 
 type AppShellProps = {
@@ -58,6 +59,7 @@ export function AppShell({
         />
       )}
       <PushPermissionPrompt />
+      <ServiceWorkerUpdater />
     </div>
   );
 }

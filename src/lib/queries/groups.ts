@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import {
@@ -9,6 +9,7 @@ import {
   userActiveGroup,
 } from "@/lib/db/schema";
 import { type PickSnapshot, samePicks } from "@/lib/predictions/same-picks";
+import { competitionRanks } from "@/lib/ranking";
 
 export const liveGroup = isNull(groups.deletedAt);
 
@@ -74,8 +75,12 @@ export async function getUserGroupsWithMeta(userId: string) {
 
   return base.map((g) => {
     const list = byGroup.get(g.id) ?? [];
-    const rank = list.findIndex((m) => m.userId === userId) + 1;
-    return { ...g, memberCount: list.length, rank: rank || list.length };
+    const mine = list.find((m) => m.userId === userId);
+    // Competition rank: everyone tied on points shares the better position.
+    const ahead = mine
+      ? list.filter((m) => m.points > mine.points).length
+      : list.length - 1;
+    return { ...g, memberCount: list.length, rank: ahead + 1 };
   });
 }
 
@@ -194,8 +199,18 @@ export async function getCopyableSourceGroups(
     .sort((a, b) => b.pickCount - a.pickCount || a.name.localeCompare(b.name));
 }
 
-export async function getStandings(groupId: string) {
-  return db
+export type StandingRow = {
+  userId: string;
+  name: string;
+  points: number;
+  hits: number;
+  misses: number;
+  /** Competition rank (1, 2, 2, 4) — not the row's position in the list. */
+  rank: number;
+};
+
+export async function getStandings(groupId: string): Promise<StandingRow[]> {
+  const rows = await db
     .select({
       userId: groupMembers.userId,
       name: user.name,
@@ -215,7 +230,12 @@ export async function getStandings(groupId: string) {
     )
     .where(eq(groupMembers.groupId, groupId))
     .groupBy(groupMembers.userId, user.name, groupMembers.points)
-    .orderBy(desc(groupMembers.points));
+    // Name breaks the tie so equal-point members keep a stable order; without
+    // it Postgres is free to return them in a different order every render.
+    .orderBy(desc(groupMembers.points), asc(user.name));
+
+  const ranks = competitionRanks(rows);
+  return rows.map((row) => ({ ...row, rank: ranks.get(row.userId) ?? 0 }));
 }
 
 export async function getGroupMembers(groupId: string) {

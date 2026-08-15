@@ -145,6 +145,8 @@ export const matches = pgTable(
     homeScoreHt: integer("home_score_ht"),
     awayScoreHt: integer("away_score_ht"),
     matchday: integer("matchday").notNull(),
+    /** Season start year (2025 means 2025/26) — matchdays repeat every season. */
+    season: integer("season").notNull(),
     status: matchStatusEnum("status").notNull().default("scheduled"),
     kickoff: timestamp("kickoff").notNull(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -154,8 +156,9 @@ export const matches = pgTable(
       table.externalId,
       table.competition,
     ),
-    index("matches_competition_matchday_idx").on(
+    index("matches_competition_season_matchday_idx").on(
       table.competition,
+      table.season,
       table.matchday,
     ),
     index("matches_competition_status_idx").on(table.competition, table.status),
@@ -168,6 +171,8 @@ export const rounds = pgTable(
     id: text("id").primaryKey(),
     competition: competitionEnum("competition").notNull(),
     matchday: integer("matchday").notNull(),
+    /** Without this, next season's matchday 1 would reopen this season's. */
+    season: integer("season").notNull(),
     status: roundStatusEnum("status").notNull().default("open"),
     /** First kickoff of the round: the single deadline for every pick. */
     lockAt: timestamp("lock_at").notNull(),
@@ -176,8 +181,9 @@ export const rounds = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("rounds_competition_matchday_idx").on(
+    uniqueIndex("rounds_competition_season_matchday_idx").on(
       table.competition,
+      table.season,
       table.matchday,
     ),
     index("rounds_competition_status_idx").on(table.competition, table.status),
@@ -250,6 +256,8 @@ export const entries = pgTable(
       table.groupId,
       table.roundId,
     ),
+    /** Push dispatch looks up every pick anchored to a match, once per tick. */
+    index("entries_target_match_idx").on(table.targetMatchId),
   ],
 );
 
@@ -280,6 +288,18 @@ export const pushSubscriptions = pgTable(
     index("push_subscriptions_user_idx").on(table.userId),
   ],
 );
+
+/**
+ * Absence of a row means "not decided yet", which is treated as opted in —
+ * email only ever goes to people push cannot reach in the first place.
+ */
+export const notificationPrefs = pgTable("notification_prefs", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  emailEnabled: boolean("email_enabled").notNull().default(true),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
 
 /** One row per (user, kind, entity) so a cron tick cannot double-send. */
 export const pushDispatches = pgTable(
@@ -384,3 +404,13 @@ export const pushSubscriptionsRelations = relations(
 export const pushDispatchesRelations = relations(pushDispatches, ({ one }) => ({
   user: one(user, { fields: [pushDispatches.userId], references: [user.id] }),
 }));
+
+export const notificationPrefsRelations = relations(
+  notificationPrefs,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [notificationPrefs.userId],
+      references: [user.id],
+    }),
+  }),
+);

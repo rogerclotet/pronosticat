@@ -46,7 +46,14 @@ export async function PredictionsContent() {
       slots={board.slots}
       matches={board.matches.map(toBoardMatch)}
       entries={entries.map(toEntryView)}
-      history={history.filter((row) => row.matchday !== board.round.matchday)}
+      // Matchday numbers repeat every season, so the round in play is
+      // identified by both — otherwise last season's matchday 7 vanishes
+      // from the history alongside this season's.
+      history={history.filter(
+        (row) =>
+          row.season !== board.round.season ||
+          row.matchday !== board.round.matchday,
+      )}
       groupId={activeGroup.id}
       competition={activeGroup.competition}
       copySources={copySources}
