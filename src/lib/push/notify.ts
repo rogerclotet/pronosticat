@@ -75,3 +75,22 @@ export async function notifyUser(input: {
     await releaseDispatch(input.userId, input.kind, input.entityId);
   }
 }
+
+/**
+ * The email counterpart, sharing the same ledger so a channel switch (push
+ * subscription added or dropped mid-round) cannot produce a second send for
+ * an event the other channel already covered.
+ */
+export async function notifyUserByEmail(input: {
+  userId: string;
+  kind: PushKind;
+  entityId: string;
+  send: () => Promise<boolean>;
+}) {
+  if (!(await claimDispatch(input.userId, input.kind, input.entityId))) {
+    return;
+  }
+  if (!(await input.send())) {
+    await releaseDispatch(input.userId, input.kind, input.entityId);
+  }
+}

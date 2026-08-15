@@ -289,6 +289,18 @@ export const pushSubscriptions = pgTable(
   ],
 );
 
+/**
+ * Absence of a row means "not decided yet", which is treated as opted in —
+ * email only ever goes to people push cannot reach in the first place.
+ */
+export const notificationPrefs = pgTable("notification_prefs", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  emailEnabled: boolean("email_enabled").notNull().default(true),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 /** One row per (user, kind, entity) so a cron tick cannot double-send. */
 export const pushDispatches = pgTable(
   "push_dispatches",
@@ -392,3 +404,13 @@ export const pushSubscriptionsRelations = relations(
 export const pushDispatchesRelations = relations(pushDispatches, ({ one }) => ({
   user: one(user, { fields: [pushDispatches.userId], references: [user.id] }),
 }));
+
+export const notificationPrefsRelations = relations(
+  notificationPrefs,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [notificationPrefs.userId],
+      references: [user.id],
+    }),
+  }),
+);

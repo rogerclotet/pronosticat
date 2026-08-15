@@ -244,7 +244,13 @@
     "disabled": "Desactivats en aquest dispositiu. Pots activar-los per no perdre't el tancament ni els resultats.",
     "disableCta": "DESACTIVA",
     "denied": "Has bloquejat les notificacions. Torna-les a permetre des de la configuració del navegador o del telèfon.",
-    "unsupported": "Aquest navegador no admet avisos emergents."
+    "unsupported": "Aquest navegador no admet avisos emergents.",
+    "emailLabel": "AVISOS PER CORREU",
+    "emailEnabled": "Com que no tens els avisos del mòbil activats, t'enviem un correu quan el tauler es tanca aviat i quan es liquida la jornada.",
+    "emailEnabledPushOn": "Tens els avisos del mòbil activats, així que no t'enviem correus. Si algun dia els desactives, els rebràs per correu.",
+    "emailDisabled": "No rebràs cap correu. Si tampoc tens els avisos del mòbil, no t'avisarem de res.",
+    "emailDisableCta": "No vull correus",
+    "emailEnableCta": "Vull rebre correus"
   },
   "archive": {
     "title": "Arxiu",
