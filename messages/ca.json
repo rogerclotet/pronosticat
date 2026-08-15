@@ -117,7 +117,17 @@
     "statMade": "JUGADES J{round}",
     "statHits": "ENCERTS",
     "statPoints": "PUNTS AQUESTA JORNADA",
-    "historyTitle": "Jornades anteriors"
+    "historyTitle": "Jornades anteriors",
+    "copyFromOne": "Copia les jugades de {name}",
+    "copyFromOther": "Copia d'un altre grup",
+    "copyTitle": "Copia d'un altre grup",
+    "copyBody": "Agafa les jugades que ja tens fetes en un altre grup d'aquesta competició i posa-les aquí. Després les pots retocar.",
+    "copyPickMeta": "{count, plural, one {# JUGADA} other {# JUGADES}}",
+    "copyCta": "Copia les jugades",
+    "copyConfirmTitle": "Substitueixes les jugades?",
+    "copyConfirmBody": "Les jugades que ja has posat en aquest grup es canviaran per les de {name}. Això no es pot desfer.",
+    "copyConfirm": "Sí, substitueix-les",
+    "copyError": "No s'han pogut copiar. Torna-ho a provar."
   },
   "group": {
     "title": "Classificació",

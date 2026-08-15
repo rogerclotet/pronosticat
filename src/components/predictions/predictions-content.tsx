@@ -11,6 +11,7 @@ import {
   getCachedSession,
   getCachedUserEntries,
 } from "@/lib/queries/cached";
+import { getCopyableSourceGroups } from "@/lib/queries/groups";
 import { getMatchdayHistory } from "@/lib/queries/stats";
 
 export async function PredictionsContent() {
@@ -26,9 +27,17 @@ export async function PredictionsContent() {
     return <p className="p-4 text-sm text-muted">{t("notReady")}</p>;
   }
 
-  const [entries, history] = await Promise.all([
+  const [entries, history, copySources] = await Promise.all([
     getCachedUserEntries(session.user.id, activeGroup.id, board.round.id),
     getMatchdayHistory(session.user.id, activeGroup.id),
+    board.round.status === "open"
+      ? getCopyableSourceGroups(
+          session.user.id,
+          activeGroup.id,
+          activeGroup.competition,
+          board.round.id,
+        )
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -40,6 +49,7 @@ export async function PredictionsContent() {
       history={history.filter((row) => row.matchday !== board.round.matchday)}
       groupId={activeGroup.id}
       competition={activeGroup.competition}
+      copySources={copySources}
     />
   );
 }

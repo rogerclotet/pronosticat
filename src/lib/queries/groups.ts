@@ -1,4 +1,5 @@
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import type { Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import {
   entries,
@@ -7,6 +8,7 @@ import {
   user,
   userActiveGroup,
 } from "@/lib/db/schema";
+import { type PickSnapshot, samePicks } from "@/lib/predictions/same-picks";
 
 export const liveGroup = isNull(groups.deletedAt);
 
@@ -112,6 +114,84 @@ export async function getUserEntries(
     ),
     with: { roundChallenge: true, targetMatch: true },
   });
+}
+
+export type CopyableSourceGroup = {
+  id: string;
+  name: string;
+  pickCount: number;
+};
+
+/**
+ * Other live groups the user is in, same competition, that already have
+ * picks for this round that differ from the current board.
+ */
+export async function getCopyableSourceGroups(
+  userId: string,
+  currentGroupId: string,
+  competition: Competition,
+  roundId: string,
+): Promise<CopyableSourceGroup[]> {
+  const rows = await db
+    .select({
+      groupId: groups.id,
+      groupName: groups.name,
+      roundChallengeId: entries.roundChallengeId,
+      targetMatchId: entries.targetMatchId,
+      targetSide: entries.targetSide,
+      predictedHome: entries.predictedHome,
+      predictedAway: entries.predictedAway,
+      numericValue: entries.numericValue,
+      targetsJson: entries.targetsJson,
+      isJoker: entries.isJoker,
+    })
+    .from(groupMembers)
+    .innerJoin(groups, eq(groups.id, groupMembers.groupId))
+    .innerJoin(
+      entries,
+      and(
+        eq(entries.groupId, groups.id),
+        eq(entries.userId, userId),
+        eq(entries.roundId, roundId),
+      ),
+    )
+    .where(
+      and(
+        eq(groupMembers.userId, userId),
+        eq(groups.competition, competition),
+        liveGroup,
+      ),
+    );
+
+  const byGroup = new Map<string, { name: string; picks: PickSnapshot[] }>();
+  for (const row of rows) {
+    const pick: PickSnapshot = {
+      roundChallengeId: row.roundChallengeId,
+      targetMatchId: row.targetMatchId,
+      targetSide: row.targetSide,
+      predictedHome: row.predictedHome,
+      predictedAway: row.predictedAway,
+      numericValue: row.numericValue,
+      targetsJson: row.targetsJson,
+      isJoker: row.isJoker,
+    };
+    const existing = byGroup.get(row.groupId);
+    if (existing) existing.picks.push(pick);
+    else byGroup.set(row.groupId, { name: row.groupName, picks: [pick] });
+  }
+
+  const current = byGroup.get(currentGroupId)?.picks ?? [];
+
+  return [...byGroup]
+    .filter(
+      ([id, { picks }]) => id !== currentGroupId && !samePicks(current, picks),
+    )
+    .map(([id, { name, picks }]) => ({
+      id,
+      name,
+      pickCount: picks.length,
+    }))
+    .sort((a, b) => b.pickCount - a.pickCount || a.name.localeCompare(b.name));
 }
 
 export async function getStandings(groupId: string) {
