@@ -121,6 +121,13 @@ export async function getUserEntries(
   });
 }
 
+export async function getGroupEntries(groupId: string, roundId: string) {
+  return db.query.entries.findMany({
+    where: and(eq(entries.groupId, groupId), eq(entries.roundId, roundId)),
+    with: { roundChallenge: true, targetMatch: true },
+  });
+}
+
 export type CopyableSourceGroup = {
   id: string;
   name: string;

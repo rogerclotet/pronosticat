@@ -158,7 +158,8 @@
     },
     "archive": "ARXIU DE TEMPORADES →",
     "chartTitle": "EVOLUCIÓ DE PUNTS",
-    "chartRound": "Jornada {round}"
+    "chartRound": "Jornada {round}",
+    "viewPicks": "JUGADES DEL GRUP →"
   },
   "groupsSheet": {
     "title": "Els meus grups",
@@ -172,6 +173,12 @@
     "deleteConfirmBody": "{name} deixarà de ser accessible per a tothom. El conservem per si ha estat un error.",
     "deleteConfirm": "Sí, elimina'l",
     "deleteCancel": "Cancel·la"
+  },
+  "groupPicks": {
+    "title": "Jugades del grup",
+    "subtitle": "Jornada {round}",
+    "hidden": "Les jugades de tothom es veuran quan comenci la jornada.",
+    "empty": "Ningú ha posat res al tauler encara."
   },
   "rival": {
     "meta": "{points} PUNTS · {delta} AQUESTA JORNADA",
