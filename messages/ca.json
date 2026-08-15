@@ -145,7 +145,8 @@
       "laliga": "LaLiga",
       "premier_league": "Premier League",
       "champions_league": "Champions League"
-    }
+    },
+    "archive": "ARXIU DE TEMPORADES →"
   },
   "groupsSheet": {
     "title": "Els meus grups",
@@ -242,5 +243,17 @@
     "disableCta": "DESACTIVA",
     "denied": "Has bloquejat les notificacions. Torna-les a permetre des de la configuració del navegador o del telèfon.",
     "unsupported": "Aquest navegador no admet avisos emergents."
+  },
+  "archive": {
+    "title": "Arxiu",
+    "empty": "Encara no hi ha cap jornada liquidada. Quan se n'acabi una, apareixerà aquí.",
+    "champion": "CAMPIÓ",
+    "tableFinal": "CLASSIFICACIÓ FINAL",
+    "tableSoFar": "CLASSIFICACIÓ FINS ARA",
+    "roundCount": "{count, plural, one {# JORNADA} other {# JORNADES}}",
+    "roundsToggle": "VEURE LES JORNADES →",
+    "round": "Jornada {round} · {competition}",
+    "roundMeta": "{count, plural, one {# jugada} other {# jugades}} · {hits} encerts",
+    "roundSkipped": "No hi vas jugar"
   }
 }

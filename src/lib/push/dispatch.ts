@@ -128,7 +128,7 @@ function memberKey(userId: string, groupId: string) {
 async function dispatchBoardReminders(now: Date, subscribed: Set<string>) {
   const open = await db.query.rounds.findMany({
     where: eq(rounds.status, "open"),
-    orderBy: [asc(rounds.matchday)],
+    orderBy: [asc(rounds.season), asc(rounds.matchday)],
   });
 
   const earliestOpen = new Map<string, string>();
@@ -379,12 +379,13 @@ async function dispatchMatchEvents(
   >();
 
   async function snapshotFor(match: (typeof live)[number]) {
-    const key = `${match.competition}:${match.matchday}`;
+    const key = `${match.competition}:${match.season}:${match.matchday}`;
     const cached = roundSnapshot.get(key);
     if (cached) return cached;
     const roundMatches = await db.query.matches.findMany({
       where: and(
         eq(matches.competition, match.competition),
+        eq(matches.season, match.season),
         eq(matches.matchday, match.matchday),
       ),
     });
@@ -600,12 +601,14 @@ async function dispatchRoundSettled(since: Date, subscribed: Set<string>) {
       COMPETITIONS[round.competition as Competition].matchdayCount -
       round.matchday;
 
+    // Streaks are a within-season run: the summer break ends one.
     const settledRounds = await db.query.rounds.findMany({
       where: and(
         eq(rounds.competition, round.competition),
+        eq(rounds.season, round.season),
         eq(rounds.status, "settled"),
       ),
-      orderBy: [desc(rounds.matchday)],
+      orderBy: [desc(rounds.season), desc(rounds.matchday)],
     });
 
     for (const [groupId, groupMembersList] of byGroup) {

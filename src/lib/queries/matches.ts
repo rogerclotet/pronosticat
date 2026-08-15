@@ -19,10 +19,11 @@ function hydrateMatchDates(rows: MatchRow[]): MatchRow[] {
 
 /** Cron busts the "matches" tag after every sync, so the window is a backstop. */
 const getCachedRoundMatches = unstable_cache(
-  async (competition: Competition, matchday: number) =>
+  async (competition: Competition, season: number, matchday: number) =>
     db.query.matches.findMany({
       where: and(
         eq(matches.competition, competition),
+        eq(matches.season, season),
         eq(matches.matchday, matchday),
       ),
       orderBy: [matches.kickoff],
@@ -33,12 +34,15 @@ const getCachedRoundMatches = unstable_cache(
 
 export async function getRoundMatches(
   competition: Competition,
+  season: number,
   matchday: number,
 ) {
-  return hydrateMatchDates(await getCachedRoundMatches(competition, matchday));
+  return hydrateMatchDates(
+    await getCachedRoundMatches(competition, season, matchday),
+  );
 }
 
 export async function getCurrentRoundMatches(competition: Competition) {
-  const matchday = await getCurrentMatchdayFromDb(competition);
-  return getRoundMatches(competition, matchday);
+  const { season, matchday } = await getCurrentMatchdayFromDb(competition);
+  return getRoundMatches(competition, season, matchday);
 }

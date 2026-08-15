@@ -76,6 +76,7 @@ export async function getProfileSummary(userId: string, groupId: string) {
 
 export type MatchdayHistoryRow = {
   matchday: number;
+  season: number;
   picks: number;
   hits: number;
   misses: number;
@@ -89,6 +90,7 @@ export async function getMatchdayHistory(
   const rows = await db
     .select({
       matchday: rounds.matchday,
+      season: rounds.season,
       picks: count(entries.id),
       hits: count(sql`case when ${entries.pointsAwarded} > 0 then 1 end`),
       misses: count(sql`case when ${entries.pointsAwarded} <= 0 then 1 end`),
@@ -103,8 +105,8 @@ export async function getMatchdayHistory(
         isNotNull(entries.pointsAwarded),
       ),
     )
-    .groupBy(rounds.matchday)
-    .orderBy(desc(rounds.matchday));
+    .groupBy(rounds.season, rounds.matchday)
+    .orderBy(desc(rounds.season), desc(rounds.matchday));
 
   return rows.map((row) => ({ ...row, netDelta: Number(row.netDelta) }));
 }

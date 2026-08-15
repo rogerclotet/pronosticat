@@ -50,6 +50,13 @@
       "when": 1786776342248,
       "tag": "0006_lyrical_doorman",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786778448169,
+      "tag": "0007_flowery_masque",
+      "breakpoints": true
     }
   ]
 }

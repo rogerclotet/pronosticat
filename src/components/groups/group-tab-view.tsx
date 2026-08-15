@@ -152,6 +152,13 @@ export function GroupTabView({
             value={t(`competitions.${activeGroup.competition}`)}
             last
           />
+          <button
+            type="button"
+            onClick={() => router.push("/arxiu")}
+            className="w-full px-2.5 py-3 text-left font-mono text-[10.5px] font-bold uppercase tracking-[0.09em] text-teal"
+          >
+            {t("archive")}
+          </button>
           {viewerIsAdmin ? (
             <button
               type="button"

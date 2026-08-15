@@ -16,10 +16,14 @@ import { roundId } from "@/lib/rounds/lifecycle";
  */
 export async function ensureCompetitionRounds(competition: Competition) {
   const matchdays = await db
-    .select({ matchday: matches.matchday, firstKickoff: min(matches.kickoff) })
+    .select({
+      matchday: matches.matchday,
+      season: matches.season,
+      firstKickoff: min(matches.kickoff),
+    })
     .from(matches)
     .where(eq(matches.competition, competition))
-    .groupBy(matches.matchday);
+    .groupBy(matches.season, matches.matchday);
 
   const now = new Date();
 
@@ -27,9 +31,19 @@ export async function ensureCompetitionRounds(competition: Competition) {
   // ticks find every round already built and settled, and do nothing at all.
   const existingRounds = await db.query.rounds.findMany({
     where: eq(rounds.competition, competition),
-    columns: { id: true, lockAt: true, status: true },
+    columns: {
+      id: true,
+      lockAt: true,
+      status: true,
+      season: true,
+      matchday: true,
+    },
   });
-  const roundById = new Map(existingRounds.map((row) => [row.id, row]));
+  // Keyed on what identifies a round, not on its id: rounds created before
+  // seasons existed still carry the old id scheme.
+  const roundByMatchday = new Map(
+    existingRounds.map((row) => [`${row.season}:${row.matchday}`, row]),
+  );
 
   const existingSlots = await db
     .select({ roundId: roundChallenges.roundId, slug: roundChallenges.slug })
@@ -43,11 +57,12 @@ export async function ensureCompetitionRounds(competition: Competition) {
     else slugsByRound.set(row.roundId, new Set([row.slug]));
   }
 
-  for (const { matchday, firstKickoff } of matchdays) {
+  for (const { matchday, season, firstKickoff } of matchdays) {
     if (!firstKickoff) continue;
     const lockAt = new Date(firstKickoff);
-    const id = roundId(competition, matchday);
-    const known = roundById.get(id);
+    const known = roundByMatchday.get(`${season}:${matchday}`);
+    // Reuse the stored id when the round exists: it seeds the rotating slot.
+    const id = known?.id ?? roundId(competition, season, matchday);
 
     // A round that is no longer open has a frozen deadline and a full board;
     // there is nothing left to reconcile for it.
@@ -62,7 +77,7 @@ export async function ensureCompetitionRounds(competition: Competition) {
     if (!known) {
       await db
         .insert(rounds)
-        .values({ id, competition, matchday, lockAt })
+        .values({ id, competition, matchday, season, lockAt })
         .onConflictDoNothing({ target: rounds.id });
     }
 

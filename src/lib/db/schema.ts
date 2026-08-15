@@ -145,6 +145,8 @@ export const matches = pgTable(
     homeScoreHt: integer("home_score_ht"),
     awayScoreHt: integer("away_score_ht"),
     matchday: integer("matchday").notNull(),
+    /** Season start year (2025 means 2025/26) — matchdays repeat every season. */
+    season: integer("season").notNull(),
     status: matchStatusEnum("status").notNull().default("scheduled"),
     kickoff: timestamp("kickoff").notNull(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -154,8 +156,9 @@ export const matches = pgTable(
       table.externalId,
       table.competition,
     ),
-    index("matches_competition_matchday_idx").on(
+    index("matches_competition_season_matchday_idx").on(
       table.competition,
+      table.season,
       table.matchday,
     ),
     index("matches_competition_status_idx").on(table.competition, table.status),
@@ -168,6 +171,8 @@ export const rounds = pgTable(
     id: text("id").primaryKey(),
     competition: competitionEnum("competition").notNull(),
     matchday: integer("matchday").notNull(),
+    /** Without this, next season's matchday 1 would reopen this season's. */
+    season: integer("season").notNull(),
     status: roundStatusEnum("status").notNull().default("open"),
     /** First kickoff of the round: the single deadline for every pick. */
     lockAt: timestamp("lock_at").notNull(),
@@ -176,8 +181,9 @@ export const rounds = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("rounds_competition_matchday_idx").on(
+    uniqueIndex("rounds_competition_season_matchday_idx").on(
       table.competition,
+      table.season,
       table.matchday,
     ),
     index("rounds_competition_status_idx").on(table.competition, table.status),

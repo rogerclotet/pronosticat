@@ -284,6 +284,7 @@ export async function saveEntry(data: SaveEntryInput) {
         where: and(
           eq(matches.id, target.targetMatchId),
           eq(matches.competition, round.competition),
+          eq(matches.season, round.season),
           eq(matches.matchday, round.matchday),
         ),
       });
