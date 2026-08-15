@@ -124,14 +124,6 @@ export function PredictionsView({
         </div>
       )}
 
-      {isOpen && slots.length > 0 && copySources.length > 0 ? (
-        <CopyFromGroupButton
-          groupId={groupId}
-          sources={copySources}
-          currentPickCount={played.length}
-        />
-      ) : null}
-
       {slots.length === 0 ? (
         <p className="text-sm text-muted">{tBoard("notReady")}</p>
       ) : (
@@ -148,6 +140,14 @@ export function PredictionsView({
           ))}
         </div>
       )}
+
+      {isOpen && slots.length > 0 && copySources.length > 0 ? (
+        <CopyFromGroupButton
+          groupId={groupId}
+          sources={copySources}
+          currentPickCount={played.length}
+        />
+      ) : null}
 
       {history.length > 0 && (
         <>

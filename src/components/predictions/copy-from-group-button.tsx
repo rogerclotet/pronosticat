@@ -77,7 +77,8 @@ export function CopyFromGroupButton({
       <Button
         type="button"
         variant="secondary"
-        className="w-full"
+        size="sm"
+        className="w-full text-xs"
         onClick={openDialog}
       >
         <span className="inline-flex items-center justify-center gap-2">
