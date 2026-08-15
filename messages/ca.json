@@ -146,7 +146,9 @@
       "premier_league": "Premier League",
       "champions_league": "Champions League"
     },
-    "archive": "ARXIU DE TEMPORADES →"
+    "archive": "ARXIU DE TEMPORADES →",
+    "chartTitle": "EVOLUCIÓ DE PUNTS",
+    "chartRound": "Jornada {round}"
   },
   "groupsSheet": {
     "title": "Els meus grups",

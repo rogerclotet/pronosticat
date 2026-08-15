@@ -1,5 +1,27 @@
-export function cn(...classes: (string | undefined | false)[]): string {
-  return classes.filter(Boolean).join(" ");
+/**
+ * Class names, skipping anything falsy. Also takes a `{ class: condition }`
+ * record, which is what upstream shadcn components are written against.
+ */
+export type ClassValue =
+  | string
+  | undefined
+  | null
+  | false
+  | Record<string, boolean | undefined>;
+
+export function cn(...classes: ClassValue[]): string {
+  const out: string[] = [];
+  for (const entry of classes) {
+    if (!entry) continue;
+    if (typeof entry === "string") {
+      out.push(entry);
+      continue;
+    }
+    for (const [name, enabled] of Object.entries(entry)) {
+      if (enabled) out.push(name);
+    }
+  }
+  return out.join(" ");
 }
 
 export function teamCode(name: string): string {

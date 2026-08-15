@@ -33,6 +33,8 @@ type GroupTabViewProps = {
   memberCount: number;
   viewerIsAdmin: boolean;
   viewerUserId: string;
+  /** Rendered on the server: the chart needs the request's CSP nonce. */
+  chart: React.ReactNode;
 };
 
 export function GroupTabView({
@@ -41,6 +43,7 @@ export function GroupTabView({
   memberCount,
   viewerIsAdmin,
   viewerUserId,
+  chart,
 }: GroupTabViewProps) {
   const t = useTranslations("group");
   const tCommon = useTranslations("common");
@@ -131,6 +134,8 @@ export function GroupTabView({
             })}
           </div>
         )}
+
+        {chart}
 
         <InviteShareButton
           inviteCode={activeGroup.inviteCode}
