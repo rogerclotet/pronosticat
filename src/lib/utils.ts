@@ -66,5 +66,7 @@ export function formatKickoff(date: Date): string {
     hourCycle: "h23",
     timeZone: KICKOFF_TIME_ZONE,
   });
-  return `${datePart}, ${timePart}`;
+  // Intl emits a curly apostrophe ("d’agost"); normalize to the straight
+  // apostrophe used everywhere else in the app's copy.
+  return `${datePart}, ${timePart}`.replace(/’/g, "'");
 }

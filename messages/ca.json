@@ -85,7 +85,7 @@
     "hintNone": "Tauler complet. Ara toca patir.",
     "hintLocked": "La jornada ja ha començat. Res a tocar.",
     "notReady": "El tauler d'aquesta jornada encara no està preparat.",
-    "noMatches": "No hi ha partits en aquesta jornada",
+    "noMatches": "No hi ha partits en aquesta jornada.",
     "fixturesTitle": "Partits de la jornada",
     "empty": "TRIA",
     "jokerBadge": "JÒQUER",
@@ -146,7 +146,7 @@
     "rotateInviteBody": "El codi actual deixarà de funcionar immediatament. Els enllaços que ja hagis compartit no serviran i hauràs de repartir-ne un de nou. Els membres actuals es queden al grup.",
     "rotateInviteConfirm": "Canvia el codi",
     "rotateInviteCancel": "Cancel·la",
-    "noMembers": "No hi ha membres al grup",
+    "noMembers": "No hi ha membres al grup.",
     "codeCopied": "Codi copiat!",
     "linkCopied": "Enllaç copiat!",
     "shareTitle": "Uneix-te a {name} a Pronosticat",
@@ -190,7 +190,7 @@
     "historyTitle": "Historial de jornades",
     "historyRound": "Jornada {round} · {competition}",
     "historyMeta": "{count, plural, one {# JUGADA} other {# JUGADES}} · {hits, plural, one {# ENCERT} other {# ENCERTS}}",
-    "signOut": "Sortir",
+    "signOut": "Tanca la sessió",
     "noHistory": "Encara no tens jornades tancades.",
     "editNameTitle": "Canvia el nom",
     "nameInvalid": "El nom ha de tenir entre 1 i {max} caràcters."
@@ -234,7 +234,7 @@
     "statusFinished": "FINALITZAT"
   },
   "common": {
-    "error": "S'ha produït un error",
+    "error": "S'ha produït un error.",
     "save": "Desa",
     "cancel": "Cancel·la"
   },
