@@ -11,10 +11,12 @@ import {
   describePickTeams,
   type EntryView,
 } from "@/components/challenges/types";
+import { CopyFromGroupButton } from "@/components/predictions/copy-from-group-button";
 import { SegmentedBar } from "@/components/ui/progress-bar";
 import { StatTile } from "@/components/ui/stat-tile";
 import { usePathname, useRouter } from "@/i18n/routing";
 import type { Competition } from "@/lib/constants";
+import type { CopyableSourceGroup } from "@/lib/queries/groups";
 import type { MatchdayHistoryRow } from "@/lib/queries/stats";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +28,7 @@ type PredictionsViewProps = {
   history: MatchdayHistoryRow[];
   groupId: string;
   competition: Competition;
+  copySources: CopyableSourceGroup[];
 };
 
 export function PredictionsView({
@@ -36,6 +39,7 @@ export function PredictionsView({
   history,
   groupId,
   competition,
+  copySources,
 }: PredictionsViewProps) {
   const t = useTranslations("predictions");
   const tBoard = useTranslations("board");
@@ -119,6 +123,14 @@ export function PredictionsView({
           </span>
         </div>
       )}
+
+      {isOpen && slots.length > 0 && copySources.length > 0 ? (
+        <CopyFromGroupButton
+          groupId={groupId}
+          sources={copySources}
+          currentPickCount={played.length}
+        />
+      ) : null}
 
       {slots.length === 0 ? (
         <p className="text-sm text-muted">{tBoard("notReady")}</p>
