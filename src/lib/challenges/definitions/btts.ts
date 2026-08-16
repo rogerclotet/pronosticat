@@ -1,21 +1,30 @@
+import { scoreAtLeast } from "@/lib/challenges/definitions/thresholds";
 import {
   type ChallengeDefinition,
   findTargetMatch,
+  type ThresholdTier,
 } from "@/lib/challenges/types";
 
-const REWARD = 40;
+/**
+ * Both teams scoring at all is close to a coin flip, so it pays like one; the
+ * money is in both of them scoring twice.
+ */
+const TIERS: readonly ThresholdTier[] = [
+  { bar: 2, reward: 100 },
+  { bar: 1, reward: 20 },
+];
 const PENALTY = 0;
 
-/** Marquen tots dos: both teams score. */
+/** Marquen tots dos: both teams score, and the more each scores the better. */
 export const btts: ChallengeDefinition = {
   slug: "btts",
   targetKind: "match",
-  reward: REWARD,
+  reward: TIERS[0].reward,
   penalty: PENALTY,
+  tiers: TIERS,
   score: (target, round) => {
     const match = findTargetMatch(target, round);
     if (!match) return null;
-
-    return match.homeScore > 0 && match.awayScore > 0 ? REWARD : PENALTY;
+    return scoreAtLeast(Math.min(match.homeScore, match.awayScore), TIERS);
   },
 };

@@ -107,7 +107,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
   it("builds a board, locks it at first kickoff, and pays out the round", async () => {
     const kickoff = new Date(Date.now() - 3 * HOUR);
     await seedMatches([
-      // 4 goals, diff 2 — ties goal_fest with m2
+      // 4 goals, diff 2 — clears the goal_fest bar and the lower thrashing tier
       {
         id: "m1",
         matchday: 7,
@@ -118,7 +118,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
         status: "finished",
         kickoff,
       },
-      // 4 goals, diff 4 — thrashing winner, Barça is top scorer
+      // 4 goals, diff 4 — Barça's four clears the base goal_machine tier
       {
         id: "m2",
         matchday: 7,
@@ -187,12 +187,12 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
 
     expect(bySlug).toEqual({
       exact_score: 100, // clavat
-      goal_fest: 80, // tied on goals, still counts
-      thrashing: 0, // m2 was the thrashing, not m1
-      goal_machine: 160, // 80 doubled by the joker
+      goal_fest: 50, // four goals: the base tier
+      thrashing: 35, // a two-goal win pays even with a bigger rout elsewhere
+      goal_machine: 140, // 70 doubled by the joker
       banker: -40, // Betis lost
     });
-    expect(await points()).toBe(300);
+    expect(await points()).toBe(285);
   });
 
   it("is idempotent: a second scoring run does not pay twice", async () => {
@@ -303,12 +303,13 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
         status: "finished",
         kickoff,
       },
+      // A one-goal win: clears no thrashing tier.
       {
         id: "m2",
         matchday: 7,
         home: "Barça",
         away: "Getafe",
-        homeScore: 4,
+        homeScore: 1,
         awayScore: 0,
         status: "finished",
         kickoff,
@@ -330,7 +331,7 @@ describe.skipIf(!enabled)("round settlement against Postgres", async () => {
     });
 
     await addEntry("banker", { targetMatchId: "m1", targetSide: "home" }); // hit
-    await addEntry("thrashing", { targetMatchId: "m1" }); // miss: m2 was the thrashing
+    await addEntry("thrashing", { targetMatchId: "m2" }); // miss: only a one-goal win
     await lockOpenRounds();
     await settleLockedRounds();
 

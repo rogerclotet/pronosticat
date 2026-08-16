@@ -31,6 +31,15 @@ export type EntryTarget = {
   numericValue: number | null;
 };
 
+/**
+ * A payout step of a "clear the bar" challenge: reach `bar` and the slot pays
+ * `reward`. A tier pays only up to the next bar above it.
+ */
+export type ThresholdTier = {
+  bar: number;
+  reward: number;
+};
+
 export type ChallengeDefinition = {
   slug: string;
   targetKind: ChallengeTargetKind;
@@ -40,10 +49,16 @@ export type ChallengeDefinition = {
    * names it is rejected, rather than silently scoring as a miss.
    */
   requiredSide?: TargetSide;
-  /** Headline payout, shown on the slot card. */
+  /** Headline payout, shown on the slot card. The top tier when tiered. */
   reward: number;
   /** Cost of a miss. Negative or zero. */
   penalty: number;
+  /**
+   * Payout steps, hardest first, for challenges that score against a bar
+   * rather than all-or-nothing. Rendered in the sheet so the lower bars the
+   * headline `reward` hides are visible before the pick is locked.
+   */
+  tiers?: readonly ThresholdTier[];
   /**
    * Points before the joker is applied. Returns `null` when the pick cannot be
    * resolved at all — an empty round, or a target that was never played — in

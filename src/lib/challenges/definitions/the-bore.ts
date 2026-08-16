@@ -1,23 +1,28 @@
 import { totalGoals } from "@/lib/challenges/definitions/goal-fest";
+import { scoreAtMost } from "@/lib/challenges/definitions/thresholds";
 import {
   type ChallengeDefinition,
   findTargetMatch,
+  type ThresholdTier,
 } from "@/lib/challenges/types";
 
-const REWARD = 80;
+/** One goal is a quiet afternoon; goalless is the full bore. */
+const TIERS: readonly ThresholdTier[] = [
+  { bar: 0, reward: 100 },
+  { bar: 1, reward: 50 },
+];
 const PENALTY = 0;
 
-/** El rotllo: the match with the fewest total goals. Ties all win. */
+/** El rotllo: a match that ends with one goal or none. */
 export const theBore: ChallengeDefinition = {
   slug: "the_bore",
   targetKind: "match",
-  reward: REWARD,
+  reward: TIERS[0].reward,
   penalty: PENALTY,
+  tiers: TIERS,
   score: (target, round) => {
     const match = findTargetMatch(target, round);
     if (!match) return null;
-
-    const quietest = Math.min(...round.map(totalGoals));
-    return totalGoals(match) === quietest ? REWARD : PENALTY;
+    return scoreAtMost(totalGoals(match), TIERS);
   },
 };

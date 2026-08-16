@@ -68,15 +68,21 @@ describe("exactScore", () => {
 });
 
 describe("goalFest", () => {
-  it("rewards the highest-scoring match", () => {
-    expect(goalFest.score(target({ matchId: "b" }), round)).toBe(80);
+  it("pays the base tier for a match that clears four goals", () => {
+    expect(goalFest.score(target({ matchId: "a" }), round)).toBe(50);
   });
 
-  it("rewards every match tied on goals", () => {
-    expect(goalFest.score(target({ matchId: "a" }), round)).toBe(80);
+  it("pays the top tier for six goals or more", () => {
+    const shootout = [...round, match("d", 4, 2)];
+    expect(goalFest.score(target({ matchId: "d" }), shootout)).toBe(100);
   });
 
-  it("scores nothing for a quieter match", () => {
+  it("pays a match that clears the bar even when a louder one exists", () => {
+    const louder = [match("a", 3, 1), match("b", 5, 2)];
+    expect(goalFest.score(target({ matchId: "a" }), louder)).toBe(50);
+  });
+
+  it("scores nothing below the bar", () => {
     expect(goalFest.score(target({ matchId: "c" }), round)).toBe(0);
   });
 
@@ -86,45 +92,53 @@ describe("goalFest", () => {
 });
 
 describe("thrashing", () => {
-  it("rewards the biggest goal difference", () => {
-    expect(thrashing.score(target({ matchId: "b" }), round)).toBe(80);
+  it("pays the base tier for a two-goal win", () => {
+    expect(thrashing.score(target({ matchId: "a" }), round)).toBe(35);
   });
 
-  it("scores nothing for a tighter match", () => {
-    expect(thrashing.score(target({ matchId: "a" }), round)).toBe(0);
+  it("pays the top tier for a four-goal win", () => {
+    expect(thrashing.score(target({ matchId: "b" }), round)).toBe(100);
+  });
+
+  it("scores nothing for a one-goal win", () => {
+    expect(thrashing.score(target({ matchId: "c" }), round)).toBe(0);
   });
 
   it("counts an away thrashing the same as a home one", () => {
     const lopsided = [match("a", 1, 1), match("b", 0, 5)];
-    expect(thrashing.score(target({ matchId: "b" }), lopsided)).toBe(80);
+    expect(thrashing.score(target({ matchId: "b" }), lopsided)).toBe(100);
   });
 
-  it("rewards every match tied on difference", () => {
-    const tied = [match("a", 2, 0), match("b", 0, 2)];
-    expect(thrashing.score(target({ matchId: "a" }), tied)).toBe(80);
-    expect(thrashing.score(target({ matchId: "b" }), tied)).toBe(80);
+  it("pays a two-goal win even when a bigger rout exists", () => {
+    expect(
+      thrashing.score(target({ matchId: "a" }), [...round, match("d", 6, 0)]),
+    ).toBe(35);
   });
 });
 
 describe("goalMachine", () => {
-  it("rewards the top-scoring team", () => {
-    const pick = target({ matchId: "b", side: "home" });
-    expect(goalMachine.score(pick, round)).toBe(80);
+  it("pays the base tier for a team that scores three", () => {
+    const pick = target({ matchId: "a", side: "home" });
+    expect(goalMachine.score(pick, round)).toBe(70);
   });
 
-  it("scores nothing for a team that scored less", () => {
-    const pick = target({ matchId: "a", side: "home" });
+  it("pays the top tier for five goals or more", () => {
+    const rout = [match("a", 5, 0)];
+    expect(
+      goalMachine.score(target({ matchId: "a", side: "home" }), rout),
+    ).toBe(140);
+  });
+
+  it("scores nothing for a team below the bar", () => {
+    const pick = target({ matchId: "c", side: "away" });
     expect(goalMachine.score(pick, round)).toBe(0);
   });
 
-  it("rewards every team tied on goals", () => {
-    const tied = [match("a", 3, 0), match("b", 0, 3)];
+  it("pays a team that clears the bar even when another scored more", () => {
+    const tally = [match("a", 3, 0), match("b", 6, 0)];
     expect(
-      goalMachine.score(target({ matchId: "a", side: "home" }), tied),
-    ).toBe(80);
-    expect(
-      goalMachine.score(target({ matchId: "b", side: "away" }), tied),
-    ).toBe(80);
+      goalMachine.score(target({ matchId: "a", side: "home" }), tally),
+    ).toBe(70);
   });
 
   it("voids a team pick with no side", () => {

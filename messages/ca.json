@@ -20,15 +20,27 @@
     },
     "goal_fest": {
       "name": "La golejada",
-      "rule": "El partit amb més gols de la jornada."
+      "rule": "Un partit amb 4 gols o més.",
+      "tier": {
+        "4": "4 o 5 gols",
+        "6": "6 gols o més"
+      }
     },
     "thrashing": {
       "name": "La pallissa",
-      "rule": "El partit amb més diferència de gols."
+      "rule": "Un partit guanyat per 2 gols o més.",
+      "tier": {
+        "2": "Guanya per 2 o 3 gols",
+        "4": "Guanya per 4 gols o més"
+      }
     },
     "goal_machine": {
       "name": "La màquina",
-      "rule": "L'equip que marqui més gols de tota la jornada."
+      "rule": "Un equip que marqui 3 gols o més.",
+      "tier": {
+        "3": "3 o 4 gols",
+        "5": "5 gols o més"
+      }
     },
     "banker": {
       "name": "El segur",
@@ -36,7 +48,11 @@
     },
     "the_bore": {
       "name": "El rotllo",
-      "rule": "El partit amb menys gols de la jornada."
+      "rule": "Un partit amb 1 gol o menys.",
+      "tier": {
+        "0": "Acaba 0-0",
+        "1": "Només 1 gol"
+      }
     },
     "upset": {
       "name": "La sorpresa",
@@ -60,7 +76,11 @@
     },
     "btts": {
       "name": "Marquen tots dos",
-      "rule": "Un partit on marquen els dos equips."
+      "rule": "Un partit on marquen els dos equips. Com més en marquin, millor.",
+      "tier": {
+        "1": "Marquen tots dos",
+        "2": "Tots dos en marquen 2 o més"
+      }
     },
     "comeback": {
       "name": "La remuntada",
@@ -88,6 +108,7 @@
     "noMatches": "No hi ha partits en aquesta jornada.",
     "fixturesTitle": "Partits de la jornada",
     "empty": "TRIA",
+    "upTo": "FINS A",
     "jokerBadge": "JÒQUER",
     "resultHit": "+{points}",
     "resultMiss": "{points}",

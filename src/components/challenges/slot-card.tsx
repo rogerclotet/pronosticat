@@ -97,6 +97,9 @@ export function SlotCard({
           {tChallenge(`${slot.slug}.rule`)}
         </p>
         <span className="relative flex items-center gap-1 font-mono text-[9px] font-bold tracking-[0.08em]">
+          {slot.tiers && (
+            <span className="text-text-secondary">{t("upTo")}</span>
+          )}
           <span className="text-teal">+{slot.reward}</span>
           {slot.penalty !== 0 && (
             <>
