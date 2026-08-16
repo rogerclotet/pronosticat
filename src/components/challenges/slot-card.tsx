@@ -6,6 +6,7 @@ import {
   challengeIcons,
   fallbackChallengeIcon,
 } from "@/components/challenges/challenge-icon";
+import { CardPayouts } from "@/components/challenges/payouts";
 import {
   type BoardMatch,
   type BoardSlotView,
@@ -96,18 +97,7 @@ export function SlotCard({
         <p className="relative font-sans text-[11.5px] leading-snug text-text-secondary">
           {tChallenge(`${slot.slug}.rule`)}
         </p>
-        <span className="relative flex items-center gap-1 font-mono text-[9px] font-bold tracking-[0.08em]">
-          {slot.tiers && (
-            <span className="text-text-secondary">{t("upTo")}</span>
-          )}
-          <span className="text-teal">+{slot.reward}</span>
-          {slot.penalty !== 0 && (
-            <>
-              <span className="text-border-strong">/</span>
-              <span className="text-danger">{slot.penalty}</span>
-            </>
-          )}
-        </span>
+        <CardPayouts slug={slot.slug} payouts={slot.payouts} />
       </div>
 
       <button

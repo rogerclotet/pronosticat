@@ -1,7 +1,7 @@
 import type {
+  ChallengePayout,
   ChallengeTargetKind,
   TargetSide,
-  ThresholdTier,
 } from "@/lib/challenges/types";
 import type { entries, matches, rounds } from "@/lib/db/schema";
 
@@ -33,8 +33,8 @@ export type BoardSlotView = {
   requiredSide?: TargetSide;
   reward: number;
   penalty: number;
-  /** Payout steps, hardest first, when the slot scores against a bar. */
-  tiers?: readonly ThresholdTier[];
+  /** Every outcome the slot can pay, best first. */
+  payouts: readonly ChallengePayout[];
 };
 
 export type EntryView = {

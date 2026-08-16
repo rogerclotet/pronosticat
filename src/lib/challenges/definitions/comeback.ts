@@ -12,6 +12,7 @@ export const comeback: ChallengeDefinition = {
   targetKind: "match",
   reward: REWARD,
   penalty: PENALTY,
+  payouts: [{ id: "hit", points: REWARD }],
   score: (target, round) => {
     const match = findTargetMatch(target, round);
     if (!match || match.homeScoreHt === null || match.awayScoreHt === null) {
