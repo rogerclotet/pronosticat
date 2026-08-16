@@ -125,6 +125,18 @@ export function ChallengeSheet({
       }
     >
       <div className="flex flex-col gap-3.5">
+        <JokerToggle
+          checked={isJoker}
+          disabled={jokerLocked}
+          onChange={setIsJoker}
+          note={
+            jokerHolder
+              ? t("jokerTakenNote", { challenge: jokerHolder })
+              : t("jokerNote")
+          }
+          label={t("jokerLabel")}
+        />
+
         <div className="flex">
           <StatTile
             label={t("rewardLabel")}
@@ -194,18 +206,6 @@ export function ChallengeSheet({
           </>
         )}
 
-        <JokerToggle
-          checked={isJoker}
-          disabled={jokerLocked}
-          onChange={setIsJoker}
-          note={
-            jokerHolder
-              ? t("jokerTakenNote", { challenge: jokerHolder })
-              : t("jokerNote")
-          }
-          label={t("jokerLabel")}
-        />
-
         {error && <p className="text-sm text-danger">{error}</p>}
 
         <p className="border-l-4 border-teal-dark/60 pl-2.5 font-sans text-[10.5px] leading-relaxed text-text-secondary">
@@ -232,30 +232,51 @@ function JokerToggle({
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "flex items-center gap-2.5 border-2 px-2.5 py-2.5 text-left disabled:opacity-50",
+        "flex items-center justify-between gap-2.5 border-2 px-2.5 py-2.5 text-left disabled:opacity-50",
         checked ? "border-teal bg-highlight-bg" : "border-border bg-surface",
       )}
     >
+      <span className="flex items-center gap-2.5">
+        <span
+          className={cn(
+            "shrink-0 border-2 px-1 py-0.5 font-mono text-[10px] font-bold",
+            checked
+              ? "border-teal text-teal"
+              : "border-border-strong text-text-secondary",
+          )}
+        >
+          ×2
+        </span>
+        <span className="flex flex-col gap-1">
+          <span className="font-mono text-[10.5px] font-bold uppercase tracking-[0.09em]">
+            {label}
+          </span>
+          <span className="font-sans text-[10.5px] leading-snug text-text-secondary">
+            {note}
+          </span>
+        </span>
+      </span>
       <span
         className={cn(
-          "flex h-5 w-5 shrink-0 items-center justify-center border-2 font-mono text-xs font-bold",
+          "relative h-5 w-9 shrink-0 border-2 transition-colors",
           checked
-            ? "border-teal text-teal"
-            : "border-border-strong text-transparent",
+            ? "border-teal bg-teal/20"
+            : "border-border-strong bg-surface",
         )}
       >
-        ×2
-      </span>
-      <span className="flex flex-col gap-1">
-        <span className="font-mono text-[10.5px] font-bold uppercase tracking-[0.09em]">
-          {label}
-        </span>
-        <span className="font-sans text-[10.5px] leading-snug text-text-secondary">
-          {note}
-        </span>
+        <span
+          className={cn(
+            "absolute top-0.5 h-3 w-3 transition-transform",
+            checked
+              ? "translate-x-[18px] bg-teal"
+              : "translate-x-0.5 bg-border-strong",
+          )}
+        />
       </span>
     </button>
   );
