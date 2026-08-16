@@ -53,9 +53,9 @@ export function SlotCard({
 
   const trailing = outcome ? (
     <span className={cn("shrink-0", outcome.tone)}>{outcome.label}</span>
-  ) : pick ? (
+  ) : pick && interactive ? (
     <Pencil className="size-3.5 shrink-0" strokeWidth={2.5} />
-  ) : (
+  ) : pick ? null : (
     <ArrowRight className="size-3.5 shrink-0" strokeWidth={3} />
   );
 
