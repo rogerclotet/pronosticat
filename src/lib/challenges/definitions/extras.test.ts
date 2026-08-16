@@ -43,8 +43,18 @@ function target(overrides: Partial<EntryTarget>): EntryTarget {
 const round = [match("a", 3, 1), match("b", 4, 0), match("c", 0, 1)];
 
 describe("theBore", () => {
-  it("rewards the quietest match", () => {
-    expect(theBore.score(target({ matchId: "c" }), round)).toBe(80);
+  it("pays the base tier for a single-goal match", () => {
+    expect(theBore.score(target({ matchId: "c" }), round)).toBe(50);
+  });
+
+  it("pays the top tier for a goalless match", () => {
+    const goalless = [...round, match("d", 0, 0)];
+    expect(theBore.score(target({ matchId: "d" }), goalless)).toBe(100);
+  });
+
+  it("pays a quiet match even when a quieter one exists", () => {
+    const quieter = [match("c", 0, 1), match("d", 0, 0)];
+    expect(theBore.score(target({ matchId: "c" }), quieter)).toBe(50);
   });
 
   it("scores nothing for a high-scoring match", () => {
@@ -90,8 +100,13 @@ describe("drawPick", () => {
 });
 
 describe("btts", () => {
-  it("rewards a match where both teams score", () => {
-    expect(btts.score(target({ matchId: "a" }), round)).toBe(40);
+  it("pays the base tier when both teams score once", () => {
+    expect(btts.score(target({ matchId: "a" }), round)).toBe(20);
+  });
+
+  it("pays the top tier when both teams score twice", () => {
+    const shared = [...round, match("d", 3, 2)];
+    expect(btts.score(target({ matchId: "d" }), shared)).toBe(100);
   });
 
   it("scores nothing for a clean sheet match", () => {
