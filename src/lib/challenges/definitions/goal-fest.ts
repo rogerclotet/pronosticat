@@ -1,4 +1,7 @@
-import { scoreAtLeast } from "@/lib/challenges/definitions/thresholds";
+import {
+  scoreAtLeast,
+  tierPayouts,
+} from "@/lib/challenges/definitions/thresholds";
 import {
   type ChallengeDefinition,
   findTargetMatch,
@@ -27,7 +30,7 @@ export const goalFest: ChallengeDefinition = {
   targetKind: "match",
   reward: TIERS[0].reward,
   penalty: PENALTY,
-  tiers: TIERS,
+  payouts: tierPayouts(TIERS),
   score: (target, round) => {
     const match = findTargetMatch(target, round);
     if (!match) return null;

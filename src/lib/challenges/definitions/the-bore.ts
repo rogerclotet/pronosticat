@@ -1,5 +1,8 @@
 import { totalGoals } from "@/lib/challenges/definitions/goal-fest";
-import { scoreAtMost } from "@/lib/challenges/definitions/thresholds";
+import {
+  scoreAtMost,
+  tierPayouts,
+} from "@/lib/challenges/definitions/thresholds";
 import {
   type ChallengeDefinition,
   findTargetMatch,
@@ -19,7 +22,7 @@ export const theBore: ChallengeDefinition = {
   targetKind: "match",
   reward: TIERS[0].reward,
   penalty: PENALTY,
-  tiers: TIERS,
+  payouts: tierPayouts(TIERS),
   score: (target, round) => {
     const match = findTargetMatch(target, round);
     if (!match) return null;

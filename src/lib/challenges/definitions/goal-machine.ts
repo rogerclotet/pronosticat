@@ -1,4 +1,7 @@
-import { scoreAtLeast } from "@/lib/challenges/definitions/thresholds";
+import {
+  scoreAtLeast,
+  tierPayouts,
+} from "@/lib/challenges/definitions/thresholds";
 import {
   type ChallengeDefinition,
   resolveTeamTarget,
@@ -18,7 +21,7 @@ export const goalMachine: ChallengeDefinition = {
   targetKind: "team",
   reward: TIERS[0].reward,
   penalty: PENALTY,
-  tiers: TIERS,
+  payouts: tierPayouts(TIERS),
   score: (target, round) => {
     const picked = resolveTeamTarget(target, round);
     if (!picked) return null;

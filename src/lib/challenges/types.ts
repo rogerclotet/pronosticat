@@ -40,6 +40,15 @@ export type ThresholdTier = {
   reward: number;
 };
 
+/**
+ * One outcome the slot can pay out, named so it can be explained before the
+ * pick is locked. The condition copy lives at `challenges.<slug>.payout.<id>`.
+ */
+export type ChallengePayout = {
+  id: string;
+  points: number;
+};
+
 export type ChallengeDefinition = {
   slug: string;
   targetKind: ChallengeTargetKind;
@@ -49,16 +58,17 @@ export type ChallengeDefinition = {
    * names it is rejected, rather than silently scoring as a miss.
    */
   requiredSide?: TargetSide;
-  /** Headline payout, shown on the slot card. The top tier when tiered. */
+  /** Best payout the slot can produce. Drives the best-case round projection. */
   reward: number;
   /** Cost of a miss. Negative or zero. */
   penalty: number;
   /**
-   * Payout steps, hardest first, for challenges that score against a bar
-   * rather than all-or-nothing. Rendered in the sheet so the lower bars the
-   * headline `reward` hides are visible before the pick is locked.
+   * Every outcome worth naming, best first: each payout step plus the miss when
+   * it costs points. Rendered on the card and in the sheet so the exact number
+   * each result pays is visible before the pick is locked, rather than hidden
+   * behind a headline `reward`.
    */
-  tiers?: readonly ThresholdTier[];
+  payouts: readonly ChallengePayout[];
   /**
    * Points before the joker is applied. Returns `null` when the pick cannot be
    * resolved at all — an empty round, or a target that was never played — in

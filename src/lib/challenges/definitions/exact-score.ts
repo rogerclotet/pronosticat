@@ -14,6 +14,11 @@ export const exactScore: ChallengeDefinition = {
   targetKind: "match_score",
   reward: EXACT_REWARD,
   penalty: PENALTY,
+  payouts: [
+    { id: "exact", points: EXACT_REWARD },
+    { id: "outcome", points: OUTCOME_REWARD },
+    { id: "miss", points: PENALTY },
+  ],
   score: (target, round) => {
     const match = findTargetMatch(target, round);
     if (!match) return null;

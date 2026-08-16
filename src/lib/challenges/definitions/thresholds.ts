@@ -1,6 +1,16 @@
-import type { ThresholdTier } from "@/lib/challenges/types";
+import type { ChallengePayout, ThresholdTier } from "@/lib/challenges/types";
 
 const MISS = 0;
+
+/**
+ * The payout ladder of a tiered challenge, one entry per bar. The bar doubles
+ * as the copy key, so `challenges.<slug>.payout.<bar>` spells out the step.
+ */
+export function tierPayouts(
+  tiers: readonly ThresholdTier[],
+): readonly ChallengePayout[] {
+  return tiers.map((tier) => ({ id: String(tier.bar), points: tier.reward }));
+}
 
 /**
  * Payout for a "clear the bar" challenge where a bigger value is better.

@@ -3,6 +3,11 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
+  formatPoints,
+  isSinglePayout,
+  SheetPayouts,
+} from "@/components/challenges/payouts";
+import {
   MatchPicker,
   NumberPicker,
   ScorePicker,
@@ -17,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { StatTile } from "@/components/ui/stat-tile";
 import { deleteEntry, saveEntry } from "@/lib/actions/groups";
-import type { TargetSide, ThresholdTier } from "@/lib/challenges/types";
+import type { TargetSide } from "@/lib/challenges/types";
 import { cn } from "@/lib/utils";
 
 type ChallengeSheetProps = {
@@ -138,30 +143,30 @@ export function ChallengeSheet({
           label={t("jokerLabel")}
         />
 
-        {slot.tiers ? (
-          <RewardTiers
-            slug={slot.slug}
-            tiers={slot.tiers}
-            multiplier={multiplier}
-            label={t("rewardLabel")}
-          />
-        ) : (
+        {isSinglePayout(slot.payouts) ? (
           <div className="flex">
             <StatTile
               label={t("rewardLabel")}
-              value={`+${slot.reward * multiplier}`}
+              value={formatPoints(slot.reward * multiplier)}
               accent="teal"
               className="flex-1"
             />
             {slot.penalty !== 0 && (
               <StatTile
                 label={t("penaltyLabel")}
-                value={String(slot.penalty * multiplier)}
+                value={formatPoints(slot.penalty * multiplier)}
                 accent="danger"
                 className="-ml-0.5 flex-1"
               />
             )}
           </div>
+        ) : (
+          <SheetPayouts
+            slug={slot.slug}
+            payouts={slot.payouts}
+            multiplier={multiplier}
+            label={t("payoutsLabel")}
+          />
         )}
 
         {slot.targetKind === "number" ? (
@@ -223,42 +228,6 @@ export function ChallengeSheet({
         </p>
       </div>
     </Sheet>
-  );
-}
-
-/** The payout ladder of a slot scored against a bar, hardest tier first. */
-function RewardTiers({
-  slug,
-  tiers,
-  multiplier,
-  label,
-}: {
-  slug: string;
-  tiers: readonly ThresholdTier[];
-  multiplier: number;
-  label: string;
-}) {
-  const tChallenge = useTranslations("challenges");
-
-  return (
-    <div className="border-2 border-border bg-surface px-2 py-2.5">
-      <ul className="flex flex-col gap-1.5">
-        {tiers.map((tier) => (
-          <li
-            key={tier.bar}
-            className="flex items-baseline justify-between gap-2.5"
-          >
-            <span className="font-sans text-[11px] leading-snug text-text-secondary">
-              {tChallenge(`${slug}.tier.${tier.bar}`)}
-            </span>
-            <span className="font-mono text-lg font-bold tabular-nums text-teal">
-              +{tier.reward * multiplier}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="label-mono mt-1.5">{label}</p>
-    </div>
   );
 }
 

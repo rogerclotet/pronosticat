@@ -12,6 +12,7 @@ export const choke: ChallengeDefinition = {
   targetKind: "team",
   reward: REWARD,
   penalty: PENALTY,
+  payouts: [{ id: "hit", points: REWARD }],
   score: (target, round) => {
     const picked = resolveTeamTarget(target, round);
     if (!picked) return null;

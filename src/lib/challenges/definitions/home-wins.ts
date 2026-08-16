@@ -1,4 +1,7 @@
-import { tieredNumberScore } from "@/lib/challenges/definitions/tiered-number";
+import {
+  tieredNumberPayouts,
+  tieredNumberScore,
+} from "@/lib/challenges/definitions/tiered-number";
 import type { ChallengeDefinition } from "@/lib/challenges/types";
 
 /** Mando de casa: how many home wins in the round. */
@@ -7,6 +10,7 @@ export const homeWins: ChallengeDefinition = {
   targetKind: "number",
   reward: 100,
   penalty: 0,
+  payouts: tieredNumberPayouts,
   score: (target, round) => {
     if (target.numericValue === null) return null;
 

@@ -1,5 +1,8 @@
 import { totalGoals } from "@/lib/challenges/definitions/goal-fest";
-import { tieredNumberScore } from "@/lib/challenges/definitions/tiered-number";
+import {
+  tieredNumberPayouts,
+  tieredNumberScore,
+} from "@/lib/challenges/definitions/tiered-number";
 import type { ChallengeDefinition } from "@/lib/challenges/types";
 
 /** El comptador: total goals across the whole round. */
@@ -8,6 +11,7 @@ export const totalGoalsRound: ChallengeDefinition = {
   targetKind: "number",
   reward: 100,
   penalty: 0,
+  payouts: tieredNumberPayouts,
   score: (target, round) => {
     if (target.numericValue === null) return null;
 

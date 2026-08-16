@@ -1,9 +1,9 @@
 import { asc, eq } from "drizzle-orm";
 import { CORE_CHALLENGE_SLUGS, getChallenge } from "@/lib/challenges/registry";
 import type {
+  ChallengePayout,
   ChallengeTargetKind,
   TargetSide,
-  ThresholdTier,
 } from "@/lib/challenges/types";
 import type { Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
@@ -28,7 +28,7 @@ export type BoardSlot = {
   requiredSide?: TargetSide;
   reward: number;
   penalty: number;
-  tiers?: readonly ThresholdTier[];
+  payouts: readonly ChallengePayout[];
 };
 
 export type RoundBoard = {
@@ -57,7 +57,7 @@ async function loadSlots(roundId: string): Promise<BoardSlot[]> {
         requiredSide: challenge.requiredSide,
         reward: challenge.reward,
         penalty: challenge.penalty,
-        tiers: challenge.tiers,
+        payouts: challenge.payouts,
       },
     ];
   });
