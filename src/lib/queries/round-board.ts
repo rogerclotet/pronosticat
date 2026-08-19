@@ -8,7 +8,10 @@ import type {
 import type { Competition } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches, roundChallenges, type rounds } from "@/lib/db/schema";
-import { getCurrentRound } from "@/lib/queries/matchday";
+import {
+  getCurrentRound,
+  getRoundAcceptingPredictions,
+} from "@/lib/queries/matchday";
 import { getRoundMatches } from "@/lib/queries/matches";
 import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
 
@@ -36,6 +39,26 @@ export type RoundBoard = {
   slots: BoardSlot[];
   matches: (typeof matches.$inferSelect)[];
 };
+
+async function loadRoundBoard(
+  competition: Competition,
+  round: typeof rounds.$inferSelect,
+): Promise<RoundBoard> {
+  const [initialSlots, roundMatches] = await Promise.all([
+    loadSlots(round.id),
+    getRoundMatches(competition, round.season, round.matchday),
+  ]);
+  let slots = initialSlots;
+
+  // Rounds created before a slot was added to the board (or before the
+  // rotating extra existed at all) are missing rows, not empty — top them up.
+  if (slots.length < CORE_CHALLENGE_SLUGS.length + 1) {
+    await ensureCompetitionRounds(competition);
+    slots = await loadSlots(round.id);
+  }
+
+  return { round, slots, matches: roundMatches };
+}
 
 async function loadSlots(roundId: string): Promise<BoardSlot[]> {
   const rows = await db.query.roundChallenges.findMany({
@@ -79,18 +102,27 @@ export async function getCurrentRoundBoard(
   }
   if (!round) return null;
 
-  const [initialSlots, roundMatches] = await Promise.all([
-    loadSlots(round.id),
-    getRoundMatches(competition, round.season, round.matchday),
-  ]);
-  let slots = initialSlots;
+  return loadRoundBoard(competition, round);
+}
 
-  // Rounds created before a slot was added to the board (or before the
-  // rotating extra existed at all) are missing rows, not empty — top them up.
-  if (slots.length < CORE_CHALLENGE_SLUGS.length + 1) {
+/**
+ * Prediction entry board: prefer the next round that still accepts picks, and
+ * fall back to the current in-play round for read-only display.
+ */
+export async function getPredictionRoundBoard(
+  competition: Competition,
+): Promise<RoundBoard | null> {
+  let round = await getRoundAcceptingPredictions(competition);
+  if (!round) {
+    if (!(await hasCompetitionMatches(competition))) {
+      return null;
+    }
     await ensureCompetitionRounds(competition);
-    slots = await loadSlots(round.id);
+    round = await getRoundAcceptingPredictions(competition);
+  }
+  if (round) {
+    return loadRoundBoard(competition, round);
   }
 
-  return { round, slots, matches: roundMatches };
+  return getCurrentRoundBoard(competition);
 }

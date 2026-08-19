@@ -26,6 +26,8 @@ type PredictionsViewProps = {
   matches: BoardMatch[];
   entries: EntryView[];
   history: MatchdayHistoryRow[];
+  roundView: "upcoming" | "previous";
+  showRoundToggle: boolean;
   groupId: string;
   competition: Competition;
   copySources: CopyableSourceGroup[];
@@ -37,6 +39,8 @@ export function PredictionsView({
   matches,
   entries,
   history,
+  roundView,
+  showRoundToggle,
   groupId,
   competition,
   copySources,
@@ -51,6 +55,7 @@ export function PredictionsView({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const openSlotId = searchParams.get("slot");
+  const isPreviousView = roundView === "previous";
 
   const entryBySlot = new Map(entries.map((e) => [e.roundChallengeId, e]));
   const played = slots.filter((slot) => entryBySlot.has(slot.id));
@@ -88,6 +93,47 @@ export function PredictionsView({
       <div className="border-b-2 border-border pb-2 font-sans text-[15px] font-extrabold uppercase">
         {t("title")}
       </div>
+
+      {showRoundToggle ? (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            className={cn(
+              "border-2 px-3 py-2 text-xs font-extrabold uppercase tracking-wide",
+              !isPreviousView
+                ? "border-teal bg-teal text-background"
+                : "border-border bg-surface text-foreground",
+            )}
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.delete("view");
+              params.delete("slot");
+              const query = params.toString();
+              router.replace(query ? `${pathname}?${query}` : pathname);
+            }}
+          >
+            {t("toggleUpcoming")}
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "border-2 px-3 py-2 text-xs font-extrabold uppercase tracking-wide",
+              isPreviousView
+                ? "border-teal bg-teal text-background"
+                : "border-border bg-surface text-foreground",
+            )}
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.set("view", "previous");
+              params.delete("slot");
+              const query = params.toString();
+              router.replace(query ? `${pathname}?${query}` : pathname);
+            }}
+          >
+            {t("togglePrevious")}
+          </button>
+        </div>
+      ) : null}
 
       <div className="flex">
         <StatTile
@@ -173,7 +219,7 @@ export function PredictionsView({
         </>
       )}
 
-      {openSlot && (
+      {isOpen && openSlot && (
         <ChallengeSheet
           onClose={() => router.replace(pathname)}
           groupId={groupId}

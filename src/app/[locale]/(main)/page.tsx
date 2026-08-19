@@ -2,10 +2,14 @@ import { Suspense } from "react";
 import { PredictionsContent } from "@/components/predictions/predictions-content";
 import { PredictionsSkeleton } from "@/components/predictions/predictions-skeleton";
 
-export default function HomePage() {
+type HomePageProps = {
+  searchParams: Promise<{ view?: string }>;
+};
+
+export default function HomePage({ searchParams }: HomePageProps) {
   return (
     <Suspense fallback={<PredictionsSkeleton />}>
-      <PredictionsContent />
+      <PredictionsContent searchParams={searchParams} />
     </Suspense>
   );
 }

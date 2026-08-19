@@ -28,7 +28,7 @@ import {
 import { normalizeInviteCode } from "@/lib/invite";
 import { notifyMemberJoined } from "@/lib/push/dispatch";
 import { getUserGroupsWithMeta, liveGroup } from "@/lib/queries/groups";
-import { getCurrentRound } from "@/lib/queries/matchday";
+import { getRoundAcceptingPredictions } from "@/lib/queries/matchday";
 import { assertRateLimit } from "@/lib/security/rate-limit";
 import { requireSession } from "@/lib/session";
 
@@ -447,8 +447,10 @@ export async function copyEntriesFromGroup(data: {
     throw new Error("Groups are not in the same competition");
   }
 
-  const round = await getCurrentRound(targetMember.group.competition);
-  if (!round) throw new Error("Round not found");
+  const round = await getRoundAcceptingPredictions(
+    targetMember.group.competition,
+  );
+  if (!round) throw new Error("Round already locked");
 
   await db.transaction(async (tx) => {
     const [locked] = await tx
