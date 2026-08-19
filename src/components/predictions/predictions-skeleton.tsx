@@ -25,8 +25,9 @@ export function PredictionsSkeleton() {
       aria-busy
       aria-label="Loading"
     >
-      <div className="border-b-2 border-border pb-2">
+      <div className="flex items-baseline justify-between gap-3 border-b-2 border-border pb-2">
         <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-3 w-36" />
       </div>
 
       <div className="flex">
