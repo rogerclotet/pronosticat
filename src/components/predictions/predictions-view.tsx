@@ -18,7 +18,7 @@ import { usePathname, useRouter } from "@/i18n/routing";
 import type { Competition } from "@/lib/constants";
 import type { CopyableSourceGroup } from "@/lib/queries/groups";
 import type { MatchdayHistoryRow } from "@/lib/queries/stats";
-import { cn } from "@/lib/utils";
+import { cn, formatKickoff } from "@/lib/utils";
 
 type PredictionsViewProps = {
   round: BoardRound;
@@ -67,6 +67,13 @@ export function PredictionsView({
 
   const isOpen = round.status === "open";
   const remaining = slots.length - played.length;
+  const lockTime = formatKickoff(new Date(round.lockAt));
+  const deadline =
+    round.status === "settled"
+      ? tBoard("settled")
+      : isOpen
+        ? tBoard("closes", { time: lockTime })
+        : tBoard("closed");
 
   const jokerEntry = entries.find((e) => e.isJoker);
   const jokerSlug = jokerEntry
@@ -90,8 +97,13 @@ export function PredictionsView({
 
   return (
     <div className="flex flex-col gap-3.5 p-4 pb-6">
-      <div className="border-b-2 border-border pb-2 font-sans text-[15px] font-extrabold uppercase">
-        {t("title")}
+      <div className="flex items-baseline justify-between gap-3 border-b-2 border-border pb-2">
+        <span className="font-sans text-[15px] font-extrabold uppercase">
+          {t("title")}
+        </span>
+        <span className="shrink-0 text-right font-mono text-[9.5px] uppercase tracking-[0.09em] text-muted">
+          {deadline}
+        </span>
       </div>
 
       {showRoundToggle ? (
@@ -161,8 +173,8 @@ export function PredictionsView({
             {!isOpen
               ? tBoard("hintLocked")
               : remaining > 0
-                ? tBoard("hint", { count: remaining })
-                : tBoard("hintNone")}
+                ? t("hintOpen", { count: remaining, time: lockTime })
+                : t("hintFull", { time: lockTime })}
           </span>
           <span className="font-mono text-xs font-bold text-teal">
             {tBoard("progress", { used: played.length, total: slots.length })}
@@ -225,6 +237,7 @@ export function PredictionsView({
           groupId={groupId}
           slot={openSlot}
           matches={matches}
+          lockAt={round.lockAt}
           existing={entryBySlot.get(openSlot.id) ?? null}
           jokerHolder={
             jokerSlug && jokerSlug !== openSlot.slug

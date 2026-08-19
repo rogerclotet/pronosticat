@@ -23,13 +23,15 @@ import { Sheet } from "@/components/ui/sheet";
 import { StatTile } from "@/components/ui/stat-tile";
 import { deleteEntry, saveEntry } from "@/lib/actions/groups";
 import type { TargetSide } from "@/lib/challenges/types";
-import { cn } from "@/lib/utils";
+import { cn, formatKickoff } from "@/lib/utils";
 
 type ChallengeSheetProps = {
   onClose: () => void;
   groupId: string;
   slot: BoardSlotView;
   matches: BoardMatch[];
+  /** ISO timestamp: picks freeze at the first kickoff of the round. */
+  lockAt: string;
   existing: EntryView | null;
   /** Name of the challenge already carrying the joker, if it isn't this one. */
   jokerHolder: string | null;
@@ -42,6 +44,7 @@ export function ChallengeSheet({
   groupId,
   slot,
   matches,
+  lockAt,
   existing,
   jokerHolder,
   teamsInUse,
@@ -224,7 +227,7 @@ export function ChallengeSheet({
         {error && <p className="text-sm text-danger">{error}</p>}
 
         <p className="border-l-4 border-teal-dark/60 pl-2.5 font-sans text-[10.5px] leading-relaxed text-text-secondary">
-          {t("lockNote")}
+          {t("lockNote", { time: formatKickoff(new Date(lockAt)) })}
         </p>
       </div>
     </Sheet>
