@@ -7,6 +7,7 @@ import {
 import { PredictionsView } from "@/components/predictions/predictions-view";
 import {
   getCachedActiveGroup,
+  getCachedPredictionRoundBoard,
   getCachedRoundBoard,
   getCachedSession,
   getCachedUserEntries,
@@ -14,14 +15,39 @@ import {
 import { getCopyableSourceGroups } from "@/lib/queries/groups";
 import { getMatchdayHistory } from "@/lib/queries/stats";
 
-export async function PredictionsContent() {
+type PredictionsContentProps = {
+  searchParams: Promise<{ view?: string }>;
+};
+
+type RoundView = "upcoming" | "previous";
+
+function normalizeRoundView(value: string | undefined): RoundView {
+  return value === "previous" ? "previous" : "upcoming";
+}
+
+export async function PredictionsContent({
+  searchParams,
+}: PredictionsContentProps) {
   const session = await getCachedSession();
   if (!session) return null;
 
   const activeGroup = await getCachedActiveGroup(session.user.id);
   if (!activeGroup) return null;
 
-  const board = await getCachedRoundBoard(activeGroup.competition);
+  const [{ view }, predictionBoard, currentBoard] = await Promise.all([
+    searchParams,
+    getCachedPredictionRoundBoard(activeGroup.competition),
+    getCachedRoundBoard(activeGroup.competition),
+  ]);
+  const selectedView = normalizeRoundView(view);
+  const hasPreviousRound =
+    !!predictionBoard &&
+    !!currentBoard &&
+    predictionBoard.round.id !== currentBoard.round.id;
+  const board =
+    hasPreviousRound && selectedView === "previous"
+      ? currentBoard
+      : (predictionBoard ?? currentBoard);
   if (!board) {
     const t = await getTranslations("board");
     return <p className="p-4 text-sm text-muted">{t("notReady")}</p>;
@@ -54,6 +80,12 @@ export async function PredictionsContent() {
           row.season !== board.round.season ||
           row.matchday !== board.round.matchday,
       )}
+      roundView={
+        hasPreviousRound && selectedView === "previous"
+          ? "previous"
+          : "upcoming"
+      }
+      showRoundToggle={hasPreviousRound}
       groupId={activeGroup.id}
       competition={activeGroup.competition}
       copySources={copySources}

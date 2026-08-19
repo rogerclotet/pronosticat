@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, ne } from "drizzle-orm";
 import { type Competition, seasonFromDate } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches, rounds } from "@/lib/db/schema";
@@ -17,6 +17,26 @@ export async function getCurrentRound(
     where: and(
       eq(rounds.competition, competition),
       ne(rounds.status, "settled"),
+    ),
+    orderBy: [asc(rounds.season), asc(rounds.matchday)],
+  });
+
+  return round ?? null;
+}
+
+/**
+ * The round users are still allowed to submit picks for: open and before lock.
+ * When the previous round is still awaiting settlement, this points at the
+ * upcoming one so predictions stay available.
+ */
+export async function getRoundAcceptingPredictions(
+  competition: Competition,
+): Promise<CurrentRound | null> {
+  const round = await db.query.rounds.findFirst({
+    where: and(
+      eq(rounds.competition, competition),
+      eq(rounds.status, "open"),
+      gt(rounds.lockAt, new Date()),
     ),
     orderBy: [asc(rounds.season), asc(rounds.matchday)],
   });

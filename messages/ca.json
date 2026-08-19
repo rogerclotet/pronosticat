@@ -172,6 +172,8 @@
   },
   "predictions": {
     "title": "Les meves jugades",
+    "toggleUpcoming": "Jornada oberta",
+    "togglePrevious": "Jornada anterior",
     "statMade": "JUGADES J{round}",
     "statHits": "ENCERTS",
     "statPoints": "PUNTS AQUESTA JORNADA",
