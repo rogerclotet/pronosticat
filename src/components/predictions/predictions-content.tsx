@@ -25,7 +25,9 @@ function normalizeRoundView(value: string | undefined): RoundView {
   return value === "previous" ? "previous" : "upcoming";
 }
 
-export async function PredictionsContent({ searchParams }: PredictionsContentProps) {
+export async function PredictionsContent({
+  searchParams,
+}: PredictionsContentProps) {
   const session = await getCachedSession();
   if (!session) return null;
 
@@ -45,7 +47,7 @@ export async function PredictionsContent({ searchParams }: PredictionsContentPro
   const board =
     hasPreviousRound && selectedView === "previous"
       ? currentBoard
-      : predictionBoard ?? currentBoard;
+      : (predictionBoard ?? currentBoard);
   if (!board) {
     const t = await getTranslations("board");
     return <p className="p-4 text-sm text-muted">{t("notReady")}</p>;
@@ -78,7 +80,11 @@ export async function PredictionsContent({ searchParams }: PredictionsContentPro
           row.season !== board.round.season ||
           row.matchday !== board.round.matchday,
       )}
-      roundView={hasPreviousRound && selectedView === "previous" ? "previous" : "upcoming"}
+      roundView={
+        hasPreviousRound && selectedView === "previous"
+          ? "previous"
+          : "upcoming"
+      }
       showRoundToggle={hasPreviousRound}
       groupId={activeGroup.id}
       competition={activeGroup.competition}
