@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, ne } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lte, ne } from "drizzle-orm";
 import { type Competition, seasonFromDate } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { matches, rounds } from "@/lib/db/schema";
@@ -42,6 +42,24 @@ export async function getRoundAcceptingPredictions(
   });
 
   return round ?? null;
+}
+
+/**
+ * Every round that has already kicked off, newest first. The results screen
+ * opens on the first of these and offers the rest through its selector.
+ * Based on `lockAt` rather than status so a round shows up the moment its
+ * first match starts, without waiting for the cron to mark it locked.
+ */
+export async function getStartedRounds(
+  competition: Competition,
+): Promise<CurrentRound[]> {
+  return db.query.rounds.findMany({
+    where: and(
+      eq(rounds.competition, competition),
+      lte(rounds.lockAt, new Date()),
+    ),
+    orderBy: [desc(rounds.season), desc(rounds.matchday)],
+  });
 }
 
 /** Fallback for when no round row exists yet (fixtures synced, cron not run). */
