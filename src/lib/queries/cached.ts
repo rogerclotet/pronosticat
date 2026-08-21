@@ -4,6 +4,7 @@ import { getActiveGroup, getUserEntries } from "@/lib/queries/groups";
 import {
   getCurrentRoundBoard,
   getPredictionRoundBoard,
+  getResultsRoundBoard,
 } from "@/lib/queries/round-board";
 import { getSession } from "@/lib/session";
 
@@ -16,6 +17,11 @@ export const getCachedActiveGroup = cache((userId: string) =>
 
 export const getCachedRoundBoard = cache((competition: Competition) =>
   getCurrentRoundBoard(competition),
+);
+
+export const getCachedResultsRoundBoard = cache(
+  (competition: Competition, roundId?: string) =>
+    getResultsRoundBoard(competition, roundId),
 );
 
 export const getCachedPredictionRoundBoard = cache((competition: Competition) =>

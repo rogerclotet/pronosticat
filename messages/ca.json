@@ -142,6 +142,8 @@
     "notReady": "El tauler d'aquesta jornada encara no està preparat.",
     "noMatches": "No hi ha partits en aquesta jornada.",
     "fixturesTitle": "Partits de la jornada",
+    "roundPicker": "Veure jornada",
+    "roundOption": "Jornada {round}",
     "empty": "TRIA",
     "jokerBadge": "JÒQUER",
     "resultHit": "+{points}",

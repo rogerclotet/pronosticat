@@ -11,6 +11,7 @@ import { matches, roundChallenges, type rounds } from "@/lib/db/schema";
 import {
   getCurrentRound,
   getRoundAcceptingPredictions,
+  getStartedRounds,
 } from "@/lib/queries/matchday";
 import { getRoundMatches } from "@/lib/queries/matches";
 import { ensureCompetitionRounds } from "@/lib/rounds/ensure";
@@ -125,4 +126,47 @@ export async function getPredictionRoundBoard(
   }
 
   return getCurrentRoundBoard(competition);
+}
+
+export type RoundOption = {
+  id: string;
+  season: number;
+  matchday: number;
+};
+
+export type ResultsRoundBoard = {
+  board: RoundBoard;
+  /** Every round the selector can switch to, newest first. */
+  options: RoundOption[];
+};
+
+function toRoundOption(round: typeof rounds.$inferSelect): RoundOption {
+  return { id: round.id, season: round.season, matchday: round.matchday };
+}
+
+/**
+ * Results board: the latest round that has kicked off, or `roundId` when the
+ * viewer picked an earlier one. A round that is still unsettled does not hold
+ * the screen back — once the next one starts, the old one moves behind the
+ * selector.
+ */
+export async function getResultsRoundBoard(
+  competition: Competition,
+  roundId?: string,
+): Promise<ResultsRoundBoard | null> {
+  const started = await getStartedRounds(competition);
+  const [latest] = started;
+  if (!latest) {
+    // Nothing has kicked off yet: show the round that is about to.
+    const upcoming = await getCurrentRoundBoard(competition);
+    return upcoming
+      ? { board: upcoming, options: [toRoundOption(upcoming.round)] }
+      : null;
+  }
+
+  const selected = started.find((round) => round.id === roundId) ?? latest;
+  return {
+    board: await loadRoundBoard(competition, selected),
+    options: started.map(toRoundOption),
+  };
 }

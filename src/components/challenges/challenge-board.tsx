@@ -2,14 +2,18 @@
 
 import { useTranslations } from "next-intl";
 import type { BoardMatch, BoardRound } from "@/components/challenges/types";
+import { RoundSelector } from "@/components/jornada/round-selector";
 import { MatchCard } from "@/components/matches/match-card";
 import type { Competition } from "@/lib/constants";
+import type { RoundOption } from "@/lib/queries/round-board";
 import { formatKickoff } from "@/lib/utils";
 
 type ChallengeBoardProps = {
   round: BoardRound;
   matches: BoardMatch[];
   competition: Competition;
+  /** Rounds already started, newest first. */
+  roundOptions: RoundOption[];
 };
 
 /** Read-only round summary: kickoff/lock status and fixture results. Picks are made from the predictions tab. */
@@ -17,6 +21,7 @@ export function ChallengeBoard({
   round,
   matches,
   competition,
+  roundOptions,
 }: ChallengeBoardProps) {
   const t = useTranslations("board");
   const tGroup = useTranslations("group");
@@ -41,6 +46,10 @@ export function ChallengeBoard({
           {deadline}
         </span>
       </div>
+
+      {roundOptions.length > 1 ? (
+        <RoundSelector options={roundOptions} selectedId={round.id} />
+      ) : null}
 
       <div className="border-b-2 border-border pb-2 font-sans text-[13.5px] font-extrabold uppercase">
         {t("fixturesTitle")}
