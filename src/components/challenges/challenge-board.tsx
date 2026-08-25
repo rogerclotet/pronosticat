@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { RoundSelector } from "@/components/challenges/round-selector";
 import type { BoardMatch, BoardRound } from "@/components/challenges/types";
-import { RoundSelector } from "@/components/jornada/round-selector";
 import { MatchCard } from "@/components/matches/match-card";
 import type { Competition } from "@/lib/constants";
 import type { RoundOption } from "@/lib/queries/round-board";

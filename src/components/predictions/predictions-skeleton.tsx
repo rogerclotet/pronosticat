@@ -30,6 +30,11 @@ export function PredictionsSkeleton() {
         <Skeleton className="h-3 w-36" />
       </div>
 
+      <div className="flex items-center gap-2.5 border-2 border-border bg-surface px-3 py-2">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-3 flex-1" />
+      </div>
+
       <div className="flex">
         {Array.from({ length: 3 }).map((_, i) => (
           <div

@@ -144,11 +144,12 @@
     "fixturesTitle": "Partits de la jornada",
     "roundPicker": "Veure jornada",
     "roundOption": "Jornada {round}",
+    "roundOptionOpen": "Jornada {round} · OBERTA",
     "empty": "TRIA",
     "jokerBadge": "JÒQUER",
-    "resultHit": "+{points}",
-    "resultMiss": "{points}",
-    "resultVoid": "ANUL·LADA"
+    "pointsLabel": "PUNTS",
+    "pointsPending": "·",
+    "pointsMasked": "· ·"
   },
   "sheet": {
     "pickMatch": "TRIA EL PARTIT",
@@ -174,8 +175,6 @@
     "title": "Les meves jugades",
     "hintOpen": "Et queden {count, plural, one {# casella} other {# caselles}} per omplir. Pots canviar-les fins el {time}.",
     "hintFull": "Tauler complet. Ara toca patir. Pots canviar-les fins el {time}.",
-    "toggleUpcoming": "Jornada oberta",
-    "togglePrevious": "Jornada anterior",
     "statMade": "JUGADES J{round}",
     "statHits": "ENCERTS",
     "statPoints": "PUNTS AQUESTA JORNADA",
@@ -239,6 +238,7 @@
   "groupPicks": {
     "title": "Jugades del grup",
     "subtitle": "Jornada {round}",
+    "roundTotals": "Punts de la jornada",
     "hidden": "Les jugades de tothom es veuran quan comenci la jornada.",
     "empty": "Ningú ha posat res al tauler encara."
   },
@@ -249,7 +249,6 @@
     "streak": "RATXA ACTUAL",
     "predictionsTitle": "Jugades jornada {round}",
     "hidden": "OCULT FINS AL XIULET",
-    "masked": "· ·",
     "noPicks": "Encara no ha posat res al tauler."
   },
   "perfil": {
