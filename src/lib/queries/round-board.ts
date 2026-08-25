@@ -41,7 +41,8 @@ export type RoundBoard = {
   matches: (typeof matches.$inferSelect)[];
 };
 
-async function loadRoundBoard(
+/** The board of one specific round, for callers that already hold its row. */
+export async function loadRoundBoard(
   competition: Competition,
   round: typeof rounds.$inferSelect,
 ): Promise<RoundBoard> {
@@ -106,32 +107,12 @@ export async function getCurrentRoundBoard(
   return loadRoundBoard(competition, round);
 }
 
-/**
- * Prediction entry board: prefer the next round that still accepts picks, and
- * fall back to the current in-play round for read-only display.
- */
-export async function getPredictionRoundBoard(
-  competition: Competition,
-): Promise<RoundBoard | null> {
-  let round = await getRoundAcceptingPredictions(competition);
-  if (!round) {
-    if (!(await hasCompetitionMatches(competition))) {
-      return null;
-    }
-    await ensureCompetitionRounds(competition);
-    round = await getRoundAcceptingPredictions(competition);
-  }
-  if (round) {
-    return loadRoundBoard(competition, round);
-  }
-
-  return getCurrentRoundBoard(competition);
-}
-
 export type RoundOption = {
   id: string;
   season: number;
   matchday: number;
+  /** The round still taking picks, labelled apart from the played ones. */
+  open?: boolean;
 };
 
 export type ResultsRoundBoard = {
@@ -142,6 +123,58 @@ export type ResultsRoundBoard = {
 
 function toRoundOption(round: typeof rounds.$inferSelect): RoundOption {
   return { id: round.id, season: round.season, matchday: round.matchday };
+}
+
+export type PredictionBoard = {
+  board: RoundBoard;
+  /** The open round first, then every round that has kicked off, newest first. */
+  options: RoundOption[];
+};
+
+/**
+ * Prediction entry board: the round still accepting picks, or `roundId` when
+ * the viewer stepped back to an earlier one. Every round that has kicked off
+ * stays reachable, so a settled round's picks can still be read back.
+ */
+export async function getPredictionBoard(
+  competition: Competition,
+  roundId?: string,
+): Promise<PredictionBoard | null> {
+  let open = await getRoundAcceptingPredictions(competition);
+  if (!open) {
+    // Page renders must not call football-data.org: that burns quota, can wait
+    // on 429s, and lets any logged-in user trigger an outbound sync.
+    if (!(await hasCompetitionMatches(competition))) {
+      return null;
+    }
+    await ensureCompetitionRounds(competition);
+    open = await getRoundAcceptingPredictions(competition);
+  }
+
+  const started = await getStartedRounds(competition);
+  const [defaultRound] = open ? [open] : started;
+  if (!defaultRound) return getCurrentRoundFallback(competition);
+
+  // The open round locks in the future, so it can never also be a started one.
+  const options: RoundOption[] = [
+    ...(open ? [{ ...toRoundOption(open), open: true }] : []),
+    ...started.map(toRoundOption),
+  ];
+  // An unknown or not-yet-started round id falls back to the default.
+  const selected =
+    (open?.id === roundId
+      ? open
+      : started.find((round) => round.id === roundId)) ?? defaultRound;
+
+  return { board: await loadRoundBoard(competition, selected), options };
+}
+
+/** No round is open and none has kicked off: fall back to the round in play. */
+async function getCurrentRoundFallback(
+  competition: Competition,
+): Promise<PredictionBoard | null> {
+  const board = await getCurrentRoundBoard(competition);
+  return board ? { board, options: [toRoundOption(board.round)] } : null;
 }
 
 /**

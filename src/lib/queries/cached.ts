@@ -3,7 +3,7 @@ import type { Competition } from "@/lib/constants";
 import { getActiveGroup, getUserEntries } from "@/lib/queries/groups";
 import {
   getCurrentRoundBoard,
-  getPredictionRoundBoard,
+  getPredictionBoard,
   getResultsRoundBoard,
 } from "@/lib/queries/round-board";
 import { getSession } from "@/lib/session";
@@ -24,8 +24,9 @@ export const getCachedResultsRoundBoard = cache(
     getResultsRoundBoard(competition, roundId),
 );
 
-export const getCachedPredictionRoundBoard = cache((competition: Competition) =>
-  getPredictionRoundBoard(competition),
+export const getCachedPredictionBoard = cache(
+  (competition: Competition, roundId?: string) =>
+    getPredictionBoard(competition, roundId),
 );
 
 export const getCachedUserEntries = cache(

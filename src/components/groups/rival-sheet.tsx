@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { PointsChip } from "@/components/challenges/points-chip";
 import { Pill } from "@/components/ui/pill";
 import { Sheet } from "@/components/ui/sheet";
 import { StatTile } from "@/components/ui/stat-tile";
@@ -101,22 +102,7 @@ export function RivalSheet({
                     {masked ? t("hidden") : (pick.label ?? "—")}
                   </span>
                 </div>
-                <div
-                  className={
-                    "border-2 px-2 py-1.5 font-mono text-sm font-bold " +
-                    (masked
-                      ? "border-border text-muted"
-                      : "border-border-strong text-foreground")
-                  }
-                >
-                  {masked
-                    ? t("masked")
-                    : pick.pointsAwarded === null
-                      ? "·"
-                      : pick.pointsAwarded > 0
-                        ? `+${pick.pointsAwarded}`
-                        : String(pick.pointsAwarded)}
-                </div>
+                <PointsChip points={pick.pointsAwarded} masked={masked} />
               </div>
             ))}
           </div>

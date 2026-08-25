@@ -3,7 +3,7 @@ import { PredictionsContent } from "@/components/predictions/predictions-content
 import { PredictionsSkeleton } from "@/components/predictions/predictions-skeleton";
 
 type HomePageProps = {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ round?: string }>;
 };
 
 export default function HomePage({ searchParams }: HomePageProps) {

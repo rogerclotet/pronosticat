@@ -6,7 +6,11 @@ import {
   challengeIcons,
   fallbackChallengeIcon,
 } from "@/components/challenges/challenge-icon";
-import { CardPayouts } from "@/components/challenges/payouts";
+import {
+  CardPayouts,
+  formatPoints,
+  payoutTone,
+} from "@/components/challenges/payouts";
 import {
   type BoardMatch,
   type BoardSlotView,
@@ -43,22 +47,12 @@ export function SlotCard({
   const Icon = challengeIcons[slot.slug] ?? fallbackChallengeIcon;
   const awaitingPick = pick === null && interactive;
 
-  const outcome =
-    settled === null
-      ? null
-      : settled > 0
-        ? { label: t("resultHit", { points: settled }), tone: "text-teal" }
-        : settled < 0
-          ? { label: t("resultMiss", { points: settled }), tone: "text-danger" }
-          : { label: t("resultMiss", { points: settled }), tone: "text-muted" };
-
-  const trailing = outcome ? (
-    <span className={cn("shrink-0", outcome.tone)}>{outcome.label}</span>
-  ) : pick && interactive ? (
-    <Pencil className="size-3.5 shrink-0" strokeWidth={2.5} />
-  ) : pick ? null : (
-    <ArrowRight className="size-3.5 shrink-0" strokeWidth={3} />
-  );
+  const trailing =
+    pick && interactive ? (
+      <Pencil className="size-3.5 shrink-0" strokeWidth={2.5} />
+    ) : pick || settled !== null ? null : (
+      <ArrowRight className="size-3.5 shrink-0" strokeWidth={3} />
+    );
 
   return (
     <div
@@ -97,7 +91,11 @@ export function SlotCard({
         <p className="relative font-sans text-[11.5px] leading-snug text-text-secondary">
           {tChallenge(`${slot.slug}.rule`)}
         </p>
-        <CardPayouts slug={slot.slug} payouts={slot.payouts} />
+        {settled === null ? (
+          <CardPayouts slug={slot.slug} payouts={slot.payouts} />
+        ) : (
+          <SettledPoints points={settled} label={t("pointsLabel")} />
+        )}
       </div>
 
       <button
@@ -129,6 +127,23 @@ export function SlotCard({
           </span>
         )}
       </button>
+    </div>
+  );
+}
+
+/** What the slot actually paid, once the round is settled. */
+function SettledPoints({ points, label }: { points: number; label: string }) {
+  return (
+    <div className="relative flex items-baseline gap-1.5">
+      <span
+        className={cn(
+          "font-mono text-2xl font-bold leading-none tabular-nums",
+          payoutTone(points),
+        )}
+      >
+        {formatPoints(points)}
+      </span>
+      <span className="label-mono">{label}</span>
     </div>
   );
 }

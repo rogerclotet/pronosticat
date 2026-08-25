@@ -9,7 +9,8 @@ export function formatPoints(points: number): string {
   return points > 0 ? `+${points}` : String(points);
 }
 
-function payoutTone(points: number): string {
+/** Teal for a gain, danger for a loss, muted for nothing at all. */
+export function payoutTone(points: number): string {
   if (points > 0) return "text-teal";
   return points < 0 ? "text-danger" : "text-muted";
 }

@@ -75,6 +75,7 @@ export async function getProfileSummary(userId: string, groupId: string) {
 }
 
 export type MatchdayHistoryRow = {
+  roundId: string;
   matchday: number;
   season: number;
   picks: number;
@@ -89,6 +90,7 @@ export async function getMatchdayHistory(
 ): Promise<MatchdayHistoryRow[]> {
   const rows = await db
     .select({
+      roundId: rounds.id,
       matchday: rounds.matchday,
       season: rounds.season,
       picks: count(entries.id),
@@ -105,7 +107,9 @@ export async function getMatchdayHistory(
         isNotNull(entries.pointsAwarded),
       ),
     )
-    .groupBy(rounds.season, rounds.matchday)
+    // A round is unique per (competition, season, matchday) and a group plays a
+    // single competition, so grouping by id changes nothing but the id column.
+    .groupBy(rounds.id, rounds.season, rounds.matchday)
     .orderBy(desc(rounds.season), desc(rounds.matchday));
 
   return rows.map((row) => ({ ...row, netDelta: Number(row.netDelta) }));

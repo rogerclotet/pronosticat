@@ -3,6 +3,8 @@
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChallengeSheet } from "@/components/challenges/challenge-sheet";
+import { formatPoints } from "@/components/challenges/payouts";
+import { RoundSelector } from "@/components/challenges/round-selector";
 import { SlotCard } from "@/components/challenges/slot-card";
 import {
   type BoardMatch,
@@ -17,8 +19,12 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { usePathname, useRouter } from "@/i18n/routing";
 import type { Competition } from "@/lib/constants";
 import type { CopyableSourceGroup } from "@/lib/queries/groups";
+import type { RoundOption } from "@/lib/queries/round-board";
 import type { MatchdayHistoryRow } from "@/lib/queries/stats";
 import { cn, formatKickoff } from "@/lib/utils";
+
+/** Stands in for a number that does not exist yet, rather than a zero. */
+const PENDING_VALUE = "·";
 
 type PredictionsViewProps = {
   round: BoardRound;
@@ -26,8 +32,7 @@ type PredictionsViewProps = {
   matches: BoardMatch[];
   entries: EntryView[];
   history: MatchdayHistoryRow[];
-  roundView: "upcoming" | "previous";
-  showRoundToggle: boolean;
+  roundOptions: RoundOption[];
   groupId: string;
   competition: Competition;
   copySources: CopyableSourceGroup[];
@@ -39,8 +44,7 @@ export function PredictionsView({
   matches,
   entries,
   history,
-  roundView,
-  showRoundToggle,
+  roundOptions,
   groupId,
   competition,
   copySources,
@@ -55,10 +59,12 @@ export function PredictionsView({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const openSlotId = searchParams.get("slot");
-  const isPreviousView = roundView === "previous";
 
   const entryBySlot = new Map(entries.map((e) => [e.roundChallengeId, e]));
   const played = slots.filter((slot) => entryBySlot.has(slot.id));
+  // Points only exist once the round is settled: until then the tiles would
+  // read a very convincing zero.
+  const isSettled = round.status === "settled";
   const hits = entries.filter((e) => (e.pointsAwarded ?? 0) > 0).length;
   const pointsThisRound = entries.reduce(
     (sum, e) => sum + (e.pointsAwarded ?? 0),
@@ -106,45 +112,8 @@ export function PredictionsView({
         </span>
       </div>
 
-      {showRoundToggle ? (
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            className={cn(
-              "border-2 px-3 py-2 text-xs font-extrabold uppercase tracking-wide",
-              !isPreviousView
-                ? "border-teal bg-teal text-background"
-                : "border-border bg-surface text-foreground",
-            )}
-            onClick={() => {
-              const params = new URLSearchParams(searchParams.toString());
-              params.delete("view");
-              params.delete("slot");
-              const query = params.toString();
-              router.replace(query ? `${pathname}?${query}` : pathname);
-            }}
-          >
-            {t("toggleUpcoming")}
-          </button>
-          <button
-            type="button"
-            className={cn(
-              "border-2 px-3 py-2 text-xs font-extrabold uppercase tracking-wide",
-              isPreviousView
-                ? "border-teal bg-teal text-background"
-                : "border-border bg-surface text-foreground",
-            )}
-            onClick={() => {
-              const params = new URLSearchParams(searchParams.toString());
-              params.set("view", "previous");
-              params.delete("slot");
-              const query = params.toString();
-              router.replace(query ? `${pathname}?${query}` : pathname);
-            }}
-          >
-            {t("togglePrevious")}
-          </button>
-        </div>
+      {roundOptions.length > 1 ? (
+        <RoundSelector options={roundOptions} selectedId={round.id} />
       ) : null}
 
       <div className="flex">
@@ -155,14 +124,16 @@ export function PredictionsView({
         />
         <StatTile
           label={t("statHits")}
-          value={hits}
-          accent="teal"
+          value={isSettled ? hits : PENDING_VALUE}
+          accent={isSettled ? "teal" : "default"}
           className="-ml-0.5 flex-1"
         />
         <StatTile
           label={t("statPoints")}
-          value={pointsThisRound > 0 ? `+${pointsThisRound}` : pointsThisRound}
-          accent={pointsThisRound >= 0 ? "teal" : "danger"}
+          value={isSettled ? formatPoints(pointsThisRound) : PENDING_VALUE}
+          accent={
+            isSettled ? (pointsThisRound >= 0 ? "teal" : "danger") : "default"
+          }
           className="-ml-0.5 flex-1"
         />
       </div>
@@ -215,8 +186,14 @@ export function PredictionsView({
           <div className="grid grid-cols-2 gap-2">
             {history.map((row) => (
               <RoundHistoryCard
-                key={row.matchday}
+                key={row.roundId}
                 row={row}
+                onOpen={() => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("round", row.roundId);
+                  params.delete("slot");
+                  router.replace(`${pathname}?${params.toString()}`);
+                }}
                 label={tPerfil("historyRound", {
                   round: row.matchday,
                   competition: tGroup(`competitions.${competition}`),
@@ -251,21 +228,28 @@ export function PredictionsView({
   );
 }
 
+/** A past round of this group: its net swing, and the way back into it. */
 function RoundHistoryCard({
   row,
   label,
   meta,
+  onOpen,
 }: {
   row: MatchdayHistoryRow;
   label: string;
   meta: string;
+  onOpen: () => void;
 }) {
   const hitPct = row.picks > 0 ? (row.hits / row.picks) * 100 : 0;
   const missPct = row.picks > 0 ? (row.misses / row.picks) * 100 : 0;
 
   return (
-    <div className="flex flex-col border-2 border-border bg-surface">
-      <div className="flex items-start justify-between gap-1 p-2">
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex cursor-pointer flex-col border-2 border-border bg-surface text-left hover:border-teal"
+    >
+      <div className="flex w-full items-start justify-between gap-1 p-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="truncate font-sans text-[10.5px] font-semibold">
             {label}
@@ -289,6 +273,6 @@ function RoundHistoryCard({
           { pct: missPct, tone: "partial" },
         ]}
       />
-    </div>
+    </button>
   );
 }
